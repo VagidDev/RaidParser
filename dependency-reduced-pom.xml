@@ -21,7 +21,7 @@
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
-              <mainClass>com.unifun.Main</mainClass>
+              <mainClass>com.unifun.raidparser.Main</mainClass>
             </manifest>
           </archive>
         </configuration>
