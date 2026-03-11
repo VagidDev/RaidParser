@@ -1,0 +1,16 @@
+package com.unifun.components.filters.battery;
+
+import com.unifun.components.filters.EmptyFilter;
+import com.unifun.components.response.AnalyzeResponse;
+
+public class BatteryEmptyFilter extends EmptyFilter<BatteryStatus> implements BatteryFilter {
+    @Override
+    protected AnalyzeResponse<BatteryStatus> getValidResponse() {
+        return new AnalyzeResponse<>(BatteryStatus.OK, "");
+    }
+
+    @Override
+    protected AnalyzeResponse<BatteryStatus> getInvalidResponse() {
+        return new AnalyzeResponse<>(BatteryStatus.EMPTY, "Empty configuration! Please check configuration manually\n");
+    }
+}

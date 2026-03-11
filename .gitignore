@@ -1,0 +1,19 @@
+# User local IDEA configuration files
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/shelf/
+
+# All the .iml module files
+*.iml
+
+# User local IDEA run configurations
+.run/
+
+# Build output & caches
+/out/
+/build/
+.gradle/
+target/ 
+
+# Credentials
+src/main/resources/
