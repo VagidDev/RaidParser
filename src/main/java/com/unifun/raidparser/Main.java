@@ -24,7 +24,7 @@ public class Main {
             "stop - stop the application";
 
 
-    public static void main(String[] args) {
+    public static void not(String[] args) {
         Scanner scanner = new Scanner(System.in);
         String raidReportPath = "";
 

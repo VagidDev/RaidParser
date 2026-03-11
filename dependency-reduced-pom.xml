@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.unifun</groupId>
   <artifactId>raid_parser</artifactId>
-  <version>3.0-TEST</version>
+  <version>4.0-BETA</version>
   <build>
     <plugins>
       <plugin>
@@ -21,10 +21,14 @@
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
-              <mainClass>com.unifun.raidparser.Main</mainClass>
+              <mainClass>com.unifun.raidparser.RaidParserApp</mainClass>
             </manifest>
           </archive>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>

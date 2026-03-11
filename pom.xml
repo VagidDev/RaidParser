@@ -3,10 +3,9 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>com.unifun</groupId>
     <artifactId>raid_parser</artifactId>
-    <version>3.0-TEST</version>
+    <version>4.0-BETA</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -16,6 +15,13 @@
     </properties>
 
     <dependencies>
+        <!-- Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+            <version>4.1.0-M2</version>
+            <scope>compile</scope>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
         <dependency>
             <groupId>org.jsoup</groupId>
@@ -95,12 +101,15 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.unifun.raidparser.Main</mainClass> <!-- Main class for executable jar -->
+                            <mainClass>com.unifun.raidparser.RaidParserApp</mainClass> <!-- Main class for executable jar -->
                         </manifest>
                     </archive>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
