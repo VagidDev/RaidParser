@@ -16,4 +16,4 @@
 target/ 
 
 # Credentials
-src/main/resources/
+src/main/resources/application.yaml
