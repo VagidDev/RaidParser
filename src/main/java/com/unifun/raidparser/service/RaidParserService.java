@@ -67,21 +67,21 @@ public class RaidParserService {
 
     public List<Map.Entry<String, AnalyzeResponse<DriverStatus>>> getSortedDrivesStatusWithManualServers(String reportPath) {
         Map<String, String> serversData = serverDataHandler.getServerData(reportPath);
-        Map<String, String> manualServersData = ServerHealthCheckService.start();
+//        Map<String, String> manualServersData = ServerHealthCheckService.start();
         Map<String, AnalyzeResponse<DriverStatus>> driveServerStatuses = driverStatusRaidParser.getParsedData(serversData, driveAnalyzer);
-        Map<String, AnalyzeResponse<DriverStatus>> manualDriveServerStatuses = driverStatusRaidParser.getParsedData(manualServersData, driveManualAnalyzer);
+//        Map<String, AnalyzeResponse<DriverStatus>> manualDriveServerStatuses = driverStatusRaidParser.getParsedData(manualServersData, driveManualAnalyzer);
         //Merging of statuses from manual Analyzer and default Analyzer
-        manualDriveServerStatuses.forEach((server, status) -> {
-            driveServerStatuses.merge(server, status, (currentStatus, newStatus) -> {
-                if (newStatus.getStatus() == DriverStatus.INTERIM_RECOVERY_MODE) {
-                    return newStatus;
-                } else if (newStatus.getStatus() == DriverStatus.EMPTY || newStatus.getStatus() == DriverStatus.UNKNOW) {
-                    return currentStatus;
-                } else {
-                    return newStatus;
-                }
-            });
-        });
+//        manualDriveServerStatuses.forEach((server, status) -> {
+//            driveServerStatuses.merge(server, status, (currentStatus, newStatus) -> {
+//                if (newStatus.getStatus() == DriverStatus.INTERIM_RECOVERY_MODE) {
+//                    return newStatus;
+//                } else if (newStatus.getStatus() == DriverStatus.EMPTY || newStatus.getStatus() == DriverStatus.UNKNOW) {
+//                    return currentStatus;
+//                } else {
+//                    return newStatus;
+//                }
+//            });
+//        });
 
         return driverStatusDataSorter.sortByStatus(driveServerStatuses);
     }

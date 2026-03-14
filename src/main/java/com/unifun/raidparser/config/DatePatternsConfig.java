@@ -1,13 +1,16 @@
 package com.unifun.raidparser.config;
-//Need to import annotations from spring-boot
-import java.util.List;
 
-@ConfigurationProperties("util.date.formats")
-public class DatePatetrnsConfig {
-    private List<String> formats;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-    @ConstructorBindings
-    public DatePatetrnsConfig(List<String> formats) {
-        this.formats = formats;
-    }
+import java.util.Map;
+
+@Configuration
+@ConfigurationProperties("util.date")
+@RequiredArgsConstructor
+@Getter
+public class DatePatternsConfig {
+    private final Map<String, String> formats;
 }

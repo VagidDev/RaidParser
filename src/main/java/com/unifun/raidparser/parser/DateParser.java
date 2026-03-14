@@ -1,0 +1,39 @@
+package com.unifun.raidparser.parser;
+
+import com.unifun.raidparser.config.DatePatternsConfig;
+import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
+
+@Component
+@RequiredArgsConstructor
+public class DateParser {
+    private static final Logger LOGGER = LogManager.getLogger(DateParser.class);
+    private final DatePatternsConfig datePatternsConfig;
+
+    public DateParseResponse parse(String stringDate) {
+        for (Map.Entry<String, String> patternEntry : datePatternsConfig.getFormats().entrySet()) {
+            if (stringDate.matches(patternEntry.getValue())) {
+                LOGGER.info(
+                        "Date `{}` is valid for regex `{}`. Date will be parsed with format `{}`",
+                        stringDate,
+                        patternEntry.getValue(),
+                        patternEntry.getKey()
+                );
+                return buildSuccessResponse(stringDate, patternEntry.getKey());
+            }
+        }
+        LOGGER.info("Cannot parse the date `{}`", stringDate);
+        return new DateParseResponse(false, LocalDate.now());
+    }
+
+    private DateParseResponse buildSuccessResponse(String stringDate, String dateFormat) {
+        LocalDate date = LocalDate.parse(stringDate, DateTimeFormatter.ofPattern(dateFormat));
+        return new DateParseResponse(true, date);
+    }
+}

@@ -7,11 +7,11 @@ public class SimpleDateValidator implements SimpleValidator<String> {
 
     public Boolean validate(String s) {
         for (String pattern : dateFormatPatterns) {
-            if (!s.matches(pattern)) {
-                return false;
+            if (s.matches(pattern)) {
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 }
