@@ -5,3 +5,13 @@ util:
       '[dd.MM.yyyy]': '^(0[1-9]|[1-2][0-9]|3[01])\.(0[1-9]|1[0-2])\.\d{4}$'
       '[yyyy-MM-dd]': '^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[01])$'
       '[MM/dd/yyyy]': '^(0[1-9]|1[0-2])/(0[1-9]|[1-2][0-9]|3[01])/\d{4}$'
+
+sftp:
+  remote:
+    file-rules:
+      - mask: "server_report_{date}"
+        format: "yyyy_MM_dd"
+      - mask: "{date}_server_report"
+        format: "dd-MM-yyyy"
+      - mask: "server_report_{date}"
+        format: "yyyy.MM.dd"

@@ -1,4 +1,4 @@
-package com.unifun.raidparser.parser;
+package com.unifun.raidparser.dto;
 
 import java.time.LocalDate;
 

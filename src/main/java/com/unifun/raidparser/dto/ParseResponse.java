@@ -1,4 +1,4 @@
-package com.unifun.raidparser.parser;
+package com.unifun.raidparser.dto;
 
 public interface ParseResponse<T> {
     boolean isParsed();

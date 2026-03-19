@@ -1,16 +1,17 @@
 package com.unifun.raidparser.parser;
 
 import com.unifun.raidparser.config.DatePatternsConfig;
+import com.unifun.raidparser.dto.DateParseResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
-@Component
+@Service
 @RequiredArgsConstructor
 public class DateParser {
     private static final Logger LOGGER = LogManager.getLogger(DateParser.class);
