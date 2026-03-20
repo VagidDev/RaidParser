@@ -22,6 +22,7 @@ import com.unifun.components.response.AnalyzeResponse;
 import com.unifun.handlers.FileDataHandler;
 import com.unifun.config.AppConfig;
 import com.unifun.core.DataSorter;
+import com.unifun.service.RaidParserService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,6 +46,8 @@ public class GoogleSheetsExporter {
     private static String diskRange = "";
     private static String psuRange = "";
     private static String batteryState = "";
+
+    private static final RaidParserService raidParserService = new RaidParserService();
 
     private static String getTokenDirectoryPath() {
         String tokenDir = AppConfig.get("sheets.token-path");
@@ -136,7 +139,7 @@ public class GoogleSheetsExporter {
 
         Map<String, String> servers = FileDataHandler.readServerDataFromFile(path);
 
-        //writeToSheet(service, spreadsheetId, diskRange, servers);
+        writeDiskState(service, spreadsheetId, diskRange, path);
         writePSUState(service, spreadsheetId, psuRange, servers);
         writeBatteryState(service, spreadsheetId, batteryState, servers);
     }
@@ -162,13 +165,13 @@ public class GoogleSheetsExporter {
         LOGGER.info("Count of rows that has been wrote to range `{}` is: {}", range, result);
     }
 
-    private static void writeDiskState(Sheets service, String spreadsheetId, String range, Map<String, String> servers) throws IOException {
+    private static void writeDiskState(Sheets service, String spreadsheetId, String range, String reportPath) throws IOException {
         if (range.isEmpty()) {
             LOGGER.warn("Disk range is empty, please set-up `sheets.spreadsheet.disk-range` in configuration");
             return;
         }
 
-        List<Map.Entry<String, AnalyzeResponse<DriverStatus>>> disks = DataSorter.getSortedDrives(servers);
+        List<Map.Entry<String, AnalyzeResponse<DriverStatus>>> disks = raidParserService.getSortedDrivesStatusWithManualServers(reportPath);
         List<List<Object>> values = new ArrayList<>();
         for (Map.Entry<String, AnalyzeResponse<DriverStatus>> entry : disks) {
             List<Object> row = new ArrayList<>(List.of(entry.getKey(), entry.getValue().getStatus().getName().trim(), entry.getValue().getErrorText().trim()));

@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.unifun</groupId>
   <artifactId>raid_parser</artifactId>
-  <version>3.0-TEST</version>
+  <version>3.0</version>
   <build>
     <plugins>
       <plugin>
