@@ -85,21 +85,17 @@ class DateParserTest {
         String isoDate = "2026-03-18";
         LocalDate date = LocalDate.parse(isoDate, isoFormatter);
 
-        String result = dateParser.parseToString(date);
+        String result = dateParser.parseToString(date, "yyyy_MM_dd");
 
         assertEquals(isoDate.replace("-", "_"), result);
     }
 
     @Test
-    void parseToString_FailedParsingDate_incorrectConfiguration() {
-        DatePatternsConfig config = new DatePatternsConfig();
-        config.setDateStringFormat("incorrect format");
-        DateParser customParser = new DateParser(config);
-
+    void parseToString_FailedParsingDate_incorrectDateFormat() {
         String isoDate = "2026-03-18";
         LocalDate date = LocalDate.parse(isoDate, isoFormatter);
 
-        String result = customParser.parseToString(date);
+        String result = dateParser.parseToString(date, "incorrect format");
 
         assertEquals("", result);
     }

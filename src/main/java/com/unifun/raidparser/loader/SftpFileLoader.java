@@ -2,8 +2,11 @@ package com.unifun.raidparser.loader;
 
 import com.jcraft.jsch.*;
 import com.unifun.raidparser.config.AppConfig;
+import com.unifun.raidparser.config.SftpUserConfig;
+import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Service;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -11,67 +14,18 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@Service
+@RequiredArgsConstructor
 public class SftpFileLoader {
-    private static final String DEFAULT_SAVING_DIR = "./raid_reports/";
-    private static final String DEFAULT_REMOTE_FILE_TEMPLATE = "/servers_raid_status_";
-
     private static final Logger LOGGER = LogManager.getLogger(SftpFileLoader.class);
 
-    private static String getFileOnLocalServer(String date) {
-        String filePath = "";
+    private final SftpUserConfig sftpUserConfig;
 
-        //checking if date format is correct
-        if (date.matches("^\\d{4}_(0[1-9]|1[0-2])_(0[1-9]|[12][0-9]|3[01])$")) {
-            if (AppConfig.get("dir.raid-reports").isBlank()) {
-                filePath = SftpFileLoader.DEFAULT_SAVING_DIR + "servers_raid_status_" + date;
-                LOGGER.info("Getting default saving directory: {} ", filePath);
-                return filePath;
-            }
-            filePath = AppConfig.get("dir.raid-reports") + "servers_raid_status_" + date;
-            LOGGER.info("Getting saving directory from config: {} ", filePath);
-            return filePath;
-        } else {
-            LOGGER.warn("Entered invalid date, that does not matches pattern for yyyy_MM_dd. Entered date: {} ", date);
-            return "";
-        }
-    }
-
-    public static String getFileForDate(String date) {
-        String path = getFileOnLocalServer(date);
-        if (path.isBlank() || !Files.isRegularFile(Path.of(path))) {
-            LOGGER.info("File do not exists on local server and will be downloaded from SFTP");
-            path = downloadFileFromRemoteServer(date);
-        }
-
-        return path;
-    }
-
-    private static String downloadFileFromRemoteServer(String date) {
-        String host = AppConfig.get("sftp.host"); // Адрес удаленного сервера
-        String username = AppConfig.get("sftp.user");       // Логин
-        String password = AppConfig.get("sftp.password");       // Пароль
-        String remoteFile = (AppConfig.get("sftp.remote-file-template").isBlank()
-                ? DEFAULT_REMOTE_FILE_TEMPLATE : AppConfig.get("sftp.remote-file-template"))
-            + date; // Путь к файлу на удаленном сервере
-        String localDir = AppConfig.get("sftp.local-path-raid-status").isBlank() ? DEFAULT_SAVING_DIR : AppConfig.get("sftp.local-path-raid-status"); // Локальный путь для сохранения файла
-        String localFile = localDir + "servers_raid_status_" + date;
-
-        if (host.isEmpty() || username.isEmpty() || password.isEmpty()) {
-            LOGGER.error("Please set up sftp host and user credentials in configuration!");
-            return "";
-        }
-
-        Path localPath = Path.of(localDir);
-        if (Files.notExists(localPath)) {
-            LOGGER.warn("Directory `{}` for saving reports from sftp does not exists.", localPath);
-            try {
-                Files.createDirectory(localPath);
-                LOGGER.info("Directory `{}` for saving reports from sftp is created", localPath);
-            } catch (IOException e) {
-                LOGGER.error("Unexpected error while creating local directory `{}` for saving reports from sftp server. Error -> {}",
-                        localPath, e.getMessage(), e);
-            }
-        }
+    public String downloadFile(String remoteFile, String localFile) {
+        String host = sftpUserConfig.getHost();             // Адрес удаленного сервера
+        int port = sftpUserConfig.getPort();                // Port
+        String username = sftpUserConfig.getLogin();        // Логин
+        String password = sftpUserConfig.getPassword();     // Пароль
 
         JSch jsch = new JSch();
         Session session = null;
@@ -80,7 +34,7 @@ public class SftpFileLoader {
 
         try {
             // Создаем SSH сессию
-            session = jsch.getSession(username, host, 22);
+            session = jsch.getSession(username, host, port);
             session.setPassword(password);
 
             // Отключаем проверку хоста (если необходимо)
@@ -127,4 +81,27 @@ public class SftpFileLoader {
             return "";
         }
     }
+
+//    String remoteFile = (AppConfig.get("sftp.remote-file-template").isBlank()
+//            ? DEFAULT_REMOTE_FILE_TEMPLATE : AppConfig.get("sftp.remote-file-template"))
+//            + date; // Путь к файлу на удаленном сервере
+//    String localDir = AppConfig.get("sftp.local-path-raid-status").isBlank() ? DEFAULT_SAVING_DIR : AppConfig.get("sftp.local-path-raid-status"); // Локальный путь для сохранения файла
+//    String localFile = localDir + "servers_raid_status_" + date;
+//
+//        if (host.isEmpty() || username.isEmpty() || password.isEmpty()) {
+//        LOGGER.error("Please set up sftp host and user credentials in configuration!");
+//        return "";
+//    }
+//
+//    Path localPath = Path.of(localDir);
+//        if (Files.notExists(localPath)) {
+//        LOGGER.warn("Directory `{}` for saving reports from sftp does not exists.", localPath);
+//        try {
+//            Files.createDirectory(localPath);
+//            LOGGER.info("Directory `{}` for saving reports from sftp is created", localPath);
+//        } catch (IOException e) {
+//            LOGGER.error("Unexpected error while creating local directory `{}` for saving reports from sftp server. Error -> {}",
+//                    localPath, e.getMessage(), e);
+//        }
+//    }
 }

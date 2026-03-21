@@ -8,10 +8,12 @@ util:
 
 sftp:
   remote:
-    file-rules:
-      - mask: "server_report_{date}"
-        format: "yyyy_MM_dd"
-      - mask: "{date}_server_report"
-        format: "dd-MM-yyyy"
-      - mask: "server_report_{date}"
-        format: "yyyy.MM.dd"
+    user:
+      host: 127.0.0.1
+      port: 22
+      login: test
+      password: test
+    file-rule:
+      directory: "/"
+      mask: "server_report_{date}"
+      date-format: "yyyy_MM_dd"

@@ -17,14 +17,9 @@ public class DateParser {
     private static final Logger LOGGER = LogManager.getLogger(DateParser.class);
     private final DatePatternsConfig datePatternsConfig;
 
-    public String parseToString(LocalDate date) {
-        if (datePatternsConfig.getDateStringFormat() == null || datePatternsConfig.getDateStringFormat().isBlank()) {
-            LOGGER.error("No string patterns is specified in configuration for date!");
-            return "";
-        }
-
+    public String parseToString(LocalDate date, String format) {
         try {
-            DateTimeFormatter toStringDateFormatter = DateTimeFormatter.ofPattern(datePatternsConfig.getDateStringFormat());
+            DateTimeFormatter toStringDateFormatter = DateTimeFormatter.ofPattern(format);
             return date.format(toStringDateFormatter);
         } catch (Exception e) {
             LOGGER.error(
@@ -36,7 +31,6 @@ public class DateParser {
             );
             return "";
         }
-
     }
 
     public DateParseResponse parseToLocalDate(String stringDate) {

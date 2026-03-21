@@ -48,7 +48,7 @@ public class Main {
                 LOGGER.info("Input date is empty, get today date: {} ", dateInput);
             }
 
-            raidReportPath = SftpFileLoader.getFileForDate(dateInput);
+            raidReportPath = "";//SftpFileLoader.getFileForDate(dateInput);
 
             if (raidReportPath.isBlank()) {
                 CONSOLE_LOGGER.warn("Got empty file for parsing. Please see logs for more information");
