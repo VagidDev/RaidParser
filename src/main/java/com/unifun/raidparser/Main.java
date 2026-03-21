@@ -3,7 +3,7 @@ package com.unifun.raidparser;
 import com.unifun.raidparser.loader.SftpFileLoader;
 import com.unifun.raidparser.config.AppConfig;
 import com.unifun.raidparser.service.RaidParserService;
-import com.unifun.raidparser.sheets.GoogleSheetsExporter;
+//import com.unifun.raidparser.sheets.GoogleSheetsExporter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -67,7 +67,7 @@ public class Main {
                     break;
                 case "export":
                     CONSOLE_LOGGER.info("Start exporting to Google Sheets");
-                    GoogleSheetsExporter.export(raidReportPath);
+//                    GoogleSheetsExporter.export(raidReportPath);
                     CONSOLE_LOGGER.info("Finish exporting data!");
                     break;
                 case "stop":
