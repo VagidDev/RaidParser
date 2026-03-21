@@ -10,9 +10,9 @@ sftp:
   remote:
     user:
       host: 127.0.0.1
-      port: 22
-      login: test
-      password: test
+      port: 2222
+      login: testuser
+      password: password
     file-rule:
       directory: "/"
       mask: "server_report_{date}"
