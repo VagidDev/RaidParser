@@ -23,6 +23,11 @@ sftp:
       directory: "./sftp"
       mask: "server_report_{date}"
       date-format: "yyyy_MM_dd"
+ssh:
+  user:
+    login: testuser
+    password: password
+    private-key:
 raid:
   parser:
     output-files:

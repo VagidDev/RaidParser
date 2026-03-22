@@ -1,18 +1,20 @@
 package com.unifun.raidparser.util;
 
 import com.jcraft.jsch.*;
-import com.unifun.raidparser.config.AppConfig;
+import com.unifun.raidparser.config.SshUserConfig;
+import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.util.List;
 import java.util.regex.Pattern;
 
-
+@Component
+@RequiredArgsConstructor
 public class RemoteCommandExecutor {
     private static final Logger LOGGER = LogManager.getLogger(RemoteCommandExecutor.class);
-
     // Регулярки для типичных интерактивных запросов
     private static final List<Pattern> INTERACTIVE_PROMPTS = List.of(
             Pattern.compile("(?i)password.*:"),
@@ -23,14 +25,23 @@ public class RemoteCommandExecutor {
             Pattern.compile("(?i)press any key to continue")
     );
 
+    private final SshUserConfig sshUserConfig;
 
-    public static String execute(String host, int port, String command) {
-        String user = AppConfig.get("ssh.user");
-        String privateKeyPath = AppConfig.get("ssh.key");
-
-        if (user.isEmpty() || privateKeyPath.isEmpty()) {
+    private boolean checkConfig() {
+        if (sshUserConfig.getLogin() == null || (sshUserConfig.getPassword() == null && sshUserConfig.getPrivateKey() == null)) {
             LOGGER.error("Please set up user credentials in configuration for SSH connection! " +
-                    "Current configuration: `ssh.user` -> {}, `ssh.key` -> {}", user, privateKeyPath);
+                    "Current configuration: `ssh.user.login` -> {}, `ssh.user.password` -> {}, ssh.user.private-key -> {}",
+                    sshUserConfig.getLogin(),
+                    sshUserConfig.getPassword(),
+                    sshUserConfig.getPrivateKey()
+            );
+            return false;
+        }
+        return true;
+    }
+
+    public String execute(String host, int port, String command) {
+        if (!checkConfig()) {
             return "";
         }
 
@@ -44,12 +55,7 @@ public class RemoteCommandExecutor {
         StringBuilder output = new StringBuilder();
 
         try {
-            JSch jsch = new JSch();
-            jsch.addIdentity(privateKeyPath);
-
-            session = jsch.getSession(user, host, port);
-            session.setConfig("StrictHostKeyChecking", "no");
-            session.connect(10000);
+            session = initSession(host, port);
 
             channel = (ChannelExec) session.openChannel("exec");
             channel.setCommand(command);
@@ -77,7 +83,27 @@ public class RemoteCommandExecutor {
         }
     }
 
-    private static String readStream(String prefix, InputStream input,
+    private Session initSession(String host, int port) throws JSchException {
+        JSch jsch = new JSch();
+        if (sshUserConfig.getPrivateKey() != null) {
+            LOGGER.info("Setting private key for ssh connection to {} via port {}", host, port);
+            jsch.addIdentity(sshUserConfig.getPrivateKey());
+        }
+
+        Session session = jsch.getSession(sshUserConfig.getLogin(), host, port);
+        session.setConfig("StrictHostKeyChecking", "no");
+
+        if (sshUserConfig.getPassword() != null) {
+            LOGGER.info("Setting password for ssh connection to {} via port {}", host, port);
+            session.setPassword(sshUserConfig.getPassword());
+        }
+
+        session.connect(10000);
+
+        return session;
+    }
+
+    private String readStream(String prefix, InputStream input,
                                    ChannelExec channel,
                                    Session session) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(input));
@@ -97,7 +123,7 @@ public class RemoteCommandExecutor {
         return output.toString();
     }
 
-    private static boolean isInteractivePrompt(String line) {
+    private boolean isInteractivePrompt(String line) {
         for (Pattern p : INTERACTIVE_PROMPTS) {
             if (p.matcher(line).find()) return true;
         }
