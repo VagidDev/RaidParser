@@ -25,7 +25,7 @@ public class DateParser {
             LOGGER.error(
                     "Cannot format date `{}` to pattern `{}`. Catch exception -> {}",
                     date,
-                    datePatternsConfig.getDateStringFormat(),
+                    format,
                     e.getLocalizedMessage(),
                     e
             );

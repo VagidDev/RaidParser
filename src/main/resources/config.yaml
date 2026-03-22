@@ -17,3 +17,8 @@ sftp:
       directory: "/"
       mask: "server_report_{date}"
       date-format: "yyyy_MM_dd"
+  local:
+    file-rule:
+      directory: "./sftp"
+      mask: "server_report_{date}"
+      date-format: "yyyy_MM_dd"
