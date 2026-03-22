@@ -81,27 +81,4 @@ public class SftpFileLoader {
             return "";
         }
     }
-
-//    String remoteFile = (AppConfig.get("sftp.remote-file-template").isBlank()
-//            ? DEFAULT_REMOTE_FILE_TEMPLATE : AppConfig.get("sftp.remote-file-template"))
-//            + date; // Путь к файлу на удаленном сервере
-//    String localDir = AppConfig.get("sftp.local-path-raid-status").isBlank() ? DEFAULT_SAVING_DIR : AppConfig.get("sftp.local-path-raid-status"); // Локальный путь для сохранения файла
-//    String localFile = localDir + "servers_raid_status_" + date;
-//
-//        if (host.isEmpty() || username.isEmpty() || password.isEmpty()) {
-//        LOGGER.error("Please set up sftp host and user credentials in configuration!");
-//        return "";
-//    }
-//
-//    Path localPath = Path.of(localDir);
-//        if (Files.notExists(localPath)) {
-//        LOGGER.warn("Directory `{}` for saving reports from sftp does not exists.", localPath);
-//        try {
-//            Files.createDirectory(localPath);
-//            LOGGER.info("Directory `{}` for saving reports from sftp is created", localPath);
-//        } catch (IOException e) {
-//            LOGGER.error("Unexpected error while creating local directory `{}` for saving reports from sftp server. Error -> {}",
-//                    localPath, e.getMessage(), e);
-//        }
-//    }
 }

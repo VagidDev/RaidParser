@@ -65,7 +65,7 @@ class SftpFileServiceTest {
     @Test
     void getFileForDate_SuccessfulDownloadingFile() {
         Path testLocalFile = testDir.resolve("local_test_file_".concat(testDate.format(DateTimeFormatter.ofPattern("yyyy_MM_dd"))));
-        String savedFile = sftpFileService.getFileForDate(testDate);
+        Path savedFile = sftpFileService.getFileForDate(testDate);
         assertTrue(Files.exists(testLocalFile));
     }
 
@@ -74,7 +74,7 @@ class SftpFileServiceTest {
     void getFileForDate_SuccessfulDownloadingFileWithCreatingDirectory() {
         Path testLocalFile = testDir.resolve("local_test_file_".concat(testDate.format(DateTimeFormatter.ofPattern("yyyy_MM_dd"))));
         Files.deleteIfExists(testDir);
-        String savedFile = sftpFileService.getFileForDate(testDate);
+        Path savedFile = sftpFileService.getFileForDate(testDate);
         assertTrue(Files.exists(testLocalFile));
     }
 
@@ -83,16 +83,16 @@ class SftpFileServiceTest {
     void getFileForDate_SuccessfulGettingFileFromLocalDir() {
         Path testLocalFile = testDir.resolve("local_test_file_".concat(testDate.format(DateTimeFormatter.ofPattern("yyyy_MM_dd"))));
         Files.createFile(testLocalFile);
-        String savedFile = sftpFileService.getFileForDate(testDate);
-        assertEquals(testLocalFile.toString(), savedFile);
+        Path savedFile = sftpFileService.getFileForDate(testDate);
+        assertEquals(testLocalFile, savedFile);
     }
 
     @Test
     void getFileForDate_FailedDownloading_FileDoesNotExistsOnSftp() {
         //Path testLocalFile = testDir.resolve("local_test_file_".concat(doesNotExistingDate.format(DateTimeFormatter.ofPattern("yyyy_MM_dd"))));
         LocalDate doesNotExistingDate = LocalDate.parse("2026-03-22", DateTimeFormatter.ISO_DATE);
-        String savedFile = sftpFileService.getFileForDate(doesNotExistingDate);
-        assertEquals("", savedFile);
+        Path savedFile = sftpFileService.getFileForDate(doesNotExistingDate);
+        assertNull(savedFile);
     }
 
 }

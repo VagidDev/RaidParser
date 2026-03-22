@@ -26,25 +26,20 @@ public class SftpFileService {
     private final SftpFileLoader sftpFileLoader;
     private final DateParser dateParser;
 
-    public String getFileForDate(LocalDate date) {
+    public Path getFileForDate(LocalDate date) {
         Path localFile = buildLocalFile(date);
         LOGGER.debug("Got local file path -> {}", localFile);
         if (localFile == null) {
             LOGGER.error("Cannot get local file for saving/reading from sftp");
-            return "";
+            return null;
         }
 
         if (Files.exists(localFile)) {
             LOGGER.info("Getting file from local saving dir. Returning file {}", localFile);
-            return localFile.toString();
+            return localFile;
         }
 
-        String fileFromSftp = getFileFromSftp(date, localFile);
-        if (fileFromSftp.isBlank()) {
-            LOGGER.error("Cannot download file for date {} from sftp", date);
-            return "";
-        }
-        return fileFromSftp;
+        return getFileFromSftp(date, localFile);
     }
 
     @Nullable
@@ -80,10 +75,15 @@ public class SftpFileService {
         }
     }
 
-    private String getFileFromSftp(LocalDate date, Path savingPath) {
+    private Path getFileFromSftp(LocalDate date, Path savingPath) {
         Path remoteFilePath = buildRemoteFile(date);
         LOGGER.info("Getting file from sftp `{}` and saving to local file `{}`", remoteFilePath, savingPath);
-        return sftpFileLoader.downloadFile(remoteFilePath.toString(), savingPath.toString());
+        String downloadedFilePath = sftpFileLoader.downloadFile(remoteFilePath.toString(), savingPath.toString());
+        if (downloadedFilePath.isBlank()) {
+            LOGGER.warn("Cannot download file `{}` from sftp", remoteFilePath);
+            return null;
+        }
+        return Path.of(downloadedFilePath);
     }
 
     private Path buildRemoteFile(LocalDate date) {

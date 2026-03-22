@@ -14,8 +14,8 @@ sftp:
       login: testuser
       password: password
     file-rule:
-      directory: "/"
-      mask: "server_report_{date}"
+      directory: "/upload"
+      mask: "test_file_{date}"
       date-format: "yyyy_MM_dd"
   local:
     file-rule:
