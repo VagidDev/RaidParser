@@ -1,8 +1,9 @@
 package com.unifun.raidparser.handlers;
 
-import com.unifun.raidparser.analyzer.response.AnalyzeResponse;
+import com.unifun.raidparser.core.response.AnalyzeResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,12 +13,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+@Service
 public class FileDataHandler {
     private static final Logger LOGGER = LogManager.getLogger(FileDataHandler.class);
 
-    public static synchronized Map<String, String> readServerDataFromFile(String path) {
-        if (path.isEmpty()) {
-            LOGGER.error("Empty file for reading servers data `{}`", path);
+    public synchronized Map<String, String> readServerDataFromFile(Path path) {
+        if (path == null) {
+            LOGGER.error("Empty file for reading servers data");
             return new HashMap<>();
         }
 
@@ -26,7 +28,7 @@ public class FileDataHandler {
         String server = "";
         //=== SERVER NAME
 
-        try (Stream<String> data = Files.lines(Path.of(path))) {
+        try (Stream<String> data = Files.lines(path)) {
             List<String> dataList = data.toList();
 
             for (int i = 0; i < dataList.size(); ++i) {
@@ -53,7 +55,7 @@ public class FileDataHandler {
         }
     }
 
-    public static String getMainData(String data, String startPattern, String endPattern) {
+    public String getMainData(String data, String startPattern, String endPattern) {
         return data.lines()
                 .takeWhile(line -> !line.contains(endPattern))
                 .dropWhile(line -> !line.contains(startPattern))
@@ -62,7 +64,7 @@ public class FileDataHandler {
                 .orElse("");
     }
 
-    public static <T> void writeData(String path, List<Map.Entry<String, AnalyzeResponse<T>>> list) {
+    public <T> void writeData(Path path, List<Map.Entry<String, AnalyzeResponse<T>>> list) {
         StringBuilder builder = new StringBuilder();
         for (Map.Entry<String, AnalyzeResponse<T>> entry : list) {
             builder
@@ -76,21 +78,40 @@ public class FileDataHandler {
                         .append(entry.getValue().getErrorText())
                         .append("====================\n");
             }
-        }
 
+            if (ensureFileExists(path)) {
+                LOGGER.info("Writing data to file {}", path);
+                writeToFile(path, builder.toString());
+            } else {
+                LOGGER.error("Cannot write data to file {} because it is does not exist", path);
+            }
+        }
+    }
+
+    private boolean ensureFileExists(Path path) {
         try {
-            Path filePath = Path.of(path);
-            if (!Files.isRegularFile(filePath)) {
+            if (!Files.isRegularFile(path)) {
                 //check if directory exists, if not - create dir
-                if (Files.notExists(filePath.getParent())) {
-                    Files.createDirectory(filePath.getParent());
+                if (Files.notExists(path.getParent())) {
+                    LOGGER.warn("Directory {} does not exist. Creating directory...", path.getParent());
+                    Files.createDirectory(path.getParent());
                 }
                 // create file
-                Files.createFile(filePath);
+                Files.createFile(path);
+                LOGGER.warn("File {} does not exist. Creating file...", path);
             }
-            Files.writeString(filePath, builder.toString());
+            return true;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOGGER.error("Error while trying to create file {}. Error -> {}", path, e.getLocalizedMessage(), e);
+            return false;
+        }
+    }
+
+    private void writeToFile(Path path, String data) {
+        try {
+            Files.writeString(path, data);
+        } catch (IOException e) {
+            LOGGER.error("Error while trying to write data to file {}. Error -> {}", path, e.getLocalizedMessage(), e);
         }
     }
 }

@@ -23,3 +23,9 @@ sftp:
       directory: "./sftp"
       mask: "server_report_{date}"
       date-format: "yyyy_MM_dd"
+raid:
+  parser:
+    output-files:
+      drive-status: "./status/drive-status.txt"
+      psu-status: "./status/psu-status.txt"
+      battery-status: "./status/battery-status.txt"

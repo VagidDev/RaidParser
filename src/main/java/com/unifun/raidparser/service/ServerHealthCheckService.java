@@ -1,7 +1,7 @@
 //package com.unifun.raidparser.service;
 //
 //import com.unifun.raidparser.config.AppConfig;
-//import com.unifun.raidparser.core.RemoteCommandExecutor;
+//import com.unifun.raidparser.util.RemoteCommandExecutor;
 //import com.unifun.raidparser.dto.ServerInfoDTO;
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;

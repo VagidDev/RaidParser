@@ -86,14 +86,14 @@ public class Main {
         final String defaultPSUStatusFile = "psu_status.txt";
         final String defaultBatteryStatusFile = "battery_status.txt";
 
-        RaidParserService service = new RaidParserService();
+        //RaidParserService service= new RaidParserService();
         CONSOLE_LOGGER.info("Start parsing data from {} ", raidReportPath);
 
         String driveOutputPath = AppConfig.get("file.output.driver").isBlank() ? defaultStatusDir + defaultDriveStatusFile : AppConfig.get("file.output.driver");
         String psuOutputPath = AppConfig.get("file.output.supply").isBlank() ? defaultStatusDir + defaultPSUStatusFile : AppConfig.get("file.output.supply");
         String batteryOutputPath = AppConfig.get("file.output.battery").isBlank() ? defaultStatusDir + defaultBatteryStatusFile : AppConfig.get("file.output.battery");
 
-        service.getAllRaidStatusAndWriteToFiles(raidReportPath, driveOutputPath, batteryOutputPath, psuOutputPath);
+        //service.getAllRaidStatusAndWriteToFiles(raidReportPath, driveOutputPath, batteryOutputPath, psuOutputPath);
         CONSOLE_LOGGER.info("Finish parsing data from {}. Status were exported to:\n{}\n{}\n{}", raidReportPath, driveOutputPath, psuOutputPath, batteryOutputPath);
     }
 
