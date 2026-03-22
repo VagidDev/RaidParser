@@ -1,14 +1,17 @@
 package com.unifun.raidparser;
 
+import com.unifun.raidparser.console.ConsoleDispatcher;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
 
 import java.util.Arrays;
 
 @SpringBootApplication
 public class RaidParserApp {
     public static void main(String[] args) {
-        SpringApplication.run(RaidParserApp.class);
-        System.out.println(Arrays.toString(args));
+        ApplicationContext context = SpringApplication.run(RaidParserApp.class);
+        ConsoleDispatcher consoleDispatcher = context.getBean(ConsoleDispatcher.class);
+        consoleDispatcher.handle(args);
     }
 }
