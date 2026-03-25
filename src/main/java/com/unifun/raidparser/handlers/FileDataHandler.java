@@ -78,13 +78,12 @@ public class FileDataHandler {
                         .append(entry.getValue().getErrorText())
                         .append("====================\n");
             }
-
-            if (ensureFileExists(path)) {
-                LOGGER.info("Writing data to file {}", path);
-                writeToFile(path, builder.toString());
-            } else {
-                LOGGER.error("Cannot write data to file {} because it is does not exist", path);
-            }
+        }
+        if (ensureFileExists(path)) {
+            LOGGER.info("Writing data to file {}", path);
+            writeToFile(path, builder.toString());
+        } else {
+            LOGGER.error("Cannot write data to file {} because it is does not exist", path);
         }
     }
 

@@ -24,15 +24,19 @@ public class ServerDataHandler {
     }
 
     public Map<String, String> getServerData(Path serverDataFile) {
-        if (this.serverDataFile.equals(serverDataFile)
-                && !this.serverData.isEmpty()) {
-            LOGGER.debug("Getting servers data from cache. Servers count -> `{}`", serverData.size());
+        if (serverDataFile == null) {
+            LOGGER.warn("Cannot get server data from null path");
+            return new HashMap<>();
+        }
+
+        if (this.serverDataFile == null || serverData.isEmpty() || !this.serverDataFile.equals(serverDataFile)) {
+            this.serverDataFile = serverDataFile;
+            LOGGER.info("Getting servers data from file `{}`. Servers count -> `{}`", serverDataFile, serverData.size());
+            serverData = fileDataHandler.readServerDataFromFile(serverDataFile);
             return serverData;
         }
 
-        this.serverDataFile = serverDataFile;
-        LOGGER.debug("Getting servers data from file `{}`. Servers count -> `{}`", serverDataFile, serverData.size());
-        serverData = fileDataHandler.readServerDataFromFile(serverDataFile);
+        LOGGER.info("Getting servers data from cache. Servers count -> `{}`", serverData.size());
         return serverData;
     }
 }

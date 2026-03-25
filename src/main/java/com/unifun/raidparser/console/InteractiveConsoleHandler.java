@@ -2,6 +2,7 @@ package com.unifun.raidparser.console;
 
 import com.unifun.raidparser.dto.DateParseResponse;
 import com.unifun.raidparser.parser.DateParser;
+import com.unifun.raidparser.service.RaidParserService;
 import com.unifun.raidparser.service.SftpFileService;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -17,7 +18,8 @@ import java.util.Scanner;
 @RequiredArgsConstructor
 public class InteractiveConsoleHandler {
     private final static Logger LOGGER = LogManager.getLogger(InteractiveConsoleHandler.class);
-
+    //TODO: Add console logger for user console-interface, maybe get it from AI
+    private final RaidParserService raidParserService;
     private final SftpFileService sftpFileService;
     private final DateParser dateParser;
 
@@ -28,6 +30,7 @@ public class InteractiveConsoleHandler {
             LOGGER.warn("Stop Application due to null report file path");
             System.exit(0);
         }
+        commandSession(consoleInput, reportFilePath);
     }
 
     @Nullable
@@ -68,6 +71,33 @@ public class InteractiveConsoleHandler {
                 return response.result();
             } else {
                 System.out.printf("Unrecognized date format for input %s. Please try again%n", input);
+            }
+        } while (true);
+    }
+
+    private void commandSession(Scanner consoleInput, Path reportFilePath) {
+        do {
+            System.out.println("Raid Parser is started!\n" +
+                    "Input command:\n" +
+                    "parse - parse raid report to txt files\n" +
+                    "check - check RAID health of servers manually\n" +
+                    "export - export data to google sheets\n" +
+                    "stop - stop the application");
+            String input = consoleInput.nextLine();
+            if (input.equalsIgnoreCase("stop")) {
+                LOGGER.warn("Stopping the application");
+                System.exit(0);
+            }
+
+            switch (input) {
+                case "parse" -> {
+                    int countDriveStatusParsedServers = raidParserService.writeSortedDriveStatusToFile(reportFilePath);
+                    LOGGER.info("Parsed {} servers for drive status from report file {}", countDriveStatusParsedServers, reportFilePath);
+                    int countPsuStatusParsedServers = raidParserService.writeSortedPowerSupplyUnitStatusToFile(reportFilePath);
+                    LOGGER.info("Parsed {} servers for power supply unit status from report file {}", countPsuStatusParsedServers, reportFilePath);
+                    int countBatteryStatusParsedServers = raidParserService.writeSortedBatteryStatusToFile(reportFilePath);
+                    LOGGER.info("Parsed {} servers for battery status from report file {}", countBatteryStatusParsedServers, reportFilePath);
+                }
             }
         } while (true);
     }
