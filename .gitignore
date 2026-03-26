@@ -17,3 +17,6 @@ target/
 
 # Credentials
 src/main/resources/application.yaml
+
+#dir for tests
+/data/
