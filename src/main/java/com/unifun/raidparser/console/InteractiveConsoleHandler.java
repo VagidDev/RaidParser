@@ -9,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Scanner;
@@ -18,87 +17,138 @@ import java.util.Scanner;
 @RequiredArgsConstructor
 public class InteractiveConsoleHandler {
     private final static Logger LOGGER = LogManager.getLogger(InteractiveConsoleHandler.class);
-    //TODO: Add console logger for user console-interface, maybe get it from AI
+
     private final RaidParserService raidParserService;
     private final SftpFileService sftpFileService;
     private final DateParser dateParser;
 
+    // Константы для оформления
+    private static final String SEPARATOR = "====================================================";
+    private static final String LOGO =
+            "  ____       _     _   ____                                \n"
+                    + " |  _ \\ __ _(_) __| | |  _ \\ __ _ _ __ ___  ___ _ __      \n"
+                    + " | |_) / _` | |/ _` | | |_) / _` | '__/ __|/ _ \\ '__|     \n"
+                    + " |  _ < (_| | | (_| | |  __/ (_| | |  \\__ \\  __/ |        \n"
+                    + " |_| \\_\\__,_|_|\\__,_| |_|   \\__,_|_|  |___/\\___|_|        ";
+
     public void startInteractiveSession() {
         Scanner consoleInput = new Scanner(System.in);
-        Path reportFilePath = getReportFileForParsing(consoleInput);
-        if (reportFilePath == null) {
-            LOGGER.warn("Stop Application due to null report file path");
-            System.exit(0);
-        }
-        commandSession(consoleInput, reportFilePath);
-    }
+        printHeader();
 
-    @Nullable
-    private Path getReportFileForParsing(Scanner consoleInput) {
-        do {
-            LocalDate date = inputDate(consoleInput);
-            if (date == null) {
-                LOGGER.warn("Received null after getting date for parsing");
-                return null;
-            }
-            Path localFilePath = sftpFileService.getFileForDate(date);
-            if (localFilePath == null) {
-                System.out.printf("Cannot find report file for date %s. Please try again%n", dateParser.parseToString(date, "yyyy-MM-dd"));
-                LOGGER.warn("Cannot get report file for date {}", date);
-            } else {
-                return localFilePath;
-            }
-        } while (true);
-    }
+        while (true) {
+            Path reportFilePath = getReportFileForParsing(consoleInput);
 
-    private LocalDate inputDate(Scanner consoleInput) {
-        String input;
-        do {
-            System.out.println("Input date of report:");
-            input = consoleInput.nextLine();
-
-            if (input.equalsIgnoreCase("stop")) {
-                return null;
-            }
-
-            if (input.equalsIgnoreCase("today") || input.isBlank()) {
-                return LocalDate.now();
-            }
-
-            DateParseResponse response = dateParser.parseToLocalDate(input);
-
-            if (response.isParsed()) {
-                return response.result();
-            } else {
-                System.out.printf("Unrecognized date format for input %s. Please try again%n", input);
-            }
-        } while (true);
-    }
-
-    private void commandSession(Scanner consoleInput, Path reportFilePath) {
-        do {
-            System.out.println("Raid Parser is started!\n" +
-                    "Input command:\n" +
-                    "parse - parse raid report to txt files\n" +
-                    "check - check RAID health of servers manually\n" +
-                    "export - export data to google sheets\n" +
-                    "stop - stop the application");
-            String input = consoleInput.nextLine();
-            if (input.equalsIgnoreCase("stop")) {
-                LOGGER.warn("Stopping the application");
+            if (reportFilePath == null) {
+                printMsg("Завершение работы... До встречи!");
                 System.exit(0);
             }
 
-            switch (input) {
-                case "parse" -> {
-                    int countDriveStatusParsedServers = raidParserService.writeSortedDriveStatusToFile(reportFilePath);
-                    LOGGER.info("Parsed {} servers for drive status from report file {}", countDriveStatusParsedServers, reportFilePath);
-                    int countPsuStatusParsedServers = raidParserService.writeSortedPowerSupplyUnitStatusToFile(reportFilePath);
-                    LOGGER.info("Parsed {} servers for power supply unit status from report file {}", countPsuStatusParsedServers, reportFilePath);
-                    int countBatteryStatusParsedServers = raidParserService.writeSortedBatteryStatusToFile(reportFilePath);
-                    LOGGER.info("Parsed {} servers for battery status from report file {}", countBatteryStatusParsedServers, reportFilePath);
-                }
+            boolean continueWithSameFile = commandSession(consoleInput, reportFilePath);
+            if (!continueWithSameFile) {
+                printMsg("Возврат к выбору даты...");
             }
-        } while (true);
+        }
+    }
+
+    private Path getReportFileForParsing(Scanner consoleInput) {
+        while (true) {
+            System.out.println("\n" + SEPARATOR);
+            printMsg("ШАГ 1: ВЫБОР ОТЧЕТА");
+            System.out.println("Введите дату отчета (гггг-мм-дд), 'today' или 'exit' для выхода:");
+            System.out.print("> ");
+
+            String input = consoleInput.nextLine().trim();
+
+            if (input.equalsIgnoreCase("exit") || input.equalsIgnoreCase("stop")) {
+                return null;
+            }
+
+            LocalDate date;
+            if (input.isEmpty() || input.equalsIgnoreCase("today")) {
+                date = LocalDate.now();
+            } else {
+                DateParseResponse response = dateParser.parseToLocalDate(input);
+                if (!response.isParsed()) {
+                    printError("Неверный формат даты: " + input);
+                    continue;
+                }
+                date = response.result();
+            }
+
+            printMsg("Поиск файла на SFTP для даты: " + dateParser.parseToString(date, "yyyy-MM-dd") + "...");
+            Path localFilePath = sftpFileService.getFileForDate(date);
+
+            if (localFilePath != null) {
+                printMsg("Файл успешно получен: " + localFilePath.getFileName());
+                return localFilePath;
+            } else {
+                printError("Файл для указанной даты не найден на сервере.");
+            }
+        }
+    }
+
+    private boolean commandSession(Scanner consoleInput, Path reportFilePath) {
+        while (true) {
+            System.out.println("\n" + SEPARATOR);
+            printMsg("ШАГ 2: ДЕЙСТВИЯ (Файл: " + reportFilePath.getFileName() + ")");
+            System.out.println("доступные команды:");
+            System.out.println(" [1] parse  - Парсинг отчета (Drive, PSU, Battery)");
+            System.out.println(" [2] check  - Ручная проверка RAID Health");
+            System.out.println(" [3] export - Экспорт в Google Sheets");
+            System.out.println(" [back]     - Выбрать другой файл/дату");
+            System.out.println(" [exit]     - Выйти из программы");
+            System.out.print("> ");
+
+            String input = consoleInput.nextLine().trim().toLowerCase();
+
+            switch (input) {
+                case "1", "parse" -> executeParsing(reportFilePath);
+                case "2", "check" -> printMsg("Функция 'check' в разработке...");
+                case "3", "export" -> printMsg("Функция 'export' в разработке...");
+                case "back" -> { return false; }
+                case "exit", "stop" -> System.exit(0);
+                default -> printError("Неизвестная команда. Попробуйте еще раз.");
+            }
+        }
+    }
+
+    private void executeParsing(Path reportFilePath) {
+        printMsg("Запуск процесса парсинга...");
+
+        try {
+            int drives = raidParserService.writeSortedDriveStatusToFile(reportFilePath);
+            int psu = raidParserService.writeSortedPowerSupplyUnitStatusToFile(reportFilePath);
+            int battery = raidParserService.writeSortedBatteryStatusToFile(reportFilePath);
+
+            System.out.println("----------------------------------------------------");
+            printMsg("РЕЗУЛЬТАТЫ ПАРСИНГА:");
+            System.out.printf(" - Диски (Drive Status): %d серверов%n", drives);
+            System.out.printf(" - Блоки питания (PSU):  %d серверов%n", psu);
+            System.out.printf(" - Батареи (Battery):    %d серверов%n", battery);
+            System.out.println("----------------------------------------------------");
+
+            LOGGER.info("Successfully parsed report {}. D:{}, P:{}, B:{}", reportFilePath, drives, psu, battery);
+        } catch (Exception e) {
+            printError("Ошибка при парсинге: " + e.getMessage());
+            LOGGER.error("Parsing error", e);
+        }
+    }
+
+    // Вспомогательные методы для красоты
+    private void printHeader() {
+        System.out.println("\n" + LOGO);
+        System.out.println("             System Administration Tool v1.0");
+        System.out.println(SEPARATOR);
+    }
+
+    private void printMsg(String msg) {
+        //[INFO]
+        System.out.println("\u001B[32m[INFO]\u001B[0m " + msg);
+    }
+
+    private void printError(String error) {
+        System.err.println("[ERROR] " + error);
+        // Небольшая задержка, чтобы err не перемешивался с out в консоли IDE
+        try { Thread.sleep(50); } catch (InterruptedException ignored) {}
     }
 }
