@@ -13,7 +13,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ServerDataHandler {
     private static final Logger LOGGER = LogManager.getLogger(ServerDataHandler.class);
-    private final FileDataHandler fileDataHandler;
+    private final RaidParserDataHandler raidParserDataHandler;
 
     private Map<String, String> serverData = new HashMap<>();
     private Path serverDataFile;
@@ -32,7 +32,7 @@ public class ServerDataHandler {
         if (this.serverDataFile == null || serverData.isEmpty() || !this.serverDataFile.equals(serverDataFile)) {
             this.serverDataFile = serverDataFile;
             LOGGER.info("Getting servers data from file `{}`. Servers count -> `{}`", serverDataFile, serverData.size());
-            serverData = fileDataHandler.readServerDataFromFile(serverDataFile);
+            serverData = raidParserDataHandler.readServerDataFromFile(serverDataFile);
             return serverData;
         }
 

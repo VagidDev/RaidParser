@@ -14,8 +14,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 @Service
-public class FileDataHandler {
-    private static final Logger LOGGER = LogManager.getLogger(FileDataHandler.class);
+public class RaidParserDataHandler {
+    private static final Logger LOGGER = LogManager.getLogger(RaidParserDataHandler.class);
 
     public synchronized Map<String, String> readServerDataFromFile(Path path) {
         if (path == null) {

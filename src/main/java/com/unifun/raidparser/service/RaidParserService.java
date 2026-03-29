@@ -1,7 +1,7 @@
 package com.unifun.raidparser.service;
 
 import com.unifun.raidparser.config.OutputStatusFileConfig;
-import com.unifun.raidparser.handlers.FileDataHandler;
+import com.unifun.raidparser.handlers.RaidParserDataHandler;
 import com.unifun.raidparser.parser.RaidStatusParser;
 import com.unifun.raidparser.core.analyzer.BatteryAnalyzer;
 import com.unifun.raidparser.core.analyzer.DriveAnalyzer;
@@ -28,7 +28,7 @@ public class RaidParserService {
     private final OutputStatusFileConfig outputStatusFileConfig;
 
     private final ServerDataHandler serverDataHandler;
-    private final FileDataHandler fileDataHandler;
+    private final RaidParserDataHandler raidParserDataHandler;
 
     private final DriveAnalyzer driveAnalyzer;
     private final PowerSupplyAnalyzer powerSupplyAnalyzer;
@@ -64,19 +64,19 @@ public class RaidParserService {
 
     public int writeSortedDriveStatusToFile(Path reportFilePath, Path driveStatusFilePath) {
         List<Map.Entry<String, AnalyzeResponse<DriverStatus>>> sortedDriveStatus = getSortedDrivesStatus(reportFilePath);
-        fileDataHandler.writeData(driveStatusFilePath, sortedDriveStatus);
+        raidParserDataHandler.writeData(driveStatusFilePath, sortedDriveStatus);
         return sortedDriveStatus.size();
     }
 
     public int writeSortedPowerSupplyUnitStatusToFile(Path reportFilePath, Path psuStatusFilePath) {
         List<Map.Entry<String, AnalyzeResponse<PowerSupplyStatus>>> sortedPowerSuppliesStatus = getSortedPowerSuppliesStatus(reportFilePath);
-        fileDataHandler.writeData(psuStatusFilePath, sortedPowerSuppliesStatus);
+        raidParserDataHandler.writeData(psuStatusFilePath, sortedPowerSuppliesStatus);
         return sortedPowerSuppliesStatus.size();
     }
 
     public int writeSortedBatteryStatusToFile(Path reportFilePath, Path baterryStatusFilePath) {
         List<Map.Entry<String, AnalyzeResponse<BatteryStatus>>> sortedBatteriesStatus = getSortedBatteriesStatus(reportFilePath);
-        fileDataHandler.writeData(baterryStatusFilePath, sortedBatteriesStatus);
+        raidParserDataHandler.writeData(baterryStatusFilePath, sortedBatteriesStatus);
         return sortedBatteriesStatus.size();
     }
 
