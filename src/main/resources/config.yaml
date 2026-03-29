@@ -34,3 +34,10 @@ raid:
       drive-status: "./status/drive-status.txt"
       psu-status: "./status/psu-status.txt"
       battery-status: "./status/battery-status.txt"
+host-overview:
+  loader:
+    login: testuser
+    password: password
+    authorization-link: http...
+    data-loader-link: http...
+    cache-file-path: ./cache/host-overview-servers.tmp
