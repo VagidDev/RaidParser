@@ -38,7 +38,7 @@ public class HostOverviewDataHandler {
 
     private String getDataFromCache() {
         if (!ensureCacheFileExists()) {
-            LOGGER.error("Cache file does not exists!");
+            LOGGER.error("Cache file does not exists! Cannot get data from cache");
             return "";
         }
         try {
@@ -52,7 +52,7 @@ public class HostOverviewDataHandler {
 
     private void writeDataToCache(String data) {
         if (!ensureCacheFileExists()) {
-            LOGGER.error("Cache file does not exists!");
+            LOGGER.error("Cache file does not exists! Cannot write data to cache");
             return;
         }
 

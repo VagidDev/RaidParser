@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.HttpCookie;
@@ -34,10 +33,12 @@ public class HostOverviewDataLoader {
         CookieManager cookieManager = new CookieManager();
         cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
 
-        try (HttpClient client = HttpClient.newBuilder()
-                .cookieHandler(cookieManager)
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .build()) {
+        HttpClient client = null;
+        try {
+             client = HttpClient.newBuilder()
+                    .cookieHandler(cookieManager)
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .build();
 
             String formData = String.format("username=%s&password=%s&Login=Login", hostOverviewLoaderConfig.getLogin(), hostOverviewLoaderConfig.getPassword());
             LOGGER.info("Prepared form data for POST request. Form data -> {}, POST URL -> {}", formData, hostOverviewLoaderConfig.getAuthorizationLink());
@@ -62,11 +63,15 @@ public class HostOverviewDataLoader {
             LOGGER.error("Get error while getting cookies for authorized session. Error -> {}", e.getMessage(), e);
             return "";
         }
+//        finally {
+//            if (client != null) client.close();
+//        }
     }
 
     private String loadServersData(String cookieSessionID) {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-
+        HttpClient client = null;
+        try {
+            client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(hostOverviewLoaderConfig.getDataLoaderLink()))
                     .header("Cookie", cookieSessionID)
@@ -81,5 +86,8 @@ public class HostOverviewDataLoader {
             LOGGER.error("Error while loading data from site. Error -> {}", e.getMessage(), e);
             return "";
         }
+//        finally {
+//            if (client != null) client.close();
+//        }
     }
 }
