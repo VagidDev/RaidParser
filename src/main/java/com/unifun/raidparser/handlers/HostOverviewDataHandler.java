@@ -1,7 +1,7 @@
 package com.unifun.raidparser.handlers;
 
 import com.unifun.raidparser.config.HostOverviewLoaderConfig;
-import com.unifun.raidparser.loader.HostOverviewDataLoader;
+import com.unifun.raidparser.loader.HttpClientHostOverviewDataLoader;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,7 +16,7 @@ import java.nio.file.Path;
 public class HostOverviewDataHandler {
     private static final Logger LOGGER = LogManager.getLogger(HostOverviewDataHandler.class);
     private final HostOverviewLoaderConfig hostOverviewLoaderConfig;
-    private final HostOverviewDataLoader hostOverviewDataLoader;
+    private final HttpClientHostOverviewDataLoader httpClientHostOverviewDataLoader;
 
     private boolean ensureCacheFileExists() {
         Path cacheFile = hostOverviewLoaderConfig.getCacheFilePath();
@@ -84,7 +84,7 @@ public class HostOverviewDataHandler {
             return data;
         }
         LOGGER.info("Getting data from loader");
-        data = hostOverviewDataLoader.loadData();
+        data = httpClientHostOverviewDataLoader.loadData();
         writeDataToCache(data);
         return data;
     }
