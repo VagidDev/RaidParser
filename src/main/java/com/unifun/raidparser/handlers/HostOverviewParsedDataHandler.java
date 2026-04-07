@@ -20,6 +20,16 @@ public class HostOverviewParsedDataHandler {
 
     private List<ServerInfo> serverInfoList;
 
+    public void loadServers() {
+        getActualServerData();
+        LOGGER.info("Actualizing server info list. Current count of parsed servers is {}", serverInfoList.size());
+    }
+    //let it be
+    public void clearCache() {
+        serverInfoList.clear();
+        LOGGER.info("Cache is cleared");
+    }
+
     public List<ServerInfo> getServerData() {
         if (CollectionUtils.isEmpty(serverInfoList)) {
             LOGGER.info("Server info is empty. Getting server info from HostOverview");
