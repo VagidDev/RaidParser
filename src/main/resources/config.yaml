@@ -41,3 +41,7 @@ host-overview:
     authorization-link: http...
     data-loader-link: http...
     cache-file-path: ./cache/host-overview-servers.tmp
+health-checker:
+  saving-directory: "./server-health/"
+  servers-to-check-config-file: "./config/servers-to-check.conf"
+  proxy-server-ip: "127.0.0.1"
