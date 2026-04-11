@@ -5,6 +5,7 @@ import com.unifun.raidparser.config.RemoteFileRuleConfig;
 import com.unifun.raidparser.config.SftpUserConfig;
 import com.unifun.raidparser.loader.SftpFileLoader;
 import com.unifun.raidparser.parser.DateParser;
+import com.unifun.raidparser.util.FileChecker;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,12 +49,14 @@ class SftpFileServiceTest {
         SftpFileLoader sftpFileLoader = correctSftpConfig();
 
         DateParser dateParser = new DateParser(null);
+        FileChecker fileChecker = new FileChecker();
 
         return new SftpFileService(
                 remoteFileRuleConfig,
                 localFileRuleConfig,
                 sftpFileLoader,
-                dateParser
+                dateParser,
+                fileChecker
         );
     }
 

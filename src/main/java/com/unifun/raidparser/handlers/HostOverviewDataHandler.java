@@ -2,6 +2,7 @@ package com.unifun.raidparser.handlers;
 
 import com.unifun.raidparser.config.HostOverviewLoaderConfig;
 import com.unifun.raidparser.loader.HttpClientHostOverviewDataLoader;
+import com.unifun.raidparser.util.FileChecker;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,33 +18,17 @@ public class HostOverviewDataHandler {
     private static final Logger LOGGER = LogManager.getLogger(HostOverviewDataHandler.class);
     private final HostOverviewLoaderConfig hostOverviewLoaderConfig;
     private final HttpClientHostOverviewDataLoader httpClientHostOverviewDataLoader;
-
-    private boolean ensureCacheFileExists() {
-        Path cacheFile = hostOverviewLoaderConfig.getCacheFilePath();
-        if (Files.exists(cacheFile)) {
-            LOGGER.info("Cache file exists!");
-            return true;
-        }
-        LOGGER.warn("Cache file does not exists! Creating cache file {}", cacheFile);
-        try {
-            Files.createDirectories(cacheFile.getParent());
-            Files.createFile(cacheFile);
-            LOGGER.info("Cache file {} is created!", cacheFile);
-            return true;
-        } catch (IOException e) {
-            LOGGER.error("Error while creating cache file. Error -> {}", e.getMessage(), e);
-            return false;
-        }
-    }
+    private final FileChecker fileChecker;
 
     private String getDataFromCache() {
-        if (!ensureCacheFileExists()) {
+        Path cacheFile = hostOverviewLoaderConfig.getCacheFilePath();
+        if (!fileChecker.ensureFileExists(cacheFile)) {
             LOGGER.error("Cache file does not exists! Cannot get data from cache");
             return "";
         }
         try {
             LOGGER.info("Reading data from cache");
-            return Files.readString(hostOverviewLoaderConfig.getCacheFilePath());
+            return Files.readString(cacheFile);
         } catch (IOException e) {
             LOGGER.error("Cannot read data from cache file `{}`", hostOverviewLoaderConfig.getCacheFilePath(), e);
             return "";
@@ -51,14 +36,15 @@ public class HostOverviewDataHandler {
     }
 
     private void writeDataToCache(String data) {
-        if (!ensureCacheFileExists()) {
+        Path cacheFile = hostOverviewLoaderConfig.getCacheFilePath();
+        if (!fileChecker.ensureFileExists(cacheFile)) {
             LOGGER.error("Cache file does not exists! Cannot write data to cache");
             return;
         }
 
         try {
             LOGGER.info("Writing data to cache");
-            Files.writeString(hostOverviewLoaderConfig.getCacheFilePath(), data);
+            Files.writeString(cacheFile, data);
         } catch (IOException e) {
             LOGGER.error("Cannot write data to cache file `{}`", hostOverviewLoaderConfig.getCacheFilePath(), e);
         }

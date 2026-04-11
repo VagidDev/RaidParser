@@ -4,6 +4,7 @@ import com.unifun.raidparser.config.LocalFileRuleConfig;
 import com.unifun.raidparser.config.RemoteFileRuleConfig;
 import com.unifun.raidparser.loader.SftpFileLoader;
 import com.unifun.raidparser.parser.DateParser;
+import com.unifun.raidparser.util.FileChecker;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +26,7 @@ public class SftpFileService {
     private final LocalFileRuleConfig localFileRuleConfig;
     private final SftpFileLoader sftpFileLoader;
     private final DateParser dateParser;
+    private final FileChecker fileChecker;
 
     public Path getFileForDate(LocalDate date) {
         Path localFile = buildLocalFile(date);
@@ -45,7 +47,7 @@ public class SftpFileService {
     @Nullable
     private Path buildLocalFile(LocalDate date) {
         Path savingDir = Path.of(localFileRuleConfig.getDirectory());
-        if (!ensureDir(savingDir)) {
+        if (!fileChecker.ensureDirectoryExists(savingDir)) {
             LOGGER.error("Cannot ensure directory `{}` to save files", savingDir);
             return null;
         }
@@ -57,22 +59,6 @@ public class SftpFileService {
                 );
 
         return savingDir.resolve(localFileName);
-    }
-
-    private boolean ensureDir(Path dir) {
-        if (Files.exists(dir)) {
-            LOGGER.info("Directory {} exists", dir);
-            return true;
-        }
-
-        try {
-            LOGGER.warn("Directory {} does not exists! Creating directory...", dir);
-            Files.createDirectories(dir);
-            return true;
-        } catch (IOException e) {
-            LOGGER.error("Cannot create directory {} due to {}", dir, e.getLocalizedMessage(), e);
-            return false;
-        }
     }
 
     private Path getFileFromSftp(LocalDate date, Path savingPath) {
