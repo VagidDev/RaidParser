@@ -24,7 +24,7 @@ public class ServersToCheckConfigFileParser {
     private ServerTask parseLine(String configLine) {
         LOGGER.debug("Parsing line {}", configLine);
         String[] splitLine = configLine.split("->");
-        if (splitLine.length == 2) {
+        if (splitLine.length == 2 && !splitLine[0].isBlank() && !splitLine[1].isBlank()) {
             return new ServerTask(
                     splitLine[0].trim(),
                     splitLine[1].trim()
