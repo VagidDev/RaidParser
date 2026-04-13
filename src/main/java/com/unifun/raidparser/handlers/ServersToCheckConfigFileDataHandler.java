@@ -3,6 +3,7 @@ package com.unifun.raidparser.handlers;
 import com.unifun.raidparser.config.ServersToCheckConfig;
 import com.unifun.raidparser.dto.ServerTask;
 import com.unifun.raidparser.parser.ServersToCheckConfigFileParser;
+import com.unifun.raidparser.service.CommandValidatorService;
 import com.unifun.raidparser.util.FileChecker;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -19,8 +20,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ServersToCheckConfigFileDataHandler {
     private static final Logger LOGGER = LogManager.getLogger(ServersToCheckConfigFileDataHandler.class);
-    private final ServersToCheckConfig serversToCheckConfig;
     private final ServersToCheckConfigFileParser serversToCheckConfigFileParser;
+    private final CommandValidatorService commandValidatorService;
+    private final ServersToCheckConfig serversToCheckConfig;
     private final FileChecker fileChecker;
 
     private List<ServerTask> serverTaskList;
@@ -37,8 +39,11 @@ public class ServersToCheckConfigFileDataHandler {
             LOGGER.warn("Configuration file {} is empty!", configFile);
             return false;
         }
-        // need to add a validator
-        this.serverTaskList = serversToCheckConfigFileParser.parse(configData);
+
+        this.serverTaskList = serversToCheckConfigFileParser.parse(configData).stream()
+                .filter(serverTask -> commandValidatorService.isValid(serverTask.getCommandToExecute()))
+                .toList();
+
         return true;
     }
 
@@ -67,7 +72,7 @@ public class ServersToCheckConfigFileDataHandler {
                 LOGGER.warn("Cannot load server task from config file!");
             }
         }
-        return serverTaskList;
+        return serverTaskList == null ? List.of() : serverTaskList;
     }
 
 }
