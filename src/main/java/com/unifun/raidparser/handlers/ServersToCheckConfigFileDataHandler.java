@@ -60,7 +60,7 @@ public class ServersToCheckConfigFileDataHandler {
     public void clearCache() {
         if (serverTaskList != null) {
             LOGGER.warn("Cache is cleared!");
-            serverTaskList.clear();
+            this.serverTaskList = null;
         }
     }
 
