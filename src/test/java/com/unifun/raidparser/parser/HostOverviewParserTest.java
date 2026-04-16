@@ -1,6 +1,6 @@
 package com.unifun.raidparser.parser;
 
-import com.unifun.raidparser.dto.ServerInfo;
+import com.unifun.raidparser.dto.HostInformation;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -81,31 +81,31 @@ class HostOverviewParserTest {
 
     @Test
     void parse_SuccessfulParseTestServer() {
-        ServerInfo serverInfoToCompare =
-                new ServerInfo("test-server", 22, "127.0.0.1","HP - ProLiant DL360 Gen9", "Proxy");
+        HostInformation hostInformationToCompare =
+                new HostInformation("test-server", 22, "127.0.0.1","HP - ProLiant DL360 Gen9", "Proxy");
 
-        List<ServerInfo> serverInfoList = hostOverviewParser.parse(correctHostOverviewData());
+        List<HostInformation> hostInformationList = hostOverviewParser.parse(correctHostOverviewData());
 
-        assertEquals(serverInfoToCompare, serverInfoList.get(0));
+        assertEquals(hostInformationToCompare, hostInformationList.get(0));
     }
 
     @Test
     void parse_EmptyDataForParsing() {
-        List<ServerInfo> serverInfoList = hostOverviewParser.parse("");
-        assertTrue(serverInfoList.isEmpty());
+        List<HostInformation> hostInformationList = hostOverviewParser.parse("");
+        assertTrue(hostInformationList.isEmpty());
     }
 
     @Test
     void parse_DoesNotParseUnstructuredData() {
-        List<ServerInfo> serverInfoList = hostOverviewParser.parse(unstructuredHostOverviewData());
-        assertTrue(serverInfoList.isEmpty());
+        List<HostInformation> hostInformationList = hostOverviewParser.parse(unstructuredHostOverviewData());
+        assertTrue(hostInformationList.isEmpty());
     }
 
     @Test
     void parse_GetServerWithoutIpAndPort() {
-        ServerInfo serverInfoToCompare =
-                new ServerInfo("test-server", -1, "","HP - ProLiant DL360 Gen9", "Proxy");
-        List<ServerInfo> serverInfoList = hostOverviewParser.parse(emptyValuesHostOverviewData());
-        assertEquals(serverInfoToCompare, serverInfoList.get(0));
+        HostInformation hostInformationToCompare =
+                new HostInformation("test-server", -1, "","HP - ProLiant DL360 Gen9", "Proxy");
+        List<HostInformation> hostInformationList = hostOverviewParser.parse(emptyValuesHostOverviewData());
+        assertEquals(hostInformationToCompare, hostInformationList.get(0));
     }
 }

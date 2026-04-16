@@ -1,6 +1,6 @@
 package com.unifun.raidparser.parser;
 
-import com.unifun.raidparser.dto.ServerInfo;
+import com.unifun.raidparser.dto.HostInformation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -15,7 +15,7 @@ import java.util.*;
 public class HostOverviewParser {
     private static final Logger LOGGER = LogManager.getLogger(HostOverviewParser.class);
 
-    public List<ServerInfo> parse(String data) {
+    public List<HostInformation> parse(String data) {
         Document doc = Jsoup.parse(data, "UTF-8");
         Element table = doc.select("table").first();
         if (table == null) {
@@ -29,7 +29,7 @@ public class HostOverviewParser {
 
                     if (innerElements.size() != 7) {
                         LOGGER.warn("Skip element {} due to the number of elements is not equal to `7`", element);
-                        return new ServerInfo();
+                        return new HostInformation();
                     }
 
                     try {
@@ -42,14 +42,14 @@ public class HostOverviewParser {
                         return buildServerInfo(server, port, ip, serverType);
                     } catch (NoSuchElementException e) {
                         LOGGER.warn("Error while getting data from row. Error -> {}", e.getMessage(), e);
-                        return new ServerInfo();
+                        return new HostInformation();
                     }
                 })
                 .filter(server -> !server.getName().isBlank())
                 .toList();
     }
 
-    private ServerInfo buildServerInfo(Element server, Element port, Element ip, Element serverType) {
+    private HostInformation buildServerInfo(Element server, Element port, Element ip, Element serverType) {
         String correctName = "";
         int correctPort = -1;
         String correctIp = "";
@@ -78,7 +78,7 @@ public class HostOverviewParser {
         LOGGER.debug("Creating server with name -> {}, port -> {}, ip -> {}, type -> {}, connection -> {}",
                 correctName, correctPort, correctIp, correctServerType, correctConnectionType);
 
-        return new ServerInfo(correctName, correctPort, correctIp, correctServerType, correctConnectionType);
+        return new HostInformation(correctName, correctPort, correctIp, correctServerType, correctConnectionType);
     }
 }
 

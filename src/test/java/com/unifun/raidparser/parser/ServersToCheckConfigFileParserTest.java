@@ -21,8 +21,8 @@ class ServersToCheckConfigFileParserTest {
         List<ServerTask> result = parser.parse(input);
 
         assertEquals(2, result.size());
-        assertEquals(new ServerTask("server1", "echo 1"), result.get(0));
-        assertEquals(new ServerTask("server2", "echo 2"), result.get(1));
+        assertEquals(new ServerTask("server1", "echo 1", null), result.get(0));
+        assertEquals(new ServerTask("server2", "echo 2", null), result.get(1));
     }
 
     @Test
@@ -36,7 +36,7 @@ class ServersToCheckConfigFileParserTest {
         List<ServerTask> result = parser.parse(input);
 
         assertEquals(2, result.size());
-        assertTrue(result.stream().noneMatch(task -> task.getServerName().contains("invalid")));
+        assertTrue(result.stream().noneMatch(task -> task.getHostName().contains("invalid")));
     }
 
     @Test
@@ -61,7 +61,7 @@ class ServersToCheckConfigFileParserTest {
         List<ServerTask> result = parser.parse(input);
 
         assertEquals(1, result.size());
-        assertEquals("server1", result.get(0).getServerName());
+        assertEquals("server1", result.get(0).getHostName());
         assertEquals("echo test", result.get(0).getCommandToExecute());
     }
 

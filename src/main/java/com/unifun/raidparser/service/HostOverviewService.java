@@ -1,7 +1,7 @@
 package com.unifun.raidparser.service;
 
 import com.unifun.raidparser.handlers.HostOverviewParsedDataHandler;
-import com.unifun.raidparser.dto.ServerInfo;
+import com.unifun.raidparser.dto.HostInformation;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,53 +24,53 @@ public class HostOverviewService {
         hostOverviewParsedDataHandler.clearCache();
     }
 
-    public List<ServerInfo> getServers() {
+    public List<HostInformation> getServers() {
         return hostOverviewParsedDataHandler.getServerData();
     }
 
-    public List<ServerInfo> getActualServers() {
+    public List<HostInformation> getActualServers() {
         return hostOverviewParsedDataHandler.getActualServerData();
     }
 
-    public List<ServerInfo> getVirtualServers() {
+    public List<HostInformation> getVirtualServers() {
         return hostOverviewParsedDataHandler.getServerData().stream()
                 .filter(server -> server.getServerType().toLowerCase()
                         .matches(".*(xen|vmware|exoscale|virtual).*"))
                 .toList();
     }
 
-    public List<ServerInfo> getPhysicalServers() {
-        List<ServerInfo> physicalServers = new ArrayList<>(hostOverviewParsedDataHandler.getServerData());
+    public List<HostInformation> getPhysicalServers() {
+        List<HostInformation> physicalServers = new ArrayList<>(hostOverviewParsedDataHandler.getServerData());
         physicalServers.removeAll(getVirtualServers());
         return physicalServers;
     }
 
-    public List<ServerInfo> getPhysicalServersWithCorrectPort() {
+    public List<HostInformation> getPhysicalServersWithCorrectPort() {
         return getPhysicalServers().stream()
                 .filter(server -> server.getPort() != -1)
                 .toList();
     }
 
-    public List<ServerInfo> getPhysicalServersWithCorrectPortByName(String serverName) {
+    public List<HostInformation> getPhysicalServersWithCorrectPortByName(String serverName) {
         return getPhysicalServersWithCorrectPort().stream()
                 .filter(serverInfo -> serverInfo.getName().contains(serverName))
                 .toList();
     }
 
-    public ServerInfo getPhysicalServerWithCorrectPortByName(String serverName) {
+    public HostInformation getPhysicalServerWithCorrectPortByName(String serverName) {
         return getPhysicalServersWithCorrectPort().stream()
                 .filter(serverInfo -> serverInfo.getName().contains(serverName))
                 .findFirst()
                 .orElse(null);
     }
 
-    public List<ServerInfo> getServersByName(String serverName) {
+    public List<HostInformation> getServersByName(String serverName) {
         return hostOverviewParsedDataHandler.getServerData().stream()
                 .filter(server -> server.getName().contains(serverName))
                 .toList();
     }
 
-    public ServerInfo getServerByName(String serverName) {
+    public HostInformation getServerByName(String serverName) {
         return hostOverviewParsedDataHandler.getServerData().stream()
                 .filter(server -> server.getName().contains(serverName))
                 .findFirst()

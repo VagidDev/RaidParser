@@ -8,14 +8,14 @@ import lombok.Setter;
 @Getter @Setter
 @AllArgsConstructor
 @EqualsAndHashCode
-public class ServerInfo {
+public class HostInformation {
     private String name;
     private int port;
     private String ip;
     private String serverType;
     private String connectionType;
 
-    public ServerInfo() {
+    public HostInformation() {
         this.name = "";
         this.port = -1;
         this.ip = "";

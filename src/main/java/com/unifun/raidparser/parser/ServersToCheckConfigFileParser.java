@@ -27,7 +27,8 @@ public class ServersToCheckConfigFileParser {
         if (splitLine.length == 2 && !splitLine[0].isBlank() && !splitLine[1].isBlank()) {
             return new ServerTask(
                     splitLine[0].trim(),
-                    splitLine[1].trim()
+                    splitLine[1].trim(),
+                    null
             );
         } else {
             LOGGER.warn("Cannot get server name and command from config line. Line to parse -> {}", configLine);

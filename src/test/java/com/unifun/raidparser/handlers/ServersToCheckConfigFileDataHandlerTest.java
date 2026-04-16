@@ -8,7 +8,6 @@ import com.unifun.raidparser.util.FileChecker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -57,8 +56,8 @@ class ServersToCheckConfigFileDataHandlerTest {
     void getServerTasks_shouldLoadAndFilterValidCommands() {
         List<String> fileData = List.of("line1", "line2");
 
-        ServerTask validTask = new ServerTask("server1", "cmd1");
-        ServerTask invalidTask = new ServerTask("server2", "cmd2");
+        ServerTask validTask = new ServerTask("server1", "cmd1", null);
+        ServerTask invalidTask = new ServerTask("server2", "cmd2", null);
 
         when(parser.parse(any())).thenReturn(List.of(validTask, invalidTask));
         when(validator.isValid("cmd1")).thenReturn(true);
@@ -81,7 +80,7 @@ class ServersToCheckConfigFileDataHandlerTest {
 
     @Test
     void getServerTasks_shouldNotReload_whenCacheExists() {
-        ServerTask task = new ServerTask("server1", "cmd1");
+        ServerTask task = new ServerTask("server1", "cmd1", null);
 
         when(parser.parse(any())).thenReturn(List.of(task));
         when(validator.isValid("cmd1")).thenReturn(true);
@@ -97,7 +96,7 @@ class ServersToCheckConfigFileDataHandlerTest {
 
     @Test
     void clearCache_shouldClearData() {
-        ServerTask task = new ServerTask("server1", "cmd1");
+        ServerTask task = new ServerTask("server1", "cmd1", null);
 
         when(parser.parse(any())).thenReturn(List.of(task));
         when(validator.isValid("cmd1")).thenReturn(true);
@@ -123,8 +122,8 @@ class ServersToCheckConfigFileDataHandlerTest {
 
     @Test
     void getServerTasks_shouldHandleInvalidCommandsOnly() {
-        ServerTask invalid1 = new ServerTask("server1", "bad1");
-        ServerTask invalid2 = new ServerTask("server2", "bad2");
+        ServerTask invalid1 = new ServerTask("server1", "bad1", null);
+        ServerTask invalid2 = new ServerTask("server2", "bad2", null);
 
         when(parser.parse(any())).thenReturn(List.of(invalid1, invalid2));
         when(validator.isValid(any())).thenReturn(false);
