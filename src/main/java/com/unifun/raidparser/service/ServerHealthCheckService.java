@@ -11,6 +11,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,15 +26,46 @@ public class ServerHealthCheckService {
 
     public List<ServerTask> checkServers() {
         //TODO: need to be implemented
+        List<ServerTask> serverTasks = serversToCheckConfigFileDataHandler.getServerTasks();
+        Map<ServerTask, HostInformation> hostsToCheck = getHostsToCheck(serverTasks);
+        //TODO: need to think how to change Map to List
         return null;
     }
 
-    public List<HostInformation> getHostsToCheck(List<ServerTask> serverTasks) {
-        List<String> nameOfHosts = serverTasks.stream().map(ServerTask::getHostName).toList();
-        List<HostInformation> hostsFromHostOverview = hostOverviewService.getPhysicalServersWithCorrectPort();
-
-        return hostsFromHostOverview.stream().filter(nameOfHosts::contains).toList();
+    public Map<ServerTask, HostInformation> getHostsToCheck(List<ServerTask> serverTasks) {
+        return serverTasks.stream().collect(Collectors
+                .toMap(serverTask -> serverTask,
+                        serverTask -> hostOverviewService.getPhysicalServerWithCorrectPortByName(serverTask.getHostName()))
+        );
     }
+
+    private ServerTask checkServer(ServerTask serverTask, HostInformation hostInformation){
+        if (serverTask == null || hostInformation == null) {
+            LOGGER.warn("Cannot check the server due to null reference received! Server task -> {}, Host information -> {}", serverTask, hostInformation);
+            return new ServerTask();
+        }
+
+        String commandOutput = "";
+        if (hostInformation.getServerType().equalsIgnoreCase("proxy"))
+            commandOutput = remoteCommandExecutor.execute(
+                    serversToCheckConfig.getProxyServerIp(),
+                    hostInformation.getPort(),
+                    serverTask.getCommandToExecute()
+            );
+        else
+            commandOutput = remoteCommandExecutor.execute(
+                    hostInformation.getIp(),
+                    22,
+                    serverTask.getCommandToExecute()
+            );
+        // I made this instead of simple editing of existing object so it will be more logically and easier to understand
+        return new ServerTask(
+                serverTask.getHostName(),
+                serverTask.getCommandToExecute(),
+                commandOutput
+        );
+    }
+
 
 
 }
