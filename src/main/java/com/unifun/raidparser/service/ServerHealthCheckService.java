@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
+import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,28 +26,39 @@ public class ServerHealthCheckService {
     private final HostOverviewService hostOverviewService;
 
     public List<ServerTask> checkServers() {
-        //TODO: need to be implemented
         List<ServerTask> serverTasks = serversToCheckConfigFileDataHandler.getServerTasks();
+        if (serverTasks == null) {
+            LOGGER.warn("No tasks to check!");
+            return List.of();
+        }
         Map<ServerTask, HostInformation> hostsToCheck = getHostsToCheck(serverTasks);
-        //TODO: need to think how to change Map to List
-        return null;
+        return hostsToCheck.entrySet().stream().
+                map(entry -> checkServer(entry.getKey(), entry.getValue()))
+                .toList();
     }
 
     public Map<ServerTask, HostInformation> getHostsToCheck(List<ServerTask> serverTasks) {
-        return serverTasks.stream().collect(Collectors
-                .toMap(serverTask -> serverTask,
-                        serverTask -> hostOverviewService.getPhysicalServerWithCorrectPortByName(serverTask.getHostName()))
-        );
+        return serverTasks.stream()
+                .map(serverTask -> new AbstractMap.SimpleEntry<>(
+                        serverTask,
+                        hostOverviewService.getPhysicalServerWithCorrectPortByName(serverTask.getHostName())
+                ))
+                .filter(entry -> {
+                    if (entry.getValue() == null) {
+                        LOGGER.warn("Cannot check the server due to null reference received! Server task -> {}, Host information -> {}", entry.getKey(), entry.getValue());
+                        return false;
+                    }
+                    return true;
+                })
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue
+                ));
     }
 
     private ServerTask checkServer(ServerTask serverTask, HostInformation hostInformation){
-        if (serverTask == null || hostInformation == null) {
-            LOGGER.warn("Cannot check the server due to null reference received! Server task -> {}, Host information -> {}", serverTask, hostInformation);
-            return new ServerTask();
-        }
-
         String commandOutput = "";
-        if (hostInformation.getServerType().equalsIgnoreCase("proxy"))
+        if (hostInformation.getConnectionType().equalsIgnoreCase("proxy"))
             commandOutput = remoteCommandExecutor.execute(
                     serversToCheckConfig.getProxyServerIp(),
                     hostInformation.getPort(),
