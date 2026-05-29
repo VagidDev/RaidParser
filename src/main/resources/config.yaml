@@ -45,3 +45,11 @@ health-checker:
   saving-directory: "./server-health/"
   servers-to-check-config-file: "./config/servers-to-check.conf"
   proxy-server-ip: "127.0.0.1"
+sheets:
+  user-credentials: ""
+  saving-token-path: ""
+  spreadsheetId: ""
+  disk-range: ""
+  psu-range: ""
+  battery-range: ""
+
