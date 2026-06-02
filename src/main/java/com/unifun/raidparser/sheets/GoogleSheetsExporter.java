@@ -12,11 +12,10 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.*;
-import com.unifun.raidparser.Main;
-import com.unifun.raidparser.core.filters.Status;
 import com.unifun.raidparser.core.filters.driver.DriverStatus;
 import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
+import com.unifun.raidparser.dto.ReportServerData;
 import com.unifun.raidparser.service.RaidParserService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,23 +36,6 @@ public class GoogleSheetsExporter {
 
     private RaidParserService raidParserService;
 
-
-    private boolean initialize() {
-        credentialsPath = AppConfig.get("sheets.credentials");
-        spreadsheetId = AppConfig.get("sheets.spreadsheetId");
-        if (spreadsheetId.isEmpty() || credentialsPath.isEmpty()) {
-            Main.CONSOLE_LOGGER.info("Please double-check configuration file");
-            LOGGER.error("Required fields in configuration are empty! Please setup `sheets.credentials` and `sheets.spreadsheetId`");
-            return false;
-        }
-
-        diskRange = AppConfig.get("sheets.spreadsheet.disk-range");
-        psuRange = AppConfig.get("sheets.spreadsheet.psu-range");
-        batteryState = AppConfig.get("sheets.spreadsheet.battery-range");
-        LOGGER.info("Google Credentials initialization successful");
-        return true;
-    }
-
     /**
      * Global instance of the scopes required by this quickstart.
      * If modifying these scopes, delete your previously saved tokens/ folder.
@@ -71,15 +53,16 @@ public class GoogleSheetsExporter {
      */
     private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT)
             throws IOException {
+
         // Load client secrets.
         InputStream in = Files.newInputStream(Path.of(credentialsPath), StandardOpenOption.READ);
         GoogleClientSecrets clientSecrets =
                 GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
         // Define required scopes for Sheets and Drive
-        List<String> SCOPES = Arrays.asList(
-                "https://www.googleapis.com/auth/spreadsheets",  // Scope for Sheets
-                "https://www.googleapis.com/auth/drive"         // Optional: Scope for Drive
+        List<String> SCOPES = List.of(
+                "https://www.googleapis.com/auth/spreadsheets"  // Scope for Sheets
+//                "https://www.googleapis.com/auth/drive"         // Optional: Scope for Drive
         );
         // Build flow and trigger user authorization request.
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
@@ -109,9 +92,6 @@ public class GoogleSheetsExporter {
      * <a href="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit">...</a>
      */
     private void exportToSheet(String path) throws Exception {
-        if (!initialize()) {
-            return;
-        }
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         Sheets service =
@@ -119,22 +99,47 @@ public class GoogleSheetsExporter {
                         .setApplicationName(APPLICATION_NAME)
                         .build();
 
-        Map<String, String> servers = FileDataHandler.readServerDataFromFile(path);
-
-        writeDiskState(service, spreadsheetId, diskRange, path);
-        writePSUState(service, spreadsheetId, psuRange, servers);
-        writeBatteryState(service, spreadsheetId, batteryState, servers);
+//        Map<String, String> servers = FileDataHandler.readServerDataFromFile(path);
+//
+//        writeDiskState(service, spreadsheetId, diskRange, path);
+//        writePSUState(service, spreadsheetId, psuRange, servers);
+//        writeBatteryState(service, spreadsheetId, batteryState, servers);
     }
 
-    private <T extends Status> void writeToSheet(Sheets service, String spreadsheetId, String range, List<Map.Entry<String, AnalyzeResponse<T>>> serversStatus) throws IOException {
+//    private <T extends Status> void writeToSheet(Sheets service, String spreadsheetId, String range, List<Map.Entry<String, AnalyzeResponse<T>>> serversStatus) throws IOException {
+//        if (range.isEmpty()) {
+//            LOGGER.warn("Range is empty!");
+//            return;
+//        }
+//
+//        List<List<Object>> values = new ArrayList<>();
+//        for (Map.Entry<String, AnalyzeResponse<T>> entry : serversStatus) {
+//            List<Object> row = new ArrayList<>(List.of(entry.getKey(), entry.getValue().getStatus().getName().trim(), entry.getValue().getErrorText().trim()));
+//            values.add(row);
+//        }
+//
+//        ValueRange body = new ValueRange().setValues(values);
+//        UpdateValuesResponse result = service.spreadsheets().values()
+//                .update(spreadsheetId, range, body)
+//                .setValueInputOption("RAW")
+//                .execute();
+//
+//        LOGGER.info("Count of rows that has been wrote to range `{}` is: {}", range, result);
+//    }
+
+    private void writeToSheet(Sheets service, String spreadsheetId, String range, List<ReportServerData> reportServerDataList) throws IOException {
         if (range.isEmpty()) {
-            LOGGER.warn("Range is empty!");
+            LOGGER.warn("Range is empty");
             return;
         }
 
         List<List<Object>> values = new ArrayList<>();
-        for (Map.Entry<String, AnalyzeResponse<T>> entry : serversStatus) {
-            List<Object> row = new ArrayList<>(List.of(entry.getKey(), entry.getValue().getStatus().getName().trim(), entry.getValue().getErrorText().trim()));
+        for (ReportServerData data : reportServerDataList) {
+            List<Object> row = new ArrayList<>(List.of(
+                    data.serverName(),
+                    data.healthStatus().trim(),
+                    data.errorText().trim()
+            ));
             values.add(row);
         }
 
@@ -144,29 +149,7 @@ public class GoogleSheetsExporter {
                 .setValueInputOption("RAW")
                 .execute();
 
-        LOGGER.info("Count of rows that has been wrote to range `{}` is: {}", range, result);
-    }
-
-    private void writeDiskState(Sheets service, String spreadsheetId, String range, String reportPath) throws IOException {
-        if (range.isEmpty()) {
-            LOGGER.warn("Disk range is empty, please set-up `sheets.spreadsheet.disk-range` in configuration");
-            return;
-        }
-
-        List<Map.Entry<String, AnalyzeResponse<DriverStatus>>> disks = raidParserService.getSortedDrivesStatusWithManualServers(reportPath);
-        List<List<Object>> values = new ArrayList<>();
-        for (Map.Entry<String, AnalyzeResponse<DriverStatus>> entry : disks) {
-            List<Object> row = new ArrayList<>(List.of(entry.getKey(), entry.getValue().getStatus().getName().trim(), entry.getValue().getErrorText().trim()));
-            values.add(row);
-        }
-
-        ValueRange body = new ValueRange().setValues(values);
-        UpdateValuesResponse result = service.spreadsheets().values()
-                .update(spreadsheetId, range, body)
-                .setValueInputOption("RAW")
-                .execute();
-
-        LOGGER.info("Disk wrote: {}", result);
+        LOGGER.info("Status wrote to the sheet with ID {}. Data Range: {}. Result: {}", spreadsheetId, range , result);
     }
 
     private void writePSUState(Sheets service, String spreadsheetId, String range, Map<String, String> servers) throws IOException {
@@ -213,8 +196,9 @@ public class GoogleSheetsExporter {
         LOGGER.info("Batteries wrote: {}", result);
     }
 
+    //TODO: Analyze error that trows export method
     public void removeOldCredentials() {
-        Path removingPath = Path.of(TOKENS_DIRECTORY_PATH);
+        Path removingPath = Path.of(null);
         try (Stream<Path> storedCredentials = Files.walk(removingPath)) {
 
             List<Path> paths = storedCredentials
