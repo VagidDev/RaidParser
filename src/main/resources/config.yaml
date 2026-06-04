@@ -46,7 +46,7 @@ health-checker:
   servers-to-check-config-file: "./config/servers-to-check.conf"
   proxy-server-ip: "127.0.0.1"
 sheets:
-  user-credentials: ""
+  user-credentials-json: ""
   saving-token-path: ""
   spreadsheetId: ""
   disk-range: ""

@@ -12,19 +12,18 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.*;
-import com.unifun.raidparser.core.filters.driver.DriverStatus;
-import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
-import com.unifun.raidparser.core.response.AnalyzeResponse;
 import com.unifun.raidparser.dto.ReportServerData;
 import com.unifun.raidparser.service.RaidParserService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.unifun.raidparser.config.GoogleSheetExporterConfig;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -34,7 +33,9 @@ public class GoogleSheetsExporter {
     private static final String APPLICATION_NAME = "Google Sheets API Java Quickstart";
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
+    private GoogleSheetExporterConfig googleSheetsExporterConfig;
     private RaidParserService raidParserService;
+    private Sheets sheetsService;
 
     /**
      * Global instance of the scopes required by this quickstart.
@@ -43,6 +44,14 @@ public class GoogleSheetsExporter {
     private static final List<String> SCOPES =
             Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
      */
+
+    private void initialize() throws GeneralSecurityException, IOException {
+        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        this.sheetsService =
+                new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+                        .setApplicationName(APPLICATION_NAME)
+                        .build();
+    }
 
     /**
      * Creates an authorized Credential object.
@@ -55,7 +64,7 @@ public class GoogleSheetsExporter {
             throws IOException {
 
         // Load client secrets.
-        InputStream in = Files.newInputStream(Path.of(credentialsPath), StandardOpenOption.READ);
+        InputStream in = Files.newInputStream(Path.of(googleSheetsExporterConfig.getUserCredentialsJson()), StandardOpenOption.READ);
         GoogleClientSecrets clientSecrets =
                 GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
@@ -67,7 +76,7 @@ public class GoogleSheetsExporter {
         // Build flow and trigger user authorization request.
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
+                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(googleSheetsExporterConfig.getSavingTokenPath())))
                 .setAccessType("offline")
                 .build();
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
@@ -98,34 +107,8 @@ public class GoogleSheetsExporter {
                 new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                         .setApplicationName(APPLICATION_NAME)
                         .build();
-
-//        Map<String, String> servers = FileDataHandler.readServerDataFromFile(path);
-//
-//        writeDiskState(service, spreadsheetId, diskRange, path);
-//        writePSUState(service, spreadsheetId, psuRange, servers);
-//        writeBatteryState(service, spreadsheetId, batteryState, servers);
     }
 
-//    private <T extends Status> void writeToSheet(Sheets service, String spreadsheetId, String range, List<Map.Entry<String, AnalyzeResponse<T>>> serversStatus) throws IOException {
-//        if (range.isEmpty()) {
-//            LOGGER.warn("Range is empty!");
-//            return;
-//        }
-//
-//        List<List<Object>> values = new ArrayList<>();
-//        for (Map.Entry<String, AnalyzeResponse<T>> entry : serversStatus) {
-//            List<Object> row = new ArrayList<>(List.of(entry.getKey(), entry.getValue().getStatus().getName().trim(), entry.getValue().getErrorText().trim()));
-//            values.add(row);
-//        }
-//
-//        ValueRange body = new ValueRange().setValues(values);
-//        UpdateValuesResponse result = service.spreadsheets().values()
-//                .update(spreadsheetId, range, body)
-//                .setValueInputOption("RAW")
-//                .execute();
-//
-//        LOGGER.info("Count of rows that has been wrote to range `{}` is: {}", range, result);
-//    }
 
     private void writeToSheet(Sheets service, String spreadsheetId, String range, List<ReportServerData> reportServerDataList) throws IOException {
         if (range.isEmpty()) {
@@ -152,7 +135,7 @@ public class GoogleSheetsExporter {
         LOGGER.info("Status wrote to the sheet with ID {}. Data Range: {}. Result: {}", spreadsheetId, range , result);
     }
 
-    private void writePSUState(Sheets service, String spreadsheetId, String range, Map<String, String> servers) throws IOException {
+/*    private void writePSUState(Sheets service, String spreadsheetId, String range, Map<String, String> servers) throws IOException {
         if (range.isEmpty()) {
             LOGGER.warn("PSU range is empty, please set-up `sheets.spreadsheet.psu-range` in configuration");
             return;
@@ -194,7 +177,7 @@ public class GoogleSheetsExporter {
                 .execute();
 
         LOGGER.info("Batteries wrote: {}", result);
-    }
+  }*/
 
     //TODO: Analyze error that trows export method
     public void removeOldCredentials() {

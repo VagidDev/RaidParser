@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties("sheets")
 @Getter @Setter
 public class GoogleSheetExporterConfig {
-    private String userCredentials;
+    private String userCredentialsJson;
     private String savingTokenPath;
     private String spreadsheetId;
     private String diskRange;
