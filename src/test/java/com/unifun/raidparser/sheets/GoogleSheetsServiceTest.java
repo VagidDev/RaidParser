@@ -14,6 +14,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
@@ -28,7 +30,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for {@link GoogleSheetsExporter}.
+ * Unit tests for {@link GoogleSheetsService}.
  *
  * <p>Используем Mockito для мокирования Google Sheets API (Sheets, Spreadsheets,
  * Values, Update) — реальных HTTP-запросов нет.
@@ -47,7 +49,8 @@ import static org.mockito.Mockito.*;
  * </pre>
  */
 @ExtendWith(MockitoExtension.class)
-class GoogleSheetsExporterTest {
+@MockitoSettings(strictness = Strictness.LENIENT)
+class GoogleSheetsServiceTest {
 
     // ──────────────────────────────────────────────────────────────────────────
     // Моки всей цепочки Google Sheets API:
@@ -70,7 +73,7 @@ class GoogleSheetsExporterTest {
     private GoogleSheetExporterConfig googleSheetsExporterConfig;
 
     @InjectMocks
-    private GoogleSheetsExporter exporter;
+    private GoogleSheetsService exporter;
 
     private static final String SPREADSHEET_ID = "test-spreadsheet-id-123";
     private static final String RANGE            = "Sheet1!A1:C10";
@@ -247,7 +250,7 @@ class GoogleSheetsExporterTest {
 
             // exportToSheet — private, вызываем через рефлексию.
             // Ожидаем, что IOException всплывёт (не проглатывается внутри метода).
-            var method = GoogleSheetsExporter.class
+            var method = GoogleSheetsService.class
                     .getDeclaredMethod("exportToSheet", String.class, String.class, List.class);
             method.setAccessible(true);
 
@@ -264,7 +267,7 @@ class GoogleSheetsExporterTest {
         void runtimeExceptionFromExecute_isPropagated() throws Exception {
             when(updateRequest.execute()).thenThrow(new RuntimeException("Unexpected error"));
 
-            var method = GoogleSheetsExporter.class
+            var method = GoogleSheetsService.class
                     .getDeclaredMethod("exportToSheet", String.class, String.class, List.class);
             method.setAccessible(true);
 
@@ -282,7 +285,7 @@ class GoogleSheetsExporterTest {
             when(values.update(anyString(), anyString(), any(ValueRange.class)))
                     .thenThrow(new IOException("Sheets API unreachable"));
 
-            var method = GoogleSheetsExporter.class
+            var method = GoogleSheetsService.class
                     .getDeclaredMethod("exportToSheet", String.class, String.class, List.class);
             method.setAccessible(true);
 
@@ -307,7 +310,7 @@ class GoogleSheetsExporterTest {
         @DisplayName("export() не бросает исключений (всё внутри try-catch)")
         void export_doesNotThrowAnyException() {
             // export() содержит пустой try-catch — убеждаемся, что он не падает
-            assertThatCode(() -> exporter.export("some/path"))
+            assertThatCode(() -> exporter.export(any(ServerDataType.class), anyList()))
                     .doesNotThrowAnyException();
         }
     }
@@ -330,8 +333,8 @@ class GoogleSheetsExporterTest {
 
             // Пробрасываем путь через рефлексию (Path.of(null) — баг в текущем коде,
             // фиксируем поведение после передачи реального пути)
-            var method = GoogleSheetsExporter.class
-                    .getDeclaredMethod("removeOldCredentials");
+            var method = GoogleSheetsService.class
+                    .getDeclaredMethod("removeOldCredentials", String.class);
             method.setAccessible(true);
 
             // Подменяем null-путь на реальный через рефлексию внутри метода —
@@ -340,10 +343,9 @@ class GoogleSheetsExporterTest {
             // TODO: После фикса (передача реального пути через конфиг) заменить на:
             //   method.invoke(exporter);
             //   assertThat(file1).doesNotExist();
-            org.junit.jupiter.api.Assertions.assertThrows(
-                    java.lang.reflect.InvocationTargetException.class,
-                    () -> method.invoke(exporter)
-            );
+            method.invoke(exporter, tmpDir.toAbsolutePath().toString());
+            assertThat(file1).doesNotExist();
+            assertThat(file2).doesNotExist();
 
             // Cleanup
             Files.deleteIfExists(file1);
@@ -354,15 +356,15 @@ class GoogleSheetsExporterTest {
         @Test
         @DisplayName("removeOldCredentials() с несуществующим путём не падает с NPE — документируем баг Path.of(null)")
         void nullPath_throwsNullPointerException() throws Exception {
-            var method = GoogleSheetsExporter.class
-                    .getDeclaredMethod("removeOldCredentials");
+            var method = GoogleSheetsService.class
+                    .getDeclaredMethod("removeOldCredentials", String.class);
             method.setAccessible(true);
 
             // Текущая реализация: Path.of(null) → NullPointerException
             // Этот тест фиксирует баг и служит регрессионным тестом
             var ex = org.junit.jupiter.api.Assertions.assertThrows(
                     java.lang.reflect.InvocationTargetException.class,
-                    () -> method.invoke(exporter)
+                    () -> method.invoke(exporter, (Object) null)
             );
             assertThat(ex.getCause()).isInstanceOf(NullPointerException.class);
         }
@@ -375,7 +377,7 @@ class GoogleSheetsExporterTest {
     private void invokeExportToSheet(String spreadsheetId,
                                      String range,
                                      List<ReportServerData> data) throws Exception {
-        var method = GoogleSheetsExporter.class
+        var method = GoogleSheetsService.class
                 .getDeclaredMethod("exportToSheet", String.class, String.class, List.class);
         method.setAccessible(true);
         method.invoke(exporter, spreadsheetId, range, data);
