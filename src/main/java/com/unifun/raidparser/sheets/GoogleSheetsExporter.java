@@ -34,7 +34,7 @@ public class GoogleSheetsExporter {
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
     private GoogleSheetExporterConfig googleSheetsExporterConfig;
-    private RaidParserService raidParserService;
+    //private RaidParserService raidParserService;
     private Sheets sheetsService;
 
     /**
@@ -82,10 +82,10 @@ public class GoogleSheetsExporter {
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
-
+    // do not use this, old logic
     public void export(String path) {
         try {
-            exportToSheet(path);
+            //exportToSheet(path);
         } catch (Exception e) {
             //TODO: analyze error message when stored credentials (tokens) are expired
             LOGGER.error("Error, while trying export data to google-sheet. Error message -> {}", e.getMessage(), e);
@@ -96,21 +96,7 @@ public class GoogleSheetsExporter {
         }
     }
 
-    /**
-     * Prints the names and majors of students in a sample spreadsheet:
-     * <a href="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit">...</a>
-     */
-    private void exportToSheet(String path) throws Exception {
-        // Build a new authorized API client service.
-        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        Sheets service =
-                new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
-                        .setApplicationName(APPLICATION_NAME)
-                        .build();
-    }
-
-
-    private void writeToSheet(Sheets service, String spreadsheetId, String range, List<ReportServerData> reportServerDataList) throws IOException {
+    public void exportToSheet(String spreadsheetId, String range, List<ReportServerData> reportServerDataList) throws IOException {
         if (range.isEmpty()) {
             LOGGER.warn("Range is empty");
             return;
@@ -127,57 +113,13 @@ public class GoogleSheetsExporter {
         }
 
         ValueRange body = new ValueRange().setValues(values);
-        UpdateValuesResponse result = service.spreadsheets().values()
+        UpdateValuesResponse result = sheetsService.spreadsheets().values()
                 .update(spreadsheetId, range, body)
                 .setValueInputOption("RAW")
                 .execute();
 
-        LOGGER.info("Status wrote to the sheet with ID {}. Data Range: {}. Result: {}", spreadsheetId, range , result);
+        LOGGER.info("Data exported to the sheet with ID {}. Data Range: {}. Result: {}", spreadsheetId, range , result);
     }
-
-/*    private void writePSUState(Sheets service, String spreadsheetId, String range, Map<String, String> servers) throws IOException {
-        if (range.isEmpty()) {
-            LOGGER.warn("PSU range is empty, please set-up `sheets.spreadsheet.psu-range` in configuration");
-            return;
-        }
-
-        List<Map.Entry<String, AnalyzeResponse<PowerSupplyStatus>>> psu = DataSorter.getSortedPowerSupplies(servers);
-        List<List<Object>> values = new ArrayList<>();
-        for (Map.Entry<String, AnalyzeResponse<PowerSupplyStatus>> entry : psu) {
-            List<Object> row = new ArrayList<>(List.of(entry.getKey(), entry.getValue().getStatus().getName().trim(), entry.getValue().getErrorText().trim()));
-            values.add(row);
-        }
-
-        ValueRange body = new ValueRange().setValues(values);
-        UpdateValuesResponse result = service.spreadsheets().values()
-                .update(spreadsheetId, range, body)
-                .setValueInputOption("RAW")
-                .execute();
-
-        LOGGER.info("PSU wrote: {}", result);
-    }
-
-    private void writeBatteryState(Sheets service, String spreadsheetId, String range, Map<String, String> servers) throws IOException {
-        if (range.isEmpty()) {
-            LOGGER.warn("Battery range is empty, please set-up `sheets.spreadsheet.battery-range` in configuration");
-            return;
-        }
-
-        List<Map.Entry<String, AnalyzeResponse<BatteryStatus>>> batteries = DataSorter.getSortedBatteries(servers);
-        List<List<Object>> values = new ArrayList<>();
-        for (Map.Entry<String, AnalyzeResponse<BatteryStatus>> entry : batteries) {
-            List<Object> row = new ArrayList<>(List.of(entry.getKey(), entry.getValue().getStatus().getName().trim(), entry.getValue().getErrorText().trim()));
-            values.add(row);
-        }
-
-        ValueRange body = new ValueRange().setValues(values);
-        UpdateValuesResponse result = service.spreadsheets().values()
-                .update(spreadsheetId, range, body)
-                .setValueInputOption("RAW")
-                .execute();
-
-        LOGGER.info("Batteries wrote: {}", result);
-  }*/
 
     //TODO: Analyze error that trows export method
     public void removeOldCredentials() {
