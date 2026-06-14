@@ -3,7 +3,8 @@ package com.unifun.raidparser.sheets;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
-import com.unifun.raidparser.config.GoogleSheetExporterConfig;
+import com.unifun.raidparser.config.GoogleSheetAuthorizationConfig;
+import com.unifun.raidparser.config.GoogleSheetExportConfig;
 import com.unifun.raidparser.dto.ReportServerData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -68,9 +69,10 @@ class GoogleSheetsServiceTest {
 
     @Mock
     private Sheets.Spreadsheets.Values.Update updateRequest;
-
     @Mock
-    private GoogleSheetExporterConfig googleSheetsExporterConfig;
+    private GoogleSheetAuthorizationConfig googleSheetAuthorizationConfig;
+    @Mock
+    private GoogleSheetExportConfig googleSheetExportConfig;
 
     @InjectMocks
     private GoogleSheetsService exporter;
@@ -310,7 +312,7 @@ class GoogleSheetsServiceTest {
         @DisplayName("export() не бросает исключений (всё внутри try-catch)")
         void export_doesNotThrowAnyException() {
             // export() содержит пустой try-catch — убеждаемся, что он не падает
-            assertThatCode(() -> exporter.export(any(ServerDataType.class), anyList()))
+            assertThatCode(() -> exporter.export(ServerDataType.HARD_DRIVE_DATA, Collections.emptyList()))
                     .doesNotThrowAnyException();
         }
     }
