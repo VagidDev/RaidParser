@@ -2,7 +2,7 @@ package com.unifun.raidparser.core.analyzer;
 
 import com.unifun.raidparser.core.filters.driver.*;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
-import com.unifun.raidparser.handlers.RaidParserDataHandler;
+import com.unifun.raidparser.parser.ReportFileParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +11,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class DriveAnalyzer implements Analyzer<DriverStatus> {
-    private final RaidParserDataHandler raidParserDataHandler;
+    private final ReportFileParser reportFileParser;
     private final List<DriveFilter> driveFilters = List.of(new DriverInterimRecoveryModeFilter(),
             new DriveFailedFilter(),
             new DriverPredictiveFailureFilter(),
@@ -20,7 +20,7 @@ public class DriveAnalyzer implements Analyzer<DriverStatus> {
     );
 
     public AnalyzeResponse<DriverStatus> analyze(String serverData) {
-        String mainText = raidParserDataHandler.getMainData(serverData,
+        String mainText = reportFileParser.getMainData(serverData,
                 "=========================drive================================",
                 "==========================RAM=================================");
 

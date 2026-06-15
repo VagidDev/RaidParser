@@ -3,7 +3,7 @@ package com.unifun.raidparser.service;
 import com.unifun.raidparser.config.OutputStatusFileConfig;
 import com.unifun.raidparser.dto.ServerData;
 import com.unifun.raidparser.dto.ServerStatus;
-import com.unifun.raidparser.handlers.RaidParserDataHandler;
+import com.unifun.raidparser.parser.ReportFileParser;
 import com.unifun.raidparser.parser.RaidStatusParser;
 import com.unifun.raidparser.core.analyzer.BatteryAnalyzer;
 import com.unifun.raidparser.core.analyzer.DriveAnalyzer;
@@ -12,7 +12,6 @@ import com.unifun.raidparser.core.analyzer.PowerSupplyAnalyzer;
 import com.unifun.raidparser.core.filters.battery.BatteryStatus;
 import com.unifun.raidparser.core.filters.driver.DriverStatus;
 import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
-import com.unifun.raidparser.core.response.AnalyzeResponse;
 import com.unifun.raidparser.handlers.ServerDataHandler;
 import com.unifun.raidparser.util.ServerDataSorter;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +29,7 @@ public class RaidParserService {
     private final OutputStatusFileConfig outputStatusFileConfig;
 
     private final ServerDataHandler serverDataHandler;
-    private final RaidParserDataHandler raidParserDataHandler;
+    private final ReportFileParser reportFileParser;
 
     private final DriveAnalyzer driveAnalyzer;
     private final PowerSupplyAnalyzer powerSupplyAnalyzer;

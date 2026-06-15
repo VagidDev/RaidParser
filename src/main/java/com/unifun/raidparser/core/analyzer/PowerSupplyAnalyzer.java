@@ -2,7 +2,7 @@ package com.unifun.raidparser.core.analyzer;
 
 import com.unifun.raidparser.core.filters.power.*;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
-import com.unifun.raidparser.handlers.RaidParserDataHandler;
+import com.unifun.raidparser.parser.ReportFileParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +11,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PowerSupplyAnalyzer implements Analyzer<PowerSupplyStatus> {
-    private final RaidParserDataHandler raidParserDataHandler;
+    private final ReportFileParser reportFileParser;
     private final List<PowerSupplyFilter> powerSupplyFilters = List.of(
                 new PowerSupplyEmptyFilter(),
                 new PowerSupplyFailedFilter(),
@@ -22,7 +22,7 @@ public class PowerSupplyAnalyzer implements Analyzer<PowerSupplyStatus> {
 
     public AnalyzeResponse<PowerSupplyStatus> analyze(String serverData) {
         // Преобразуем данные в поток строк
-        String mainText = raidParserDataHandler.getMainData(serverData,
+        String mainText = reportFileParser.getMainData(serverData,
                 "==========================PSU=================================",
                 "=========================DIMM=================================");
 

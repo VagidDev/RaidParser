@@ -1,6 +1,7 @@
 package com.unifun.raidparser.handlers;
 
 import com.unifun.raidparser.dto.ServerData;
+import com.unifun.raidparser.parser.ReportFileParser;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,7 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ServerDataHandler {
     private static final Logger LOGGER = LogManager.getLogger(ServerDataHandler.class);
-    private final RaidParserDataHandler raidParserDataHandler;
+    private final ReportFileParser reportFileParser;
 
     private List<ServerData> serverData = List.of();
     private Path serverDataFile;
@@ -32,7 +33,7 @@ public class ServerDataHandler {
         if (this.serverDataFile == null || serverData.isEmpty() || !this.serverDataFile.equals(serverDataFile)) {
             this.serverDataFile = serverDataFile;
             LOGGER.info("Getting servers data from file `{}`. Servers count -> `{}`", serverDataFile, serverData.size());
-            serverData = raidParserDataHandler.readServerDataFromFile(serverDataFile);
+            serverData = reportFileParser.readServerDataFromFile(serverDataFile);
             return serverData;
         }
 
