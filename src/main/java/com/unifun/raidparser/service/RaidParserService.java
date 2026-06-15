@@ -1,6 +1,8 @@
 package com.unifun.raidparser.service;
 
 import com.unifun.raidparser.config.OutputStatusFileConfig;
+import com.unifun.raidparser.dto.ServerData;
+import com.unifun.raidparser.dto.ServerStatus;
 import com.unifun.raidparser.handlers.RaidParserDataHandler;
 import com.unifun.raidparser.parser.RaidStatusParser;
 import com.unifun.raidparser.core.analyzer.BatteryAnalyzer;
@@ -44,24 +46,24 @@ public class RaidParserService {
     private final ServerDataSorter<PowerSupplyStatus> powerSupplyStatusDataSorter;
     private final ServerDataSorter<BatteryStatus> batteryStatusDataSorter;
 
-    public List<Map.Entry<String, AnalyzeResponse<DriverStatus>>> getSortedDrivesStatus(Path reportFilePath) {
-        Map<String, String> serversData = serverDataHandler.getServerData(reportFilePath);
-        Map<String, AnalyzeResponse<DriverStatus>> driveServerStatuses = driverStatusRaidParser.getParsedData(serversData, driveAnalyzer);
+    public List<ServerStatus<DriverStatus>> getSortedDrivesStatus(Path reportFilePath) {
+        List<ServerData> serversData = serverDataHandler.getServerData(reportFilePath);
+        List<ServerStatus<DriverStatus>> driveServerStatuses = driverStatusRaidParser.getParsedData(serversData, driveAnalyzer);
         return driverStatusDataSorter.sortByStatus(driveServerStatuses);
     }
 
-    public List<Map.Entry<String, AnalyzeResponse<PowerSupplyStatus>>> getSortedPowerSuppliesStatus(Path reportFilePath) {
-        Map<String, String> serversData = serverDataHandler.getServerData(reportFilePath);
-        Map<String, AnalyzeResponse<PowerSupplyStatus>> powerSupplyServerStatuses = powerSupplyStatusRaidParser.getParsedData(serversData, powerSupplyAnalyzer);
+    public List<ServerStatus<PowerSupplyStatus>> getSortedPowerSuppliesStatus(Path reportFilePath) {
+        List<ServerData> serversData = serverDataHandler.getServerData(reportFilePath);
+        List<ServerStatus<PowerSupplyStatus>> powerSupplyServerStatuses = powerSupplyStatusRaidParser.getParsedData(serversData, powerSupplyAnalyzer);
         return powerSupplyStatusDataSorter.sortByStatus(powerSupplyServerStatuses);
     }
 
-    public List<Map.Entry<String, AnalyzeResponse<BatteryStatus>>> getSortedBatteriesStatus(Path reportFilePath) {
-        Map<String, String> serversData = serverDataHandler.getServerData(reportFilePath);
-        Map<String, AnalyzeResponse<BatteryStatus>> batteryServerStatuses = batteryStatusRaidParser.getParsedData(serversData, batteryAnalyzer);
+    public List<ServerStatus<BatteryStatus>> getSortedBatteriesStatus(Path reportFilePath) {
+        List<ServerData> serversData = serverDataHandler.getServerData(reportFilePath);
+        List<ServerStatus<BatteryStatus>> batteryServerStatuses = batteryStatusRaidParser.getParsedData(serversData, batteryAnalyzer);
         return batteryStatusDataSorter.sortByStatus(batteryServerStatuses);
     }
-
+/*
     public int writeSortedDriveStatusToFile(Path reportFilePath, Path driveStatusFilePath) {
         List<Map.Entry<String, AnalyzeResponse<DriverStatus>>> sortedDriveStatus = getSortedDrivesStatus(reportFilePath);
         raidParserDataHandler.writeData(driveStatusFilePath, sortedDriveStatus);
@@ -94,7 +96,7 @@ public class RaidParserService {
         Path baterryStatusFilePath = Path.of(outputStatusFileConfig.getBatteryStatus());
         return writeSortedBatteryStatusToFile(reportFilePath, baterryStatusFilePath);
     }
-
+*/
 }
 //    public List<Map.Entry<String, AnalyzeResponse<DriverStatus>>> getSortedDrivesStatusWithManualServers(String reportPath) {
 //        Map<String, String> serversData = serverDataHandler.getServerData(reportPath);

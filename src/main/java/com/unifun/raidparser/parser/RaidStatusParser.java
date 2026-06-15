@@ -3,19 +3,23 @@ package com.unifun.raidparser.parser;
 import com.unifun.raidparser.core.analyzer.Analyzer;
 import com.unifun.raidparser.core.filters.Status;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
+import com.unifun.raidparser.dto.ServerData;
+import com.unifun.raidparser.dto.ServerStatus;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
 public class RaidStatusParser<T extends Status> {
-    public Map<String, AnalyzeResponse<T>> getParsedData(Map<String, String> serversData, Analyzer<T> analyzer) {
-        Map<String, AnalyzeResponse<T>> serversStatus = new HashMap<>();
+    public List<ServerStatus<T>> getParsedData(List<ServerData> serversData, Analyzer<T> analyzer) {
+        List<ServerStatus<T>> serversStatus = new ArrayList<>();
 
-        for (Map.Entry<String, String> entry : serversData.entrySet()) {
-            AnalyzeResponse<T> analyzeResponse = analyzer.analyze(entry.getValue());
-            serversStatus.put(entry.getKey(), analyzeResponse);
+        for (ServerData serverData : serversData) {
+            AnalyzeResponse<T> analyzeResponse = analyzer.analyze(serverData.healthData());
+            serversStatus.add(new ServerStatus<>(serverData.serverName(), analyzeResponse));
         }
         return serversStatus;
     }

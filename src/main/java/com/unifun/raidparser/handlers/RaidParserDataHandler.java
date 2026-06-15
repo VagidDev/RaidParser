@@ -1,6 +1,8 @@
 package com.unifun.raidparser.handlers;
 
 import com.unifun.raidparser.core.response.AnalyzeResponse;
+import com.unifun.raidparser.dto.ServerData;
+import jakarta.validation.constraints.Max;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,13 +20,13 @@ import java.util.stream.Stream;
 public class RaidParserDataHandler {
     private static final Logger LOGGER = LogManager.getLogger(RaidParserDataHandler.class);
 
-    public synchronized Map<String, String> readServerDataFromFile(Path path) {
+    public synchronized List<ServerData> readServerDataFromFile(Path path) {
         if (path == null) {
             LOGGER.error("Empty file for reading servers data");
-            return new HashMap<>();
+            return List.of();
         }
 
-        Map<String, String> servers = new HashMap<>();
+        List<ServerData> serverDataList = new ArrayList<>();
         StringBuilder builder = new StringBuilder();
         String server = "";
         //=== SERVER NAME
@@ -35,7 +38,7 @@ public class RaidParserDataHandler {
                 if (dataList.get(i).contains("=== SERVER NAME") || i == (dataList.size() - 1)) {
                     //if new server
                     if (!server.isEmpty() && !builder.isEmpty()) {
-                        servers.put(server, builder.toString());
+                        serverDataList.add(new ServerData(server, builder.toString()));
                         server = "";
                         builder = new StringBuilder();
                     }
@@ -48,10 +51,10 @@ public class RaidParserDataHandler {
 
             }
 
-            return servers;
+            return serverDataList;
         } catch (IOException e) {
             LOGGER.error("Error while reading servers data from file `{}`. Error -> {}", path, e.getMessage(), e);
-            return new HashMap<>();
+            return List.of();
         }
     }
 

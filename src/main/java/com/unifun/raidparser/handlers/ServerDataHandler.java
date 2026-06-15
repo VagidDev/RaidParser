@@ -1,13 +1,13 @@
 package com.unifun.raidparser.handlers;
 
+import com.unifun.raidparser.dto.ServerData;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -15,18 +15,18 @@ public class ServerDataHandler {
     private static final Logger LOGGER = LogManager.getLogger(ServerDataHandler.class);
     private final RaidParserDataHandler raidParserDataHandler;
 
-    private Map<String, String> serverData = new HashMap<>();
+    private List<ServerData> serverData = List.of();
     private Path serverDataFile;
 
-    public Map<String, String> getActualServerData(Path serverDataFile) {
-        serverData = new HashMap<>();
+    public List<ServerData> getActualServerData(Path serverDataFile) {
+        serverData = List.of();
         return getServerData(serverDataFile);
     }
 
-    public Map<String, String> getServerData(Path serverDataFile) {
+    public List<ServerData> getServerData(Path serverDataFile) {
         if (serverDataFile == null) {
             LOGGER.warn("Cannot get server data from null path");
-            return new HashMap<>();
+            return List.of();
         }
 
         if (this.serverDataFile == null || serverData.isEmpty() || !this.serverDataFile.equals(serverDataFile)) {

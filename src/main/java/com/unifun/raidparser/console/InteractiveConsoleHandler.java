@@ -116,9 +116,10 @@ public class InteractiveConsoleHandler {
         printMsg("Запуск процесса парсинга...");
 
         try {
-            int drives = raidParserService.writeSortedDriveStatusToFile(reportFilePath);
-            int psu = raidParserService.writeSortedPowerSupplyUnitStatusToFile(reportFilePath);
-            int battery = raidParserService.writeSortedBatteryStatusToFile(reportFilePath);
+            LOGGER.warn("Not implemented yet");
+            int drives = 0;//raidParserService.writeSortedDriveStatusToFile(reportFilePath);
+            int psu = 0;//raidParserService.writeSortedPowerSupplyUnitStatusToFile(reportFilePath);
+            int battery = 0;//raidParserService.writeSortedBatteryStatusToFile(reportFilePath);
 
             System.out.println("----------------------------------------------------");
             printMsg("РЕЗУЛЬТАТЫ ПАРСИНГА:");

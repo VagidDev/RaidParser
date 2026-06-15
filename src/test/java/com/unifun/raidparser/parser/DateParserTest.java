@@ -3,15 +3,13 @@ package com.unifun.raidparser.parser;
 import com.unifun.raidparser.config.DatePatternsConfig;
 import com.unifun.raidparser.dto.DateParseResponse;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
 class DateParserTest {
     private final DateParser dateParser;
 
@@ -19,9 +17,17 @@ class DateParserTest {
     private final DateTimeFormatter americanFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
     private final DateTimeFormatter europeanFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
-    @Autowired
-    public DateParserTest(DateParser dateParser) {
-        this.dateParser = dateParser;
+    public DateParserTest() {
+        DatePatternsConfig datePatternsConfig = new DatePatternsConfig();
+        datePatternsConfig.setDateStringFormat("yyyy_MM_dd");
+        datePatternsConfig.setFormats(Map.of(
+                "dd.MM.yyyy", "^(0[1-9]|[1-2][0-9]|3[01])\\.(0[1-9]|1[0-2])\\.\\d{4}$",
+                "dd-MM-yyyy", "^(0[1-9]|[1-2][0-9]|3[01])-(0[1-9]|1[0-2])-\\d{4}$",
+                "yyyy-MM-dd", "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[01])$",
+                "MM/dd/yyyy", "^(0[1-9]|1[0-2])/(0[1-9]|[1-2][0-9]|3[01])/\\d{4}$"
+
+        ));
+        this.dateParser = new DateParser(datePatternsConfig);
     }
 
     @Test
