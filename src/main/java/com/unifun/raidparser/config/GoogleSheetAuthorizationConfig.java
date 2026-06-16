@@ -12,4 +12,5 @@ import org.springframework.context.annotation.Configuration;
 public class GoogleSheetAuthorizationConfig {
     private String userCredentialsJson;
     private String savingTokensDir;
+    private int tokenLifetimeInDays;
 }

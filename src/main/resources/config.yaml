@@ -49,6 +49,7 @@ sheets:
   authorization:
     user-credentials-json: ""
     saving-tokens-dir: ""
+    token-lifetime-in-days: 5
   export:
     spreadsheetId: ""
     disk-range: ""
