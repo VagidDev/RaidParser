@@ -3,8 +3,6 @@ package com.unifun.raidparser.sheets;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
-import com.unifun.raidparser.config.GoogleSheetAuthorizationConfig;
-import com.unifun.raidparser.config.GoogleSheetExportConfig;
 import com.unifun.raidparser.dto.ReportServerData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,77 +10,42 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for {@link GoogleSheetsService}.
+ * Unit-тесты для {@link GoogleSheetsService}.
  *
- * <p>Используем Mockito для мокирования Google Sheets API (Sheets, Spreadsheets,
- * Values, Update) — реальных HTTP-запросов нет.
- *
- * <p>Зависимости (добавить в pom.xml / build.gradle, если ещё нет):
- * <pre>
- *   // JUnit 5
- *   org.junit.jupiter:junit-jupiter:5.10.x
- *   // Mockito
- *   org.mockito:mockito-core:5.x
- *   org.mockito:mockito-junit-jupiter:5.x
- *   // AssertJ
- *   org.assertj:assertj-core:3.x
- *   // Spring Test (для ReflectionTestUtils)
- *   org.springframework:spring-test:6.x
- * </pre>
+ * GoogleSheetsService принимает Sheets через поле (нет конструктора с Sheets),
+ * поэтому sheetsService инжектируется через ReflectionTestUtils.
+ * Все остальные зависимости не нужны — upload() их не использует.
  */
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 class GoogleSheetsServiceTest {
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Моки всей цепочки Google Sheets API:
-    //   sheetsService.spreadsheets().values().update(...).setValueInputOption(...).execute()
-    // ──────────────────────────────────────────────────────────────────────────
+    // Цепочка моков Google Sheets API:
+    // sheetsService.spreadsheets().values().update(...).setValueInputOption(...).execute()
+    @Mock private Sheets sheetsService;
+    @Mock private Sheets.Spreadsheets spreadsheets;
+    @Mock private Sheets.Spreadsheets.Values values;
+    @Mock private Sheets.Spreadsheets.Values.Update updateRequest;
 
-    @Mock
-    private Sheets sheetsService;
-
-    @Mock
-    private Sheets.Spreadsheets spreadsheets;
-
-    @Mock
-    private Sheets.Spreadsheets.Values values;
-
-    @Mock
-    private Sheets.Spreadsheets.Values.Update updateRequest;
-    @Mock
-    private GoogleSheetAuthorizationConfig googleSheetAuthorizationConfig;
-    @Mock
-    private GoogleSheetExportConfig googleSheetExportConfig;
-
-    @InjectMocks
-    private GoogleSheetsService exporter;
+    private GoogleSheetsService service;
 
     private static final String SPREADSHEET_ID = "test-spreadsheet-id-123";
-    private static final String RANGE            = "Sheet1!A1:C10";
+    private static final String RANGE           = "Sheet1!A1:C10";
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Тестовые данные
-    // ──────────────────────────────────────────────────────────────────────────
+    // ── Фабричные методы для тестовых данных ─────────────────────────────────
 
     private ReportServerData healthyServer() {
         return new ReportServerData("server-01", "OK", "");
@@ -96,18 +59,17 @@ class GoogleSheetsServiceTest {
         return new ReportServerData("server-03", "  WARNING  ", "  low memory  ");
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // setUp — пробрасываем sheetsService через рефлексию,
-    // так как initialize() вызывает GoogleNetHttpTransport и нам не нужен
-    // реальный HTTP-транспорт.
-    // ──────────────────────────────────────────────────────────────────────────
+    // ── setUp ─────────────────────────────────────────────────────────────────
 
     @BeforeEach
-    void setUp() throws IOException {
-        // Внедряем мок Sheets напрямую в private-поле, минуя initialize()
-        ReflectionTestUtils.setField(exporter, "sheetsService", sheetsService);
+    void setUp() {
+        service = new GoogleSheetsService();
+        // Sheets инжектируем через рефлексию — у сервиса нет конструктора с Sheets
+        ReflectionTestUtils.setField(service, "sheetsService", sheetsService);
+    }
 
-        // Настраиваем стандартную цепочку вызовов Google Sheets API
+    // Вспомогательный метод: настройка цепочки моков (только там где нужно)
+    private void setupSheetsMock() throws IOException {
         when(sheetsService.spreadsheets()).thenReturn(spreadsheets);
         when(spreadsheets.values()).thenReturn(values);
         when(values.update(anyString(), anyString(), any(ValueRange.class))).thenReturn(updateRequest);
@@ -115,22 +77,21 @@ class GoogleSheetsServiceTest {
     }
 
     // ══════════════════════════════════════════════════════════════════════════
-    //  Группа: exportToSheet — корректные сценарии
+    //  upload() — happy path
     // ══════════════════════════════════════════════════════════════════════════
 
     @Nested
-    @DisplayName("exportToSheet — happy path")
-    class ExportToSheetHappyPath {
+    @DisplayName("upload() — happy path")
+    class UploadHappyPath {
 
         @Test
         @DisplayName("Одна запись — данные отправляются корректно")
-        void singleRecord_sendsCorrectValues() throws Exception {
-            UpdateValuesResponse mockResponse = new UpdateValuesResponse();
-            when(updateRequest.execute()).thenReturn(mockResponse);
+        void singleRecord_sendsCorrectValues() throws IOException {
+            setupSheetsMock();
+            when(updateRequest.execute()).thenReturn(new UpdateValuesResponse());
 
-            invokeExportToSheet(SPREADSHEET_ID, RANGE, List.of(healthyServer()));
+            service.upload(SPREADSHEET_ID, RANGE, List.of(healthyServer()));
 
-            // Захватываем ValueRange, переданный в update()
             ArgumentCaptor<ValueRange> captor = ArgumentCaptor.forClass(ValueRange.class);
             verify(values).update(eq(SPREADSHEET_ID), eq(RANGE), captor.capture());
 
@@ -141,11 +102,11 @@ class GoogleSheetsServiceTest {
 
         @Test
         @DisplayName("Несколько записей — все строки попадают в таблицу")
-        void multipleRecords_allRowsSent() throws Exception {
+        void multipleRecords_allRowsSent() throws IOException {
+            setupSheetsMock();
             when(updateRequest.execute()).thenReturn(new UpdateValuesResponse());
 
-            invokeExportToSheet(SPREADSHEET_ID, RANGE,
-                    List.of(healthyServer(), unhealthyServer()));
+            service.upload(SPREADSHEET_ID, RANGE, List.of(healthyServer(), unhealthyServer()));
 
             ArgumentCaptor<ValueRange> captor = ArgumentCaptor.forClass(ValueRange.class);
             verify(values).update(eq(SPREADSHEET_ID), eq(RANGE), captor.capture());
@@ -158,62 +119,49 @@ class GoogleSheetsServiceTest {
 
         @Test
         @DisplayName("Пробелы в healthStatus и errorText обрезаются через trim()")
-        void whitespaceInFields_isTrimmed() throws Exception {
+        void whitespaceInFields_isTrimmed() throws IOException {
+            setupSheetsMock();
             when(updateRequest.execute()).thenReturn(new UpdateValuesResponse());
 
-            invokeExportToSheet(SPREADSHEET_ID, RANGE, List.of(serverWithWhitespace()));
+            service.upload(SPREADSHEET_ID, RANGE, List.of(serverWithWhitespace()));
 
             ArgumentCaptor<ValueRange> captor = ArgumentCaptor.forClass(ValueRange.class);
             verify(values).update(anyString(), anyString(), captor.capture());
 
             List<Object> row = captor.getValue().getValues().get(0);
-            assertThat(row.get(1)).isEqualTo("WARNING");     // trim применён
-            assertThat(row.get(2)).isEqualTo("low memory");  // trim применён
+            assertThat(row.get(1)).isEqualTo("WARNING");
+            assertThat(row.get(2)).isEqualTo("low memory");
         }
 
         @Test
         @DisplayName("ValueInputOption всегда RAW")
-        void valueInputOption_isRaw() throws Exception {
+        void valueInputOption_isRaw() throws IOException {
+            setupSheetsMock();
             when(updateRequest.execute()).thenReturn(new UpdateValuesResponse());
 
-            invokeExportToSheet(SPREADSHEET_ID, RANGE, List.of(healthyServer()));
+            service.upload(SPREADSHEET_ID, RANGE, List.of(healthyServer()));
 
             verify(updateRequest).setValueInputOption("RAW");
         }
 
         @Test
         @DisplayName("execute() вызывается ровно один раз")
-        void execute_calledExactlyOnce() throws Exception {
+        void execute_calledExactlyOnce() throws IOException {
+            setupSheetsMock();
             when(updateRequest.execute()).thenReturn(new UpdateValuesResponse());
 
-            invokeExportToSheet(SPREADSHEET_ID, RANGE, List.of(healthyServer(), unhealthyServer()));
+            service.upload(SPREADSHEET_ID, RANGE, List.of(healthyServer(), unhealthyServer()));
 
             verify(updateRequest, times(1)).execute();
-        }
-    }
-
-    // ══════════════════════════════════════════════════════════════════════════
-    //  Группа: exportToSheet — граничные случаи
-    // ══════════════════════════════════════════════════════════════════════════
-
-    @Nested
-    @DisplayName("exportToSheet — edge cases")
-    class ExportToSheetEdgeCases {
-
-        @Test
-        @DisplayName("Пустой range — метод завершается без вызова API")
-        void emptyRange_doesNotCallApi() throws Exception {
-            invokeExportToSheet(SPREADSHEET_ID, "", List.of(healthyServer()));
-
-            verifyNoInteractions(values);
         }
 
         @Test
         @DisplayName("Пустой список данных — в API передаётся пустой ValueRange")
-        void emptyDataList_sendsEmptyValueRange() throws Exception {
+        void emptyDataList_sendsEmptyValueRange() throws IOException {
+            setupSheetsMock();
             when(updateRequest.execute()).thenReturn(new UpdateValuesResponse());
 
-            invokeExportToSheet(SPREADSHEET_ID, RANGE, Collections.emptyList());
+            service.upload(SPREADSHEET_ID, RANGE, Collections.emptyList());
 
             ArgumentCaptor<ValueRange> captor = ArgumentCaptor.forClass(ValueRange.class);
             verify(values).update(eq(SPREADSHEET_ID), eq(RANGE), captor.capture());
@@ -222,11 +170,12 @@ class GoogleSheetsServiceTest {
 
         @Test
         @DisplayName("Пустые строки в полях DTO — передаются как пустые строки, не null")
-        void emptyStringFields_sentAsEmptyNotNull() throws Exception {
+        void emptyStringFields_sentAsEmptyNotNull() throws IOException {
+            setupSheetsMock();
             when(updateRequest.execute()).thenReturn(new UpdateValuesResponse());
-            ReportServerData blankData = new ReportServerData("server-X", "", "");
 
-            invokeExportToSheet(SPREADSHEET_ID, RANGE, List.of(blankData));
+            service.upload(SPREADSHEET_ID, RANGE,
+                    List.of(new ReportServerData("server-X", "", "")));
 
             ArgumentCaptor<ValueRange> captor = ArgumentCaptor.forClass(ValueRange.class);
             verify(values).update(anyString(), anyString(), captor.capture());
@@ -238,150 +187,96 @@ class GoogleSheetsServiceTest {
     }
 
     // ══════════════════════════════════════════════════════════════════════════
-    //  Группа: exportToSheet — обработка исключений
+    //  upload() — guard clauses (ранний выход при некорректных аргументах)
     // ══════════════════════════════════════════════════════════════════════════
 
     @Nested
-    @DisplayName("exportToSheet — exceptions")
-    class ExportToSheetExceptions {
+    @DisplayName("upload() — guard clauses")
+    class UploadGuardClauses {
+
+        @Test
+        @DisplayName("Пустой spreadsheetId — API не вызывается")
+        void emptySpreadsheetId_doesNotCallApi() throws IOException {
+            service.upload("", RANGE, List.of(healthyServer()));
+            verifyNoInteractions(sheetsService);
+        }
+
+        @Test
+        @DisplayName("Null spreadsheetId — API не вызывается")
+        void nullSpreadsheetId_doesNotCallApi() throws IOException {
+            service.upload(null, RANGE, List.of(healthyServer()));
+            verifyNoInteractions(sheetsService);
+        }
+
+        @Test
+        @DisplayName("Пустой range — API не вызывается")
+        void emptyRange_doesNotCallApi() throws IOException {
+            service.upload(SPREADSHEET_ID, "", List.of(healthyServer()));
+            verifyNoInteractions(sheetsService);
+        }
+
+        @Test
+        @DisplayName("Null range — API не вызывается")
+        void nullRange_doesNotCallApi() throws IOException {
+            service.upload(SPREADSHEET_ID, null, List.of(healthyServer()));
+            verifyNoInteractions(sheetsService);
+        }
+
+        @Test
+        @DisplayName("Null список данных — API не вызывается")
+        void nullDataList_doesNotCallApi() throws IOException {
+            service.upload(SPREADSHEET_ID, RANGE, null);
+            verifyNoInteractions(sheetsService);
+        }
+
+        @Test
+        @DisplayName("Пробельный spreadsheetId — API не вызывается")
+        void blankSpreadsheetId_doesNotCallApi() throws IOException {
+            service.upload("   ", RANGE, List.of(healthyServer()));
+            verifyNoInteractions(sheetsService);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  upload() — exceptions
+    // ══════════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("upload() — exceptions")
+    class UploadExceptions {
 
         @Test
         @DisplayName("IOException от execute() пробрасывается наверх")
-        void ioExceptionFromExecute_isPropagated() throws Exception {
+        void ioExceptionFromExecute_isPropagated() throws IOException {
+            setupSheetsMock();
             when(updateRequest.execute()).thenThrow(new IOException("Network error"));
 
-            // exportToSheet — private, вызываем через рефлексию.
-            // Ожидаем, что IOException всплывёт (не проглатывается внутри метода).
-            var method = GoogleSheetsService.class
-                    .getDeclaredMethod("exportToSheet", String.class, String.class, List.class);
-            method.setAccessible(true);
-
-            var ex = org.junit.jupiter.api.Assertions.assertThrows(
-                    java.lang.reflect.InvocationTargetException.class,
-                    () -> method.invoke(exporter, SPREADSHEET_ID, RANGE, List.of(healthyServer()))
-            );
-            assertThat(ex.getCause()).isInstanceOf(IOException.class)
+            assertThatThrownBy(() -> service.upload(SPREADSHEET_ID, RANGE, List.of(healthyServer())))
+                    .isInstanceOf(IOException.class)
                     .hasMessageContaining("Network error");
         }
 
         @Test
         @DisplayName("RuntimeException от execute() пробрасывается наверх")
-        void runtimeExceptionFromExecute_isPropagated() throws Exception {
+        void runtimeExceptionFromExecute_isPropagated() throws IOException {
+            setupSheetsMock();
             when(updateRequest.execute()).thenThrow(new RuntimeException("Unexpected error"));
 
-            var method = GoogleSheetsService.class
-                    .getDeclaredMethod("exportToSheet", String.class, String.class, List.class);
-            method.setAccessible(true);
-
-            var ex = org.junit.jupiter.api.Assertions.assertThrows(
-                    java.lang.reflect.InvocationTargetException.class,
-                    () -> method.invoke(exporter, SPREADSHEET_ID, RANGE, List.of(healthyServer()))
-            );
-            assertThat(ex.getCause()).isInstanceOf(RuntimeException.class)
+            assertThatThrownBy(() -> service.upload(SPREADSHEET_ID, RANGE, List.of(healthyServer())))
+                    .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("Unexpected error");
         }
 
         @Test
         @DisplayName("IOException при values.update() пробрасывается наверх")
-        void ioExceptionFromValuesUpdate_isPropagated() throws Exception {
+        void ioExceptionFromValuesUpdate_isPropagated() throws IOException {
+            setupSheetsMock();
             when(values.update(anyString(), anyString(), any(ValueRange.class)))
                     .thenThrow(new IOException("Sheets API unreachable"));
 
-            var method = GoogleSheetsService.class
-                    .getDeclaredMethod("exportToSheet", String.class, String.class, List.class);
-            method.setAccessible(true);
-
-            var ex = org.junit.jupiter.api.Assertions.assertThrows(
-                    java.lang.reflect.InvocationTargetException.class,
-                    () -> method.invoke(exporter, SPREADSHEET_ID, RANGE, List.of(healthyServer()))
-            );
-            assertThat(ex.getCause()).isInstanceOf(IOException.class)
+            assertThatThrownBy(() -> service.upload(SPREADSHEET_ID, RANGE, List.of(healthyServer())))
+                    .isInstanceOf(IOException.class)
                     .hasMessageContaining("Sheets API unreachable");
         }
-    }
-
-    // ══════════════════════════════════════════════════════════════════════════
-    //  Группа: export() — публичный метод (обёртка с try-catch)
-    // ══════════════════════════════════════════════════════════════════════════
-
-    @Nested
-    @DisplayName("export() — public wrapper")
-    class ExportPublicMethod {
-
-        @Test
-        @DisplayName("export() не бросает исключений (всё внутри try-catch)")
-        void export_doesNotThrowAnyException() {
-            // export() содержит пустой try-catch — убеждаемся, что он не падает
-            assertThatCode(() -> exporter.export(ServerDataType.HARD_DRIVE_DATA, Collections.emptyList()))
-                    .doesNotThrowAnyException();
-        }
-    }
-
-    // ══════════════════════════════════════════════════════════════════════════
-    //  Группа: removeOldCredentials()
-    // ══════════════════════════════════════════════════════════════════════════
-
-    @Nested
-    @DisplayName("removeOldCredentials()")
-    class RemoveOldCredentials {
-
-        @Test
-        @DisplayName("Существующие файлы credentials удаляются")
-        void existingCredentials_areDeleted() throws Exception {
-            // Создаём временную директорию с файлами
-            Path tmpDir = Files.createTempDirectory("test-tokens");
-            Path file1 = Files.createFile(tmpDir.resolve("StoredCredential"));
-            Path file2 = Files.createFile(tmpDir.resolve("StoredCredential.lock"));
-
-            // Пробрасываем путь через рефлексию (Path.of(null) — баг в текущем коде,
-            // фиксируем поведение после передачи реального пути)
-            var method = GoogleSheetsService.class
-                    .getDeclaredMethod("removeOldCredentials", String.class);
-            method.setAccessible(true);
-
-            // Подменяем null-путь на реальный через рефлексию внутри метода —
-            // поскольку path захардкожен как Path.of(null), тест документирует
-            // текущий баг: метод выбросит NullPointerException.
-            // TODO: После фикса (передача реального пути через конфиг) заменить на:
-            //   method.invoke(exporter);
-            //   assertThat(file1).doesNotExist();
-            method.invoke(exporter, tmpDir.toAbsolutePath().toString());
-            assertThat(file1).doesNotExist();
-            assertThat(file2).doesNotExist();
-
-            // Cleanup
-            Files.deleteIfExists(file1);
-            Files.deleteIfExists(file2);
-            Files.deleteIfExists(tmpDir);
-        }
-
-        @Test
-        @DisplayName("removeOldCredentials() с несуществующим путём не падает с NPE — документируем баг Path.of(null)")
-        void nullPath_throwsNullPointerException() throws Exception {
-            var method = GoogleSheetsService.class
-                    .getDeclaredMethod("removeOldCredentials", String.class);
-            method.setAccessible(true);
-
-            // Текущая реализация: Path.of(null) → NullPointerException
-            // Этот тест фиксирует баг и служит регрессионным тестом
-            var ex = org.junit.jupiter.api.Assertions.assertThrows(
-                    java.lang.reflect.InvocationTargetException.class,
-                    () -> method.invoke(exporter, (Object) null)
-            );
-            assertThat(ex.getCause()).isInstanceOf(NullPointerException.class);
-        }
-    }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Вспомогательный метод: вызов private exportToSheet() через рефлексию
-    // ──────────────────────────────────────────────────────────────────────────
-
-    private void invokeExportToSheet(String spreadsheetId,
-                                     String range,
-                                     List<ReportServerData> data) throws Exception {
-        var method = GoogleSheetsService.class
-                .getDeclaredMethod("exportToSheet", String.class, String.class, List.class);
-        method.setAccessible(true);
-        method.invoke(exporter, spreadsheetId, range, data);
     }
 }

@@ -10,12 +10,12 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
+import com.unifun.raidparser.util.GoogleTokenManager;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,14 +24,8 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.security.GeneralSecurityException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Configuration
 @RequiredArgsConstructor
@@ -39,6 +33,7 @@ public class GoogleSheetConfig {
     private static final Logger LOGGER = LogManager.getLogger(GoogleSheetConfig.class);
     private static final String APPLICATION_NAME = "Google Sheets Server Status Exporter";
     private final GoogleSheetAuthorizationConfig authorizationConfig;
+    private final GoogleTokenManager googleTokenManager;
 
     @Bean
     public Sheets sheetsService() throws GeneralSecurityException, IOException {
@@ -49,6 +44,10 @@ public class GoogleSheetConfig {
     }
 
     private Credential getCredentials(NetHttpTransport httpTransport) throws IOException {
+        if (!googleTokenManager.ensureActualityOfToken(authorizationConfig.getSavingTokensDir(), authorizationConfig.getTokenLifetimeInDays())) {
+            throw new IOException(String.format("Cannot ensure actuality of token in directory %s", authorizationConfig.getSavingTokensDir()));
+        }
+
         InputStream in = Files.newInputStream(
                 Path.of(authorizationConfig.getUserCredentialsJson()), StandardOpenOption.READ);
         GoogleClientSecrets clientSecrets =
@@ -66,45 +65,5 @@ public class GoogleSheetConfig {
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
-    private boolean ensureActualityOfToken(String tokenDir) {
-        if (!StringUtils.hasText(tokenDir)) {
-            LOGGER.warn("Cannot ensure token validity in directory `{}`", tokenDir);
-            return false;
-        }
 
-        Path tokenDirPath = Path.of(tokenDir);
-
-        try (Stream<Path> storedTokens = Files.walk(tokenDirPath)) {
-            Path token = storedTokens
-                    .filter(path -> path.compareTo(tokenDirPath) != 0)
-                    .findFirst()
-                    .orElse(null);
-
-            if (token == null) {
-                LOGGER.info("Token in directory `{}` does not exists, can create new token", tokenDirPath);
-                return true;
-            }
-
-            BasicFileAttributes attributes = Files.readAttributes(token, BasicFileAttributes.class);
-            LocalDateTime creationDateTime = LocalDateTime.ofInstant(attributes.creationTime().toInstant(), ZoneId.systemDefault());
-            LocalDateTime today = LocalDateTime.now();
-
-            if (authorizationConfig.getTokenLifetimeInDays() > ChronoUnit.DAYS.between(creationDateTime, today)) {
-                LOGGER.info("Token `{}` is valid. Token creation time -> {}", token, creationDateTime.format(DateTimeFormatter.ISO_DATE_TIME));
-                return true;
-            }
-
-            boolean isDeleted = Files.deleteIfExists(token);
-            if (isDeleted) {
-                LOGGER.info("Token was deleted: {} ", token.getFileName());
-                return true;
-            } else {
-                LOGGER.error("Cannot delete Token: {}", token.getFileName());
-                return false;
-            }
-        } catch (IOException e) {
-            LOGGER.error("Input/Output exception while deleting old credential! Path to token -> {}, StackTrace -> {}", tokenDirPath, e.getMessage(), e);
-            return false;
-        }
-    }
 }
