@@ -39,7 +39,7 @@ public class GoogleTokenManager {
             }
 
             BasicFileAttributes attributes = Files.readAttributes(token, BasicFileAttributes.class);
-            LocalDateTime creationDateTime = LocalDateTime.ofInstant(attributes.creationTime().toInstant(), ZoneId.systemDefault());
+            LocalDateTime creationDateTime = LocalDateTime.ofInstant(attributes.lastModifiedTime().toInstant(), ZoneId.systemDefault());
             LocalDateTime today = LocalDateTime.now();
 
             if (tokenLifetimeDays > ChronoUnit.DAYS.between(creationDateTime, today)) {
