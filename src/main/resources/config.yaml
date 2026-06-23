@@ -34,6 +34,10 @@ raid:
       drive-status: "./status/drive-status.txt"
       psu-status: "./status/psu-status.txt"
       battery-status: "./status/battery-status.txt"
+    cache:
+      drive-status-age-seconds: 3600
+      power-supply-status-age-seconds: 3600
+      battery-status-age-seconds: 3600
 host-overview:
   loader:
     login: testuser
