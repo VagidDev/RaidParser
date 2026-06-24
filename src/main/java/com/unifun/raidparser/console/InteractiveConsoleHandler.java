@@ -1,6 +1,13 @@
 package com.unifun.raidparser.console;
 
+import com.unifun.raidparser.config.OutputStatusFileConfig;
+import com.unifun.raidparser.core.filters.battery.BatteryStatus;
+import com.unifun.raidparser.core.filters.driver.DriverStatus;
+import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
 import com.unifun.raidparser.dto.DateParseResponse;
+import com.unifun.raidparser.exporter.FileExporter;
+import com.unifun.raidparser.exporter.GoogleSheetExporter;
+import com.unifun.raidparser.handlers.ParsedRaidStatusDataHandler;
 import com.unifun.raidparser.parser.DateParser;
 import com.unifun.raidparser.service.RaidParserService;
 import com.unifun.raidparser.service.SftpFileService;
@@ -17,8 +24,13 @@ import java.util.Scanner;
 @RequiredArgsConstructor
 public class InteractiveConsoleHandler {
     private final static Logger LOGGER = LogManager.getLogger(InteractiveConsoleHandler.class);
+    //Configs
+    private final OutputStatusFileConfig outputStatusFileConfig;
 
-    private final RaidParserService raidParserService;
+    //Services
+    private final ParsedRaidStatusDataHandler parsedRaidStatusDataHandler;
+    private final FileExporter fileExporter;
+    private final GoogleSheetExporter googleSheetExporter;
     private final SftpFileService sftpFileService;
     private final DateParser dateParser;
 
@@ -94,7 +106,8 @@ public class InteractiveConsoleHandler {
             System.out.println("доступные команды:");
             System.out.println(" [1] parse  - Парсинг отчета (Drive, PSU, Battery)");
             System.out.println(" [2] check  - Ручная проверка RAID Health");
-            System.out.println(" [3] export - Экспорт в Google Sheets");
+            System.out.println(" [3] file-export - Экспорт в статус-файлы");
+            System.out.println(" [4] sheets-export - Экспорт в Google Sheets");
             System.out.println(" [back]     - Выбрать другой файл/дату");
             System.out.println(" [exit]     - Выйти из программы");
             System.out.print("> ");
@@ -104,7 +117,8 @@ public class InteractiveConsoleHandler {
             switch (input) {
                 case "1", "parse" -> executeParsing(reportFilePath);
                 case "2", "check" -> printMsg("Функция 'check' в разработке...");
-                case "3", "export" -> printMsg("Функция 'export' в разработке...");
+                case "3", "file-export" -> exportToFile(reportFilePath);
+                case "4", "sheets-export" -> exportToGoogleSheets(reportFilePath);
                 case "back" -> { return false; }
                 case "exit", "stop" -> System.exit(0);
                 default -> printError("Неизвестная команда. Попробуйте еще раз.");
@@ -116,10 +130,9 @@ public class InteractiveConsoleHandler {
         printMsg("Запуск процесса парсинга...");
 
         try {
-            LOGGER.warn("Not implemented yet");
-            int drives = 0;//raidParserService.writeSortedDriveStatusToFile(reportFilePath);
-            int psu = 0;//raidParserService.writeSortedPowerSupplyUnitStatusToFile(reportFilePath);
-            int battery = 0;//raidParserService.writeSortedBatteryStatusToFile(reportFilePath);
+            int drives = parsedRaidStatusDataHandler.getSortedDriveStatus(reportFilePath).size();
+            int psu = parsedRaidStatusDataHandler.getSortedPowerSupplyStatus(reportFilePath).size();
+            int battery = parsedRaidStatusDataHandler.getSortedBatteryStatus(reportFilePath).size();
 
             System.out.println("----------------------------------------------------");
             printMsg("РЕЗУЛЬТАТЫ ПАРСИНГА:");
@@ -135,10 +148,34 @@ public class InteractiveConsoleHandler {
         }
     }
 
+    private void exportToFile(Path reportFilePath) {
+        printMsg("Запуск процесса экспорта в файл...");
+
+        Path driveFileStatusPath = Path.of(outputStatusFileConfig.getDriveStatus());
+        Path powerSupplyFileStatusPath = Path.of(outputStatusFileConfig.getPsuStatus());
+        Path batteryFileStatusPath = Path.of(outputStatusFileConfig.getBatteryStatus());
+
+        fileExporter.export(driveFileStatusPath, parsedRaidStatusDataHandler.getSortedDriveStatus(reportFilePath));
+        fileExporter.export(powerSupplyFileStatusPath, parsedRaidStatusDataHandler.getSortedPowerSupplyStatus(reportFilePath));
+        fileExporter.export(batteryFileStatusPath, parsedRaidStatusDataHandler.getSortedBatteryStatus(reportFilePath));
+
+        printMsg(String.format("Данные успешно экспортированы в файлы: %s | %s | %s", driveFileStatusPath, powerSupplyFileStatusPath, batteryFileStatusPath));
+    }
+
+    private void exportToGoogleSheets(Path reportFilePath) {
+        printMsg("Запуск процесса экспорта в Google Sheets...");
+
+        googleSheetExporter.export(parsedRaidStatusDataHandler.getSortedDriveStatus(reportFilePath), DriverStatus.class);
+        googleSheetExporter.export(parsedRaidStatusDataHandler.getSortedPowerSupplyStatus(reportFilePath), PowerSupplyStatus.class);
+        googleSheetExporter.export(parsedRaidStatusDataHandler.getSortedBatteryStatus(reportFilePath), BatteryStatus.class);
+
+        printMsg("Данные успешно экспортированы в Google Sheets!");
+    }
+
     // Вспомогательные методы для красоты
     private void printHeader() {
         System.out.println("\n" + LOGO);
-        System.out.println("             System Administration Tool v1.0");
+        System.out.println("             System Administration Tool v4.0");
         System.out.println(SEPARATOR);
     }
 

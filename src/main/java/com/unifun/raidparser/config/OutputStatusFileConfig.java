@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties("raid.parser.output-files")
 @Getter @Setter
 public class OutputStatusFileConfig {
-    private String driveStatus;
-    private String psuStatus;
-    private String batteryStatus;
+    private String driveStatus = "drive_status.txt";
+    private String psuStatus = "psu_status.txt";
+    private String batteryStatus = "battery_status.txt";
 }

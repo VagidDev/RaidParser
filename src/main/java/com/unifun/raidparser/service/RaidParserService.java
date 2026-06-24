@@ -1,6 +1,5 @@
 package com.unifun.raidparser.service;
 
-import com.unifun.raidparser.config.OutputStatusFileConfig;
 import com.unifun.raidparser.dto.ServerData;
 import com.unifun.raidparser.dto.ServerStatus;
 import com.unifun.raidparser.parser.ReportFileParser;
@@ -26,10 +25,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class RaidParserService {
     private static final Logger LOGGER = LogManager.getLogger(RaidParserService.class);
-    private final OutputStatusFileConfig outputStatusFileConfig;
 
     private final ServerDataHandler serverDataHandler;
-    private final ReportFileParser reportFileParser;
 
     private final DriveAnalyzer driveAnalyzer;
     private final PowerSupplyAnalyzer powerSupplyAnalyzer;
