@@ -67,7 +67,8 @@ class GoogleSheetsServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GoogleSheetsService();
+        // заглушка для Sheets
+        service = new GoogleSheetsService(null);
         // Sheets инжектируем через рефлексию — у сервиса нет конструктора с Sheets
         ReflectionTestUtils.setField(service, "sheetsService", sheetsService);
     }

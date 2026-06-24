@@ -3,6 +3,7 @@ package com.unifun.raidparser.service;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.*;
 import com.unifun.raidparser.dto.ReportServerData;
+import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -12,9 +13,10 @@ import java.io.*;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class GoogleSheetsService {
     private static final Logger LOGGER = LogManager.getLogger(GoogleSheetsService.class);
-    private Sheets sheetsService;
+    private final Sheets sheetsService;
 
     public void upload(String spreadsheetId, String range, List<ReportServerData> reportServerDataList) throws IOException {
         if (!StringUtils.hasText(spreadsheetId) || !StringUtils.hasText(range) || reportServerDataList == null) {
