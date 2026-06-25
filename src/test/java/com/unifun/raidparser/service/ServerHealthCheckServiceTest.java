@@ -3,6 +3,7 @@ package com.unifun.raidparser.service;
 import com.unifun.raidparser.config.ServersToCheckConfig;
 import com.unifun.raidparser.config.SshUserConfig;
 import com.unifun.raidparser.dto.HostInformation;
+import com.unifun.raidparser.dto.ServerData;
 import com.unifun.raidparser.dto.ServerTask;
 import com.unifun.raidparser.handlers.ServersToCheckConfigFileDataHandler;
 import com.unifun.raidparser.util.RemoteCommandExecutor;
@@ -55,11 +56,11 @@ class ServerHealthCheckServiceTest {
         when(serversToCheckConfig.getProxyServerIp())
                 .thenReturn("127.0.0.1");
 
-        List<ServerTask> completedTasks = serverHealthCheckService.checkServers();
+        List<ServerData> completedTasks = serverHealthCheckService.checkServers();
 
         assertFalse(completedTasks.isEmpty());
-        System.out.println("Command output: " + completedTasks.get(0).getCommandOutput());
-        assertTrue(completedTasks.get(0).getCommandOutput().contains("Hello world!"));
+        System.out.println("Command output: " + completedTasks.get(0).healthData());
+        assertTrue(completedTasks.get(0).healthData().contains("Hello world!"));
     }
 
     @Test
@@ -96,10 +97,10 @@ class ServerHealthCheckServiceTest {
                 hostOverviewService
         );
 
-        List<ServerTask> result = serverHealthCheckService.checkServers();
+        List<ServerData> result = serverHealthCheckService.checkServers();
 
         assertEquals(1, result.size());
-        assertEquals("Server uptime", result.get(0).getCommandOutput());
+        assertEquals("Server uptime", result.get(0).healthData());
 
         verify(executorMock).execute("192.168.1.10", 22, "uptime");
     }
@@ -115,7 +116,7 @@ class ServerHealthCheckServiceTest {
         when(hostOverviewService.getPhysicalServerWithCorrectPortByName(anyString()))
                 .thenReturn(null);
 
-        List<ServerTask> result = serverHealthCheckService.checkServers();
+        List<ServerData> result = serverHealthCheckService.checkServers();
 
         assertEquals(0, result.size());
     }

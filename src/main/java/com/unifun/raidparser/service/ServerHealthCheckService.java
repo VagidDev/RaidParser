@@ -2,6 +2,7 @@ package com.unifun.raidparser.service;
 
 import com.unifun.raidparser.config.ServersToCheckConfig;
 import com.unifun.raidparser.dto.HostInformation;
+import com.unifun.raidparser.dto.ServerData;
 import com.unifun.raidparser.dto.ServerTask;
 import com.unifun.raidparser.handlers.ServersToCheckConfigFileDataHandler;
 import com.unifun.raidparser.util.RemoteCommandExecutor;
@@ -25,7 +26,7 @@ public class ServerHealthCheckService {
     private final ServersToCheckConfig serversToCheckConfig;
     private final HostOverviewService hostOverviewService;
 
-    public List<ServerTask> checkServers() {
+    public List<ServerData> checkServers() {
         List<ServerTask> serverTasks = serversToCheckConfigFileDataHandler.getServerTasks();
         if (serverTasks == null) {
             LOGGER.warn("No tasks to check!");
@@ -56,7 +57,7 @@ public class ServerHealthCheckService {
                 ));
     }
 
-    private ServerTask checkServer(ServerTask serverTask, HostInformation hostInformation){
+    private ServerData checkServer(ServerTask serverTask, HostInformation hostInformation){
         String commandOutput = "";
         if (hostInformation.getConnectionType().equalsIgnoreCase("proxy"))
             commandOutput = remoteCommandExecutor.execute(
@@ -71,9 +72,8 @@ public class ServerHealthCheckService {
                     serverTask.getCommandToExecute()
             );
         // I made this instead of simple editing of existing object so it will be more logically and easier to understand
-        return new ServerTask(
+        return new ServerData(
                 serverTask.getHostName(),
-                serverTask.getCommandToExecute(),
                 commandOutput
         );
     }

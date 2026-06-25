@@ -42,6 +42,8 @@ public class RaidParserService {
     private final ServerDataSorter<PowerSupplyStatus> powerSupplyStatusDataSorter;
     private final ServerDataSorter<BatteryStatus> batteryStatusDataSorter;
 
+    private final ServerHealthCheckService serverHealthCheckService;
+
     public List<ServerStatus<DriverStatus>> getSortedDrivesStatus(Path reportFilePath) {
         List<ServerData> serversData = serverDataHandler.getServerData(reportFilePath);
         List<ServerStatus<DriverStatus>> driveServerStatuses = driverStatusRaidParser.getParsedData(serversData, driveAnalyzer);
@@ -59,58 +61,20 @@ public class RaidParserService {
         List<ServerStatus<BatteryStatus>> batteryServerStatuses = batteryStatusRaidParser.getParsedData(serversData, batteryAnalyzer);
         return batteryStatusDataSorter.sortByStatus(batteryServerStatuses);
     }
-/*
-    public int writeSortedDriveStatusToFile(Path reportFilePath, Path driveStatusFilePath) {
-        List<Map.Entry<String, AnalyzeResponse<DriverStatus>>> sortedDriveStatus = getSortedDrivesStatus(reportFilePath);
-        raidParserDataHandler.writeData(driveStatusFilePath, sortedDriveStatus);
-        return sortedDriveStatus.size();
-    }
 
-    public int writeSortedPowerSupplyUnitStatusToFile(Path reportFilePath, Path psuStatusFilePath) {
-        List<Map.Entry<String, AnalyzeResponse<PowerSupplyStatus>>> sortedPowerSuppliesStatus = getSortedPowerSuppliesStatus(reportFilePath);
-        raidParserDataHandler.writeData(psuStatusFilePath, sortedPowerSuppliesStatus);
-        return sortedPowerSuppliesStatus.size();
-    }
+    public List<ServerStatus<DriverStatus>> getManualDriverStatus() {
+        List<ServerData> serverHealthDataList = serverHealthCheckService.checkServers();
+        List<ServerStatus<DriverStatus>> driverManualStatus = new ArrayList<>(serverHealthDataList.size());
 
-    public int writeSortedBatteryStatusToFile(Path reportFilePath, Path baterryStatusFilePath) {
-        List<Map.Entry<String, AnalyzeResponse<BatteryStatus>>> sortedBatteriesStatus = getSortedBatteriesStatus(reportFilePath);
-        raidParserDataHandler.writeData(baterryStatusFilePath, sortedBatteriesStatus);
-        return sortedBatteriesStatus.size();
-    }
+        for (ServerData serverHealthData : serverHealthDataList) {
+            driverManualStatus.add(
+                    new ServerStatus<>(
+                            serverHealthData.serverName(),
+                            driveManualAnalyzer.analyze(serverHealthData.healthData())
+                    )
+            );
+        }
 
-    public int writeSortedDriveStatusToFile(Path reportFilePath) {
-        Path driveStatusFilePath = Path.of(outputStatusFileConfig.getDriveStatus());
-        return writeSortedDriveStatusToFile(reportFilePath, driveStatusFilePath);
+        return driverManualStatus;
     }
-
-    public int writeSortedPowerSupplyUnitStatusToFile(Path reportFilePath) {
-        Path psuStatusFilePath = Path.of(outputStatusFileConfig.getPsuStatus());
-        return writeSortedPowerSupplyUnitStatusToFile(reportFilePath, psuStatusFilePath);
-    }
-
-    public int writeSortedBatteryStatusToFile(Path reportFilePath) {
-        Path baterryStatusFilePath = Path.of(outputStatusFileConfig.getBatteryStatus());
-        return writeSortedBatteryStatusToFile(reportFilePath, baterryStatusFilePath);
-    }
-*/
 }
-//    public List<Map.Entry<String, AnalyzeResponse<DriverStatus>>> getSortedDrivesStatusWithManualServers(String reportPath) {
-//        Map<String, String> serversData = serverDataHandler.getServerData(reportPath);
-//        Map<String, AnalyzeResponse<DriverStatus>> driveServerStatuses = driverStatusRaidParser.getParsedData(serversData, driveAnalyzer);
-//        return driverStatusDataSorter.sortByStatus(driveServerStatuses);
-//    }
-
-//        Map<String, String> manualServersData = ServerHealthCheckService.start();
-//        Map<String, AnalyzeResponse<DriverStatus>> manualDriveServerStatuses = driverStatusRaidParser.getParsedData(manualServersData, driveManualAnalyzer);
-//Merging of statuses from manual Analyzer and default Analyzer
-//        manualDriveServerStatuses.forEach((server, status) -> {
-//            driveServerStatuses.merge(server, status, (currentStatus, newStatus) -> {
-//                if (newStatus.getStatus() == DriverStatus.INTERIM_RECOVERY_MODE) {
-//                    return newStatus;
-//                } else if (newStatus.getStatus() == DriverStatus.EMPTY || newStatus.getStatus() == DriverStatus.UNKNOW) {
-//                    return currentStatus;
-//                } else {
-//                    return newStatus;
-//                }
-//            });
-//        });
