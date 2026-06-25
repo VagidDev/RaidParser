@@ -13,7 +13,7 @@ public class FileChecker {
     private static final Logger LOGGER = LogManager.getLogger(FileChecker.class);
     public boolean ensureFileExists(Path file) {
         if (Files.exists(file)) {
-            LOGGER.info("File exists!");
+            LOGGER.info("File {} exists!", file);
             return true;
         }
         LOGGER.warn("File does not exists! Creating file {}", file);
@@ -29,7 +29,7 @@ public class FileChecker {
     }
 
     public boolean ensureDirectoryExists(Path directory) {
-        if (Files.exists(directory)) {
+        if (Files.isDirectory(directory)) {
             LOGGER.info("Directory {} exists", directory);
             return true;
         }

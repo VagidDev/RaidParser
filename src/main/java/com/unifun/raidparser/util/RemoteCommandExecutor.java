@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.*;
 import java.util.List;
@@ -85,7 +86,7 @@ public class RemoteCommandExecutor {
 
     private Session initSession(String host, int port) throws JSchException {
         JSch jsch = new JSch();
-        if (sshUserConfig.getPrivateKey() != null) {
+        if (StringUtils.hasText(sshUserConfig.getPrivateKey())) {
             LOGGER.info("Setting private key for ssh connection to {} via port {}", host, port);
             jsch.addIdentity(sshUserConfig.getPrivateKey());
         }
