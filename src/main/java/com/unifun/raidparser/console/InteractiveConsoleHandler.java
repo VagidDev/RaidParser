@@ -5,6 +5,7 @@ import com.unifun.raidparser.core.filters.battery.BatteryStatus;
 import com.unifun.raidparser.core.filters.driver.DriverStatus;
 import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
 import com.unifun.raidparser.dto.DateParseResponse;
+import com.unifun.raidparser.dto.ServerStatus;
 import com.unifun.raidparser.exporter.FileExporter;
 import com.unifun.raidparser.exporter.GoogleSheetExporter;
 import com.unifun.raidparser.handlers.ParsedRaidStatusDataHandler;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Scanner;
 
 @Component
@@ -116,7 +118,7 @@ public class InteractiveConsoleHandler {
 
             switch (input) {
                 case "1", "parse" -> executeParsing(reportFilePath);
-                case "2", "check" -> printMsg("Функция 'check' в разработке...");
+                case "2", "check" -> executeChecking(reportFilePath);
                 case "3", "file-export" -> exportToFile(reportFilePath);
                 case "4", "sheets-export" -> exportToGoogleSheets(reportFilePath);
                 case "back" -> { return false; }
@@ -146,6 +148,23 @@ public class InteractiveConsoleHandler {
             printError("Ошибка при парсинге: " + e.getMessage());
             LOGGER.error("Parsing error", e);
         }
+    }
+
+    private void executeChecking(Path reportFilePath) {
+        printMsg("Запуск процесса сбора полного статуса дисков...");
+        List<ServerStatus<DriverStatus>> fullDriveStatus = parsedRaidStatusDataHandler.getSortedFullDriveStatus(reportFilePath);
+        printMsg("Печатаю текущий статус ниже:");
+
+        fullDriveStatus.forEach(serverStatus -> printMsg(
+                        String.format(
+                                "Сервер: %s -> Статус: %s -> Текст статуса %s",
+                                serverStatus.serverName(),
+                                serverStatus.analyzeResponse().getStatus().getName(),
+                                serverStatus.analyzeResponse().getErrorText()
+                        )
+                )
+        );
+        printMsg("Статус собран!");
     }
 
     private void exportToFile(Path reportFilePath) {

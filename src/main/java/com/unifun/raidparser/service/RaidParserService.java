@@ -2,7 +2,6 @@ package com.unifun.raidparser.service;
 
 import com.unifun.raidparser.dto.ServerData;
 import com.unifun.raidparser.dto.ServerStatus;
-import com.unifun.raidparser.parser.ReportFileParser;
 import com.unifun.raidparser.parser.RaidStatusParser;
 import com.unifun.raidparser.core.analyzer.BatteryAnalyzer;
 import com.unifun.raidparser.core.analyzer.DriveAnalyzer;
@@ -76,5 +75,35 @@ public class RaidParserService {
         }
 
         return driverManualStatus;
+    }
+
+    public List<ServerStatus<DriverStatus>> getSortedFullDriveStatus(Path reportFilePath) {
+        List<ServerData> serversData = serverDataHandler.getServerData(reportFilePath);
+        List<ServerStatus<DriverStatus>> driveServerStatuses = driverStatusRaidParser.getParsedData(serversData, driveAnalyzer);
+        List<ServerStatus<DriverStatus>> manualServerStatuses = getManualDriverStatus();
+
+        driveServerStatuses.replaceAll(serverReportStatus -> {
+                    ServerStatus<DriverStatus> manualServerStatus = manualServerStatuses.stream()
+                            .filter(mss -> mss.serverName().contains(serverReportStatus.serverName()))
+                            .findFirst()
+                            .orElse(null);
+                    if (manualServerStatus == null) {
+                        return serverReportStatus;
+                    } else if (manualServerStatus.analyzeResponse().getStatus().getPriority() > serverReportStatus.analyzeResponse().getStatus().getPriority()) {
+                        LOGGER.info(
+                                "Replacing existing server status {} for server {} with manual checked. Manual checked server status is {}",
+                                serverReportStatus.serverName(),
+                                serverReportStatus.analyzeResponse().getStatus().getName(),
+                                manualServerStatus.analyzeResponse().getStatus().getName()
+                        );
+                        return manualServerStatus;
+                    } else {
+                        return serverReportStatus;
+                    }
+
+                }
+        );
+
+        return driverStatusDataSorter.sortByStatus(driveServerStatuses);
     }
 }
