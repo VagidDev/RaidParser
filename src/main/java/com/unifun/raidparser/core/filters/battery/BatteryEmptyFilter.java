@@ -11,6 +11,6 @@ public class BatteryEmptyFilter extends EmptyFilter<BatteryStatus> implements Ba
 
     @Override
     protected AnalyzeResponse<BatteryStatus> getInvalidResponse() {
-        return new AnalyzeResponse<>(BatteryStatus.EMPTY, "Empty configuration! Please check configuration manually\n");
+        return new AnalyzeResponse<>(BatteryStatus.EMPTY, "Empty configuration! Please check configuration manually");
     }
 }

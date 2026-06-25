@@ -12,6 +12,6 @@ public class BatteryOkFilter extends AbstractFilter<BatteryStatus> implements Ba
             return new AnalyzeResponse<>(BatteryStatus.OK, "");
         }
 
-        return new AnalyzeResponse<>(BatteryStatus.UNKNOWN, "Cannot read config, please check it manually\n");
+        return new AnalyzeResponse<>(BatteryStatus.UNKNOWN, "Cannot read config, please check it manually");
     }
 }

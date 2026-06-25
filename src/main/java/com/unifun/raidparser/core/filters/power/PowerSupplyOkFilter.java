@@ -9,6 +9,6 @@ public class PowerSupplyOkFilter extends AbstractFilter<PowerSupplyStatus> imple
         if ((text.contains("condition: ok") && text.contains("redundant: yes")) || text.contains("fully redundant")) {
             return new AnalyzeResponse<>(PowerSupplyStatus.OK, "");
         }
-        return new AnalyzeResponse<>(PowerSupplyStatus.UNKNOWN, "Some error in configuration, please check manually\n");
+        return new AnalyzeResponse<>(PowerSupplyStatus.UNKNOWN, "Some error in configuration, please check manually");
     }
 }

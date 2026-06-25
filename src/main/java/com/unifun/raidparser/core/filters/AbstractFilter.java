@@ -2,6 +2,7 @@ package com.unifun.raidparser.core.filters;
 
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractFilter<T> implements Filter<T>{
@@ -9,14 +10,16 @@ public abstract class AbstractFilter<T> implements Filter<T>{
 
     public String buildErrorText(String data, String ...patterns) {
         List<String> lines = data.lines().toList();
-        StringBuilder builder = new StringBuilder();
+        List<String> matchedLines = new ArrayList<>();
+
         for (String row : lines) {
             for (String pattern : patterns) {
                 if (row.toLowerCase().contains(pattern)) {
-                    builder.append(row).append("\n");
+                    matchedLines.add(row);
+                    break;
                 }
             }
         }
-        return builder.toString();
+        return String.join("\n", matchedLines);
     }
 }

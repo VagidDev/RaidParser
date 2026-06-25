@@ -11,6 +11,6 @@ public class DriveEmptyFilter extends EmptyFilter<DriverStatus> implements Drive
 
     @Override
     protected AnalyzeResponse<DriverStatus> getInvalidResponse() {
-        return new AnalyzeResponse<>(DriverStatus.EMPTY, "Empty response, please check manually\n");
+        return new AnalyzeResponse<>(DriverStatus.EMPTY, "Empty response, please check manually");
     }
 }

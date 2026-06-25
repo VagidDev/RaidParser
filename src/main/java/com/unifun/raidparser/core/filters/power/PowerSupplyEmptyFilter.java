@@ -11,6 +11,6 @@ public class PowerSupplyEmptyFilter extends EmptyFilter<PowerSupplyStatus> imple
 
     @Override
     protected AnalyzeResponse<PowerSupplyStatus> getInvalidResponse() {
-        return new AnalyzeResponse<>(PowerSupplyStatus.EMPTY, "Empty response, please check manually\n");
+        return new AnalyzeResponse<>(PowerSupplyStatus.EMPTY, "Empty response, please check manually");
     }
 }

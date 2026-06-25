@@ -9,6 +9,6 @@ public class DriveOkManualFilter extends AbstractFilter<DriverStatus> implements
         if (text.contains("blocks super") && text.contains("active raid1") && text.contains("[2/2] [UU]")) {
             return new AnalyzeResponse<>(DriverStatus.OK, "");
         }
-        return new AnalyzeResponse<>(DriverStatus.UNKNOW, "Unknown RAID status! Please chack manually\n");
+        return new AnalyzeResponse<>(DriverStatus.UNKNOW, "Unknown RAID status! Please chack manually");
     }
 }

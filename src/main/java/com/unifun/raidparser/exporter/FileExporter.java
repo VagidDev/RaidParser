@@ -47,7 +47,7 @@ public class FileExporter {
                 builder
                         .append("------------------\n")
                         .append(serverStatus.analyzeResponse().getErrorText())
-                        .append("====================\n");
+                        .append("\n====================\n");
             }
         }
         if (ensureFileExists(path)) {
