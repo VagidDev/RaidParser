@@ -1,7 +1,9 @@
 package com.unifun.raidparser.core.filters.power;
 
 import com.unifun.raidparser.core.filters.Status;
+import lombok.Getter;
 
+@Getter
 public enum PowerSupplyStatus implements Status {
     FAILED(0, "Failed"),
     NOT_PRESENT(1, "Power Supply Not Present"),
@@ -16,14 +18,6 @@ public enum PowerSupplyStatus implements Status {
     PowerSupplyStatus(int priority, String name) {
         this.priority = priority;
         this.name = name;
-    }
-
-    public int getPriority() {
-        return priority;
-    }
-
-    public String getName() {
-        return name;
     }
 
     @Override

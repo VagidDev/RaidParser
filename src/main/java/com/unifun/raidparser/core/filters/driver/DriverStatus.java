@@ -1,7 +1,9 @@
 package com.unifun.raidparser.core.filters.driver;
 
 import com.unifun.raidparser.core.filters.Status;
+import lombok.Getter;
 
+@Getter
 public enum DriverStatus implements Status {
     INTERIM_RECOVERY_MODE(0, "Interim Recovery Mode"),
     PREDICTIVE_FAILURE(1, "OK(Predictive Failure)"),
@@ -16,14 +18,6 @@ public enum DriverStatus implements Status {
     DriverStatus(int priority, String name) {
         this.priority = priority;
         this.name = name;
-    }
-
-    public int getPriority() {
-        return priority;
-    }
-
-    public String getName() {
-        return name;
     }
 
     @Override

@@ -11,7 +11,7 @@
     </parent>
     <groupId>com.unifun</groupId>
     <artifactId>raid_parser</artifactId>
-    <version>4.0-BETA</version>
+    <version>4.0</version>
     <packaging>jar</packaging>
 
     <properties>

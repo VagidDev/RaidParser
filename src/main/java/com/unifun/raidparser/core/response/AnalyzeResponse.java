@@ -1,5 +1,9 @@
 package com.unifun.raidparser.core.response;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter @Setter
 public class AnalyzeResponse<T> {
     private T status;
     private String errorText;
@@ -12,19 +16,4 @@ public class AnalyzeResponse<T> {
         this.errorText = errorText;
     }
 
-    public T getStatus() {
-        return status;
-    }
-
-    public void setStatus(T status) {
-        this.status = status;
-    }
-
-    public String getErrorText() {
-        return errorText;
-    }
-
-    public void setErrorText(String errorText) {
-        this.errorText = errorText;
-    }
 }

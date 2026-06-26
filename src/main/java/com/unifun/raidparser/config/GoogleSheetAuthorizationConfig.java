@@ -7,8 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ConfigurationProperties("sheets.authorization")
-@Getter
-@Setter
+@Getter @Setter
 public class GoogleSheetAuthorizationConfig {
     private String userCredentialsJson;
     private String savingTokensDir;

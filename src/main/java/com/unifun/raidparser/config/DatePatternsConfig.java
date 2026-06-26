@@ -9,9 +9,7 @@ import java.util.Map;
 
 @Configuration
 @ConfigurationProperties("util.date")
-@Getter
-@Setter
-//TODO: add constructor binding or add setters
+@Getter @Setter
 public class DatePatternsConfig {
     private String dateStringFormat;
     private Map<String, String> formats;

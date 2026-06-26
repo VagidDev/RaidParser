@@ -1,6 +1,7 @@
 package com.unifun.raidparser.console;
 
 import com.unifun.raidparser.config.OutputStatusFileConfig;
+import com.unifun.raidparser.core.filters.Status;
 import com.unifun.raidparser.core.filters.battery.BatteryStatus;
 import com.unifun.raidparser.core.filters.driver.DriverStatus;
 import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
@@ -10,7 +11,6 @@ import com.unifun.raidparser.exporter.FileExporter;
 import com.unifun.raidparser.exporter.GoogleSheetExporter;
 import com.unifun.raidparser.handlers.ParsedRaidStatusDataHandler;
 import com.unifun.raidparser.parser.DateParser;
-import com.unifun.raidparser.service.RaidParserService;
 import com.unifun.raidparser.service.SftpFileService;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
+import java.util.function.Function;
 
 @Component
 @RequiredArgsConstructor
@@ -107,9 +108,10 @@ public class InteractiveConsoleHandler {
             printMsg("ШАГ 2: ДЕЙСТВИЯ (Файл: " + reportFilePath.getFileName() + ")");
             System.out.println("доступные команды:");
             System.out.println(" [1] parse  - Парсинг отчета (Drive, PSU, Battery)");
-            System.out.println(" [2] check  - Ручная проверка RAID Health");
-            System.out.println(" [3] file-export - Экспорт в статус-файлы");
-            System.out.println(" [4] sheets-export - Экспорт в Google Sheets");
+            System.out.println(" [2] check-full-driver - Вывод в консоль полного статуса для дисков (включая mdadm)");
+            System.out.println(" [3] check-report-driver - Вывод в консоль статуса для дисков из статус файла");
+            System.out.println(" [4] file-export - Экспорт в статус-файлы");
+            System.out.println(" [5] sheets-export - Экспорт в Google Sheets");
             System.out.println(" [back]     - Выбрать другой файл/дату");
             System.out.println(" [exit]     - Выйти из программы");
             System.out.print("> ");
@@ -118,9 +120,18 @@ public class InteractiveConsoleHandler {
 
             switch (input) {
                 case "1", "parse" -> executeParsing(reportFilePath);
-                case "2", "check" -> executeChecking(reportFilePath);
-                case "3", "file-export" -> exportToFile(reportFilePath);
-                case "4", "sheets-export" -> exportToGoogleSheets(reportFilePath);
+                case "2", "check-full-driver" -> executeChecking(
+                        reportFilePath,
+                        parsedRaidStatusDataHandler::getSortedFullDriveStatus,
+                        "всех дисков (включая mdadm)"
+                );
+                case "3", "check-report-driver" -> executeChecking(
+                        reportFilePath,
+                        parsedRaidStatusDataHandler::getSortedDriveStatus,
+                        "дисков только из статус-файла"
+                );
+                case "4", "file-export" -> exportToFile(reportFilePath);
+                case "5", "sheets-export" -> exportToGoogleSheets(reportFilePath);
                 case "back" -> { return false; }
                 case "exit", "stop" -> System.exit(0);
                 default -> printError("Неизвестная команда. Попробуйте еще раз.");
@@ -150,12 +161,16 @@ public class InteractiveConsoleHandler {
         }
     }
 
-    private void executeChecking(Path reportFilePath) {
-        printMsg("Запуск процесса сбора полного статуса дисков...");
-        List<ServerStatus<DriverStatus>> fullDriveStatus = parsedRaidStatusDataHandler.getSortedFullDriveStatus(reportFilePath);
+    private <T extends Status> void executeChecking(
+            Path reportFilePath,
+            Function<Path, List<ServerStatus<T>>> parser,
+            String checkingElementLog
+    ) {
+        printMsg(String.format("Запуск процесса сбора статуса для %s ...", checkingElementLog));
+        List<ServerStatus<T>> serverData = parser.apply(reportFilePath);
         printMsg("Печатаю текущий статус ниже:");
 
-        fullDriveStatus.forEach(serverStatus -> printMsg(
+        serverData.forEach(serverStatus -> printMsg(
                         String.format(
                                 "Сервер: %s -> Статус: %s -> Текст статуса %s",
                                 serverStatus.serverName(),
@@ -164,7 +179,7 @@ public class InteractiveConsoleHandler {
                         )
                 )
         );
-        printMsg("Статус собран!");
+        printMsg(String.format("Статус по %s собран!", checkingElementLog));
     }
 
     private void exportToFile(Path reportFilePath) {
@@ -174,7 +189,7 @@ public class InteractiveConsoleHandler {
         Path powerSupplyFileStatusPath = Path.of(outputStatusFileConfig.getPsuStatus());
         Path batteryFileStatusPath = Path.of(outputStatusFileConfig.getBatteryStatus());
 
-        fileExporter.export(driveFileStatusPath, parsedRaidStatusDataHandler.getSortedDriveStatus(reportFilePath));
+        fileExporter.export(driveFileStatusPath, parsedRaidStatusDataHandler.getSortedFullDriveStatus(reportFilePath));
         fileExporter.export(powerSupplyFileStatusPath, parsedRaidStatusDataHandler.getSortedPowerSupplyStatus(reportFilePath));
         fileExporter.export(batteryFileStatusPath, parsedRaidStatusDataHandler.getSortedBatteryStatus(reportFilePath));
 
@@ -184,7 +199,7 @@ public class InteractiveConsoleHandler {
     private void exportToGoogleSheets(Path reportFilePath) {
         printMsg("Запуск процесса экспорта в Google Sheets...");
 
-        googleSheetExporter.export(parsedRaidStatusDataHandler.getSortedDriveStatus(reportFilePath), DriverStatus.class);
+        googleSheetExporter.export(parsedRaidStatusDataHandler.getSortedFullDriveStatus(reportFilePath), DriverStatus.class);
         googleSheetExporter.export(parsedRaidStatusDataHandler.getSortedPowerSupplyStatus(reportFilePath), PowerSupplyStatus.class);
         googleSheetExporter.export(parsedRaidStatusDataHandler.getSortedBatteryStatus(reportFilePath), BatteryStatus.class);
 

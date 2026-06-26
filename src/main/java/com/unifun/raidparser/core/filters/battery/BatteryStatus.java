@@ -1,7 +1,9 @@
 package com.unifun.raidparser.core.filters.battery;
 
 import com.unifun.raidparser.core.filters.Status;
+import lombok.Getter;
 
+@Getter
 public enum BatteryStatus implements Status {
     FAILED(0, "Failed (Replace Batteries)"),
     RECHARGING(1, "Recharging"),
@@ -19,14 +21,6 @@ public enum BatteryStatus implements Status {
     BatteryStatus(int priority, String name) {
         this.priority = priority;
         this.name = name;
-    }
-
-    public int getPriority() {
-        return priority;
-    }
-
-    public String getName() {
-        return name;
     }
 
     @Override

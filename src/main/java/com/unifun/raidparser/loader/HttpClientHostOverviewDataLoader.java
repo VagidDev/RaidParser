@@ -62,9 +62,6 @@ public class HttpClientHostOverviewDataLoader implements HostOverviewDataLoader 
             LOGGER.error("Get error while getting cookies for authorized session. Error -> {}", e.getMessage(), e);
             return "";
         }
-//        finally {
-//            if (client != null) client.close();
-//        }
     }
 
     private String loadServersData(String cookieSessionID) {
@@ -85,8 +82,6 @@ public class HttpClientHostOverviewDataLoader implements HostOverviewDataLoader 
             LOGGER.error("Error while loading data from site. Error -> {}", e.getMessage(), e);
             return "";
         }
-//        finally {
-//            if (client != null) client.close();
-//        }
+
     }
 }
