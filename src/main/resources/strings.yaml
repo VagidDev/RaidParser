@@ -1,0 +1,19 @@
+ui:
+  interactive:
+    messages:
+      menu: | 
+        Raid Parser is started!
+        Input command:
+        parse - parse raid report to txt files
+        check - check RAID health of servers manually
+        export - export data to google sheets
+        stop - stop the application
+      data-input: "Please input data of raid report (yyyy_MM_dd) or `stop` for exit application:"
+      data-input-error: Nothing right now
+      start-parsing: Start parsing data from %s
+      finish-parsing: | 
+        Finish parsing data from %s. 
+        Status were exported to: 
+        %s
+        %s
+        %s

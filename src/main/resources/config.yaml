@@ -1,0 +1,62 @@
+util:
+  date:
+    date-string-format: yyyy_MM_dd
+    formats:
+      '[dd.MM.yyyy]': '^(0[1-9]|[1-2][0-9]|3[01])\.(0[1-9]|1[0-2])\.\d{4}$'
+      '[dd-MM-yyyy]': '^(0[1-9]|[1-2][0-9]|3[01])-(0[1-9]|1[0-2])-\d{4}$'
+      '[yyyy-MM-dd]': '^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[01])$'
+      '[MM/dd/yyyy]': '^(0[1-9]|1[0-2])/(0[1-9]|[1-2][0-9]|3[01])/\d{4}$'
+
+sftp:
+  remote:
+    user:
+      host: 127.0.0.1
+      port: 2222
+      login: testuser
+      password: password
+    file-rule:
+      directory: "/upload"
+      mask: "test_file_{date}"
+      date-format: "yyyy_MM_dd"
+  local:
+    file-rule:
+      directory: "./sftp"
+      mask: "server_report_{date}"
+      date-format: "yyyy_MM_dd"
+ssh:
+  user:
+    login: testuser
+    password: password
+    private-key:
+raid:
+  parser:
+    output-files:
+      drive-status: "./status/drive-status.txt"
+      psu-status: "./status/psu-status.txt"
+      battery-status: "./status/battery-status.txt"
+    cache:
+      drive-status-age-seconds: 3600
+      power-supply-status-age-seconds: 3600
+      battery-status-age-seconds: 3600
+host-overview:
+  loader:
+    login: testuser
+    password: password
+    authorization-link: http...
+    data-loader-link: http...
+    cache-file-path: ./cache/host-overview-servers.tmp
+health-checker:
+  saving-directory: "./server-health/"
+  servers-to-check-config-file: "./config/servers-to-check.conf"
+  proxy-server-ip: "127.0.0.1"
+sheets:
+  authorization:
+    user-credentials-json: ""
+    saving-tokens-dir: ""
+    token-lifetime-in-days: 5
+  export:
+    spreadsheetId: ""
+    disk-range: ""
+    psu-range: ""
+    battery-range: ""
+

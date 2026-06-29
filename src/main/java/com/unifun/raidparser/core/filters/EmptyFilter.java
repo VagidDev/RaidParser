@@ -1,0 +1,16 @@
+package com.unifun.raidparser.core.filters;
+
+import com.unifun.raidparser.core.response.AnalyzeResponse;
+
+public abstract class EmptyFilter<T> extends AbstractFilter<T> {
+    @Override
+    public AnalyzeResponse<T> filter(String text) {
+        if (text.isBlank()) {
+            return getInvalidResponse();
+        }
+        return getValidResponse();
+    }
+
+    protected abstract AnalyzeResponse<T> getValidResponse();
+    protected abstract AnalyzeResponse<T> getInvalidResponse();
+}
