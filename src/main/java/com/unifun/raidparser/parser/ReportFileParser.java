@@ -1,6 +1,8 @@
 package com.unifun.raidparser.parser;
 
+import com.unifun.raidparser.config.ReportFileDataBoundsPatternConfig;
 import com.unifun.raidparser.dto.ServerData;
+import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -13,8 +15,11 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Service
+@RequiredArgsConstructor
 public class ReportFileParser {
     private static final Logger LOGGER = LogManager.getLogger(ReportFileParser.class);
+
+    private final ReportFileDataBoundsPatternConfig reportFileDataBoundsPatternConfig;
 
     public synchronized List<ServerData> readServerDataFromFile(Path path) {
         if (path == null) {
@@ -34,7 +39,15 @@ public class ReportFileParser {
                 if (dataList.get(i).contains("=== SERVER NAME") || i == (dataList.size() - 1)) {
                     //if new server
                     if (!server.isEmpty() && !builder.isEmpty()) {
-                        serverDataList.add(new ServerData(server, builder.toString()));
+                        String statusDetail = builder.toString();
+                        serverDataList.add(new ServerData(
+                                    server,
+                                    getMainData(statusDetail, reportFileDataBoundsPatternConfig.getDriveStart(), reportFileDataBoundsPatternConfig.getDriveEnd()),
+                                    getMainData(statusDetail, reportFileDataBoundsPatternConfig.getPsuStart(), reportFileDataBoundsPatternConfig.getPsuEnd()),
+                                    getMainData(statusDetail, reportFileDataBoundsPatternConfig.getBatteryStart(), reportFileDataBoundsPatternConfig.getBatteryEnd())
+                                )
+                        );
+
                         server = "";
                         builder = new StringBuilder();
                     }

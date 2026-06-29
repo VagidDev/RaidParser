@@ -8,9 +8,7 @@ import com.unifun.raidparser.dto.ServerStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class RaidStatusParser<T extends Status> {
@@ -18,7 +16,7 @@ public class RaidStatusParser<T extends Status> {
         List<ServerStatus<T>> serversStatus = new ArrayList<>();
 
         for (ServerData serverData : serversData) {
-            AnalyzeResponse<T> analyzeResponse = analyzer.analyze(serverData.healthData());
+            AnalyzeResponse<T> analyzeResponse = analyzer.analyze(serverData);
             serversStatus.add(new ServerStatus<>(serverData.serverName(), analyzeResponse));
         }
         return serversStatus;

@@ -30,6 +30,14 @@ ssh:
     private-key:
 raid:
   parser:
+    report-file:
+      bounds-pattern:
+        drive-start: "=========================drive================================"
+        drive-end: "==========================RAM================================="
+        psu-start: "==========================PSU================================="
+        psu-end: "=========================DIMM================================="
+        battery-start: "=========================config==============================="
+        battery-end: "=========================drive================================"
     output-files:
       drive-status: "./status/drive-status.txt"
       psu-status: "./status/psu-status.txt"
