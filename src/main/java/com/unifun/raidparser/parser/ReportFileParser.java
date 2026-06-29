@@ -46,7 +46,7 @@ public class ReportFileParser {
                 }
 
             }
-
+            LOGGER.debug("Read server data from file `{}`, server data -> {}", path, serverDataList);
             return serverDataList;
         } catch (IOException e) {
             LOGGER.error("Error while reading servers data from file `{}`. Error -> {}", path, e.getMessage(), e);

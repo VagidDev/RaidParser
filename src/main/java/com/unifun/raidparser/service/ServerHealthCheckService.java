@@ -71,6 +71,7 @@ public class ServerHealthCheckService {
                     22,
                     serverTask.getCommandToExecute()
             );
+        LOGGER.debug("Output of the command {} is: {}", serverTask.getCommandToExecute(), commandOutput);
         // I made this instead of simple editing of existing object so it will be more logically and easier to understand
         return new ServerData(
                 serverTask.getHostName(),
