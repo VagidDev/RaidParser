@@ -1,5 +1,7 @@
 package com.unifun.raidparser.core.analyzer;
 
+import com.unifun.raidparser.core.component.ComponentType;
+import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.power.*;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 import com.unifun.raidparser.parser.ReportFileParser;
@@ -10,9 +12,8 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class PowerSupplyAnalyzer implements Analyzer<PowerSupplyStatus> {
-    private final ReportFileParser reportFileParser;
-    private final List<PowerSupplyFilter> powerSupplyFilters = List.of(
+public class PowerSupplyAnalyzer extends AbstractAnalyzer<PowerSupplyStatus> {
+    private final List<Filter<PowerSupplyStatus>> powerSupplyFilters = List.of(
                 new PowerSupplyEmptyFilter(),
                 new PowerSupplyFailedFilter(),
                 new PowerSupplyNotPresentFilter(),
@@ -20,19 +21,18 @@ public class PowerSupplyAnalyzer implements Analyzer<PowerSupplyStatus> {
                 new PowerSupplyOkFilter()
             );
 
-    public AnalyzeResponse<PowerSupplyStatus> analyze(String serverData) {
-        // Преобразуем данные в поток строк
-        String mainText = reportFileParser.getMainData(serverData,
-                "==========================PSU=================================",
-                "=========================DIMM=================================");
+    @Override
+    protected List<Filter<PowerSupplyStatus>> getFilters() {
+        return powerSupplyFilters;
+    }
 
-        AnalyzeResponse<PowerSupplyStatus> response = null;
-        for (PowerSupplyFilter filter : powerSupplyFilters) {
-            response = filter.filter(mainText);
-            if (response.getStatus() != PowerSupplyStatus.OK)
-                return response;
-        }
+    @Override
+    protected PowerSupplyStatus getSuccessfulStatus() {
+        return PowerSupplyStatus.OK;
+    }
 
-        return response;
+    @Override
+    public ComponentType getSupportedType() {
+        return ComponentType.PSU_HEALTH;
     }
 }

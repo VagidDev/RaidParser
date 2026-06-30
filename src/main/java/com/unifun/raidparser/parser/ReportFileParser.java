@@ -1,6 +1,7 @@
 package com.unifun.raidparser.parser;
 
 import com.unifun.raidparser.config.ReportFileDataBoundsPatternConfig;
+import com.unifun.raidparser.core.component.ComponentType;
 import com.unifun.raidparser.dto.ServerData;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -12,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 @Service
@@ -41,13 +43,14 @@ public class ReportFileParser {
                     if (!server.isEmpty() && !builder.isEmpty()) {
                         String statusDetail = builder.toString();
                         serverDataList.add(new ServerData(
-                                    server,
-                                    getMainData(statusDetail, reportFileDataBoundsPatternConfig.getDriveStart(), reportFileDataBoundsPatternConfig.getDriveEnd()),
-                                    getMainData(statusDetail, reportFileDataBoundsPatternConfig.getPsuStart(), reportFileDataBoundsPatternConfig.getPsuEnd()),
-                                    getMainData(statusDetail, reportFileDataBoundsPatternConfig.getBatteryStart(), reportFileDataBoundsPatternConfig.getBatteryEnd())
+                                        server,
+                                        Map.of(
+                                                ComponentType.DRIVE_HEALTH, getMainData(statusDetail, reportFileDataBoundsPatternConfig.getDriveStart(), reportFileDataBoundsPatternConfig.getDriveEnd()),
+                                                ComponentType.PSU_HEALTH, getMainData(statusDetail, reportFileDataBoundsPatternConfig.getPsuStart(), reportFileDataBoundsPatternConfig.getPsuEnd()),
+                                                ComponentType.BATTERY_HEALTH, getMainData(statusDetail, reportFileDataBoundsPatternConfig.getBatteryStart(), reportFileDataBoundsPatternConfig.getBatteryEnd())
+                                        )
                                 )
                         );
-
                         server = "";
                         builder = new StringBuilder();
                     }

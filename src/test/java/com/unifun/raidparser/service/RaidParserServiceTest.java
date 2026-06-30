@@ -4,6 +4,7 @@ import com.unifun.raidparser.core.analyzer.BatteryAnalyzer;
 import com.unifun.raidparser.core.analyzer.DriveAnalyzer;
 import com.unifun.raidparser.core.analyzer.DriveManualAnalyzer;
 import com.unifun.raidparser.core.analyzer.PowerSupplyAnalyzer;
+import com.unifun.raidparser.core.component.ComponentType;
 import com.unifun.raidparser.core.filters.battery.BatteryStatus;
 import com.unifun.raidparser.core.filters.driver.DriverStatus;
 import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
@@ -20,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -68,7 +70,7 @@ class RaidParserServiceManualDriverTest {
                 + "md0 : active raid1 sda1[0] sdb1[1]\n"
                 + "      1953382400 blocks super 1.2 [2/2] [UU]\n";
 
-        ServerData server = new ServerData("host-ok", healthData);
+        ServerData server = new ServerData("host-ok", Map.of(ComponentType.DRIVE_HEALTH, healthData));
         AnalyzeResponse<DriverStatus> analyzeResponse =
                 new AnalyzeResponse<>(DriverStatus.OK, "");
 
@@ -93,7 +95,7 @@ class RaidParserServiceManualDriverTest {
                 + "md0 : active raid1 sda1[0] sdb1[1](F)\n"
                 + "      1953382400 blocks super 1.2 [2/1] [U_]\n";
 
-        ServerData server = new ServerData("host-degraded", healthData);
+        ServerData server = new ServerData("host-degraded", Map.of(ComponentType.DRIVE_HEALTH, healthData));
         AnalyzeResponse<DriverStatus> analyzeResponse =
                 new AnalyzeResponse<>(DriverStatus.INTERIM_RECOVERY_MODE, "md0 degraded");
 
@@ -120,9 +122,9 @@ class RaidParserServiceManualDriverTest {
         String badData2 = "active raid1 blocks super [1/2] [U_]";
 
         List<ServerData> servers = List.of(
-                new ServerData("host-a", okData),
-                new ServerData("host-b", badData1),
-                new ServerData("host-c", badData2)
+                new ServerData("host-a", Map.of(ComponentType.DRIVE_HEALTH, okData)),
+                new ServerData("host-b", Map.of(ComponentType.DRIVE_HEALTH, badData1)),
+                new ServerData("host-c", Map.of(ComponentType.DRIVE_HEALTH, badData2))
         );
 
         when(serverHealthCheckService.checkServers()).thenReturn(servers);
@@ -159,8 +161,8 @@ class RaidParserServiceManualDriverTest {
         String dataB = "data-b";
 
         when(serverHealthCheckService.checkServers()).thenReturn(List.of(
-                new ServerData("srv-1", dataA),
-                new ServerData("srv-2", dataB)
+                new ServerData("srv-1",  Map.of(ComponentType.DRIVE_HEALTH, dataA)),
+                new ServerData("srv-2",  Map.of(ComponentType.DRIVE_HEALTH, dataB))
         ));
         when(driveManualAnalyzer.analyze(any()))
                 .thenReturn(new AnalyzeResponse<>(DriverStatus.OK, ""));

@@ -1,5 +1,7 @@
 package com.unifun.raidparser.core.analyzer;
 
+import com.unifun.raidparser.core.component.ComponentType;
+import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.driver.*;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 import org.springframework.stereotype.Service;
@@ -7,22 +9,24 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class DriveManualAnalyzer implements Analyzer<DriverStatus> {
-    private static final List<DriveFilter> FILTERS = List.of(
+public class DriveManualAnalyzer extends AbstractAnalyzer<DriverStatus> {
+    private static final List<Filter<DriverStatus>> FILTERS = List.of(
             new DriveFailedManualFilter(),
             new DriveOkManualFilter()
     );
 
     @Override
-    public AnalyzeResponse<DriverStatus> analyze(String data) {
-        AnalyzeResponse<DriverStatus> response = new AnalyzeResponse<>(DriverStatus.OK, "");
+    protected List<Filter<DriverStatus>> getFilters() {
+        return FILTERS;
+    }
 
-        for (DriveFilter filter : FILTERS) {
-            response = filter.filter(data);
-            if (response.getStatus() != DriverStatus.OK)
-                return response;
-        }
+    @Override
+    protected DriverStatus getSuccessfulStatus() {
+        return DriverStatus.OK;
+    }
 
-        return response;
+    @Override
+    public ComponentType getSupportedType() {
+        return ComponentType.DRIVE_HEALTH;
     }
 }

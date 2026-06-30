@@ -63,16 +63,7 @@ public class RaidParserService {
 
     public List<ServerStatus<DriverStatus>> getManualDriverStatus() {
         List<ServerData> serverHealthDataList = serverHealthCheckService.checkServers();
-        List<ServerStatus<DriverStatus>> driverManualStatus = new ArrayList<>(serverHealthDataList.size());
-
-        for (ServerData serverHealthData : serverHealthDataList) {
-            driverManualStatus.add(
-                    new ServerStatus<>(
-                            serverHealthData.serverName(),
-                            driveManualAnalyzer.analyze(serverHealthData.healthData())
-                    )
-            );
-        }
+        List<ServerStatus<DriverStatus>> driverManualStatus = driverStatusRaidParser.getParsedData(serverHealthDataList, driveManualAnalyzer);
 
         return driverManualStatus;
     }

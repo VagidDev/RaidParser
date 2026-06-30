@@ -1,5 +1,7 @@
 package com.unifun.raidparser.core.analyzer;
 
+import com.unifun.raidparser.core.component.ComponentType;
+import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.driver.*;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 import com.unifun.raidparser.parser.ReportFileParser;
@@ -10,28 +12,26 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class DriveAnalyzer implements Analyzer<DriverStatus> {
-    private final ReportFileParser reportFileParser;
-    private final List<DriveFilter> driveFilters = List.of(new DriverInterimRecoveryModeFilter(),
+public class DriveAnalyzer extends AbstractAnalyzer<DriverStatus> {
+    private final List<Filter<DriverStatus>> driveFilters = List.of(new DriverInterimRecoveryModeFilter(),
             new DriveFailedFilter(),
             new DriverPredictiveFailureFilter(),
             new DriveEmptyFilter(),
             new DriveOkFilter()
     );
 
-    public AnalyzeResponse<DriverStatus> analyze(String serverData) {
-        String mainText = reportFileParser.getMainData(serverData,
-                "=========================drive================================",
-                "==========================RAM=================================");
-
-        AnalyzeResponse<DriverStatus> response = null;
-
-        for (DriveFilter filter : driveFilters) {
-            response = filter.filter(mainText);
-            if (response.getStatus() != DriverStatus.OK)
-                return response;
-        }
-        return response;
+    @Override
+    public ComponentType getSupportedType() {
+        return ComponentType.DRIVE_HEALTH;
     }
 
+    @Override
+    protected List<Filter<DriverStatus>> getFilters() {
+        return driveFilters;
+    }
+
+    @Override
+    protected DriverStatus getSuccessfulStatus() {
+        return DriverStatus.OK;
+    }
 }

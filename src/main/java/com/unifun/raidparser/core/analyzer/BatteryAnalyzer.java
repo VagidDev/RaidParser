@@ -1,5 +1,7 @@
 package com.unifun.raidparser.core.analyzer;
 
+import com.unifun.raidparser.core.component.ComponentType;
+import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.battery.*;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 import com.unifun.raidparser.parser.ReportFileParser;
@@ -10,9 +12,8 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class BatteryAnalyzer implements Analyzer<BatteryStatus> {
-    private final ReportFileParser reportFileParser;
-    private final List<BatteryFilter> batteryFilters = List.of(
+public class BatteryAnalyzer extends AbstractAnalyzer<BatteryStatus> {
+    private final List<Filter<BatteryStatus>> batteryFilters = List.of(
             new BatteryEmptyFilter(),
             new BatteryFailedFilter(),
             new BatteryRechargingFilter(),
@@ -22,20 +23,19 @@ public class BatteryAnalyzer implements Analyzer<BatteryStatus> {
             new BatteryOkFilter()
     );
 
-    public AnalyzeResponse<BatteryStatus> analyze(String serverData) {
-        String mainText = reportFileParser.getMainData(serverData,
-                "=========================config===============================",
-                "=========================drive================================");
+    @Override
+    public ComponentType getSupportedType() {
+        return ComponentType.BATTERY_HEALTH;
+    }
 
-        AnalyzeResponse<BatteryStatus> response = null;
 
-        for (BatteryFilter filter : batteryFilters) {
-            response = filter.filter(mainText);
-            if (response.getStatus() != BatteryStatus.OK) {
-                return response;
-            }
-        }
+    @Override
+    protected List<Filter<BatteryStatus>> getFilters() {
+        return batteryFilters;
+    }
 
-        return response;
+    @Override
+    protected BatteryStatus getSuccessfulStatus() {
+        return BatteryStatus.OK;
     }
 }

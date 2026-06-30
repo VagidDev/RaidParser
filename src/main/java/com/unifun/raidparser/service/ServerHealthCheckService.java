@@ -1,6 +1,7 @@
 package com.unifun.raidparser.service;
 
 import com.unifun.raidparser.config.ServersToCheckConfig;
+import com.unifun.raidparser.core.component.ComponentType;
 import com.unifun.raidparser.dto.HostInformation;
 import com.unifun.raidparser.dto.ServerData;
 import com.unifun.raidparser.dto.ServerTask;
@@ -73,9 +74,10 @@ public class ServerHealthCheckService {
             );
         LOGGER.debug("Output of the command {} is: {}", serverTask.getCommandToExecute(), commandOutput);
         // I made this instead of simple editing of existing object so it will be more logically and easier to understand
+        //TODO: Need to fix this Hard Code Value of Component Type
         return new ServerData(
                 serverTask.getHostName(),
-                commandOutput
+                Map.of(ComponentType.DRIVE_HEALTH, commandOutput)
         );
     }
 

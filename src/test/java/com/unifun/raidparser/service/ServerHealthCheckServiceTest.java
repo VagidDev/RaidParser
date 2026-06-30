@@ -2,6 +2,7 @@ package com.unifun.raidparser.service;
 
 import com.unifun.raidparser.config.ServersToCheckConfig;
 import com.unifun.raidparser.config.SshUserConfig;
+import com.unifun.raidparser.core.component.ComponentType;
 import com.unifun.raidparser.dto.HostInformation;
 import com.unifun.raidparser.dto.ServerData;
 import com.unifun.raidparser.dto.ServerTask;
@@ -59,8 +60,8 @@ class ServerHealthCheckServiceTest {
         List<ServerData> completedTasks = serverHealthCheckService.checkServers();
 
         assertFalse(completedTasks.isEmpty());
-        System.out.println("Command output: " + completedTasks.get(0).healthData());
-        assertTrue(completedTasks.get(0).healthData().contains("Hello world!"));
+        System.out.println("Command output: " + completedTasks.get(0).getRawData(ComponentType.DRIVE_HEALTH));
+        assertTrue(completedTasks.get(0).getRawData(ComponentType.DRIVE_HEALTH).contains("Hello world!"));
     }
 
     @Test
@@ -100,7 +101,7 @@ class ServerHealthCheckServiceTest {
         List<ServerData> result = serverHealthCheckService.checkServers();
 
         assertEquals(1, result.size());
-        assertEquals("Server uptime", result.get(0).healthData());
+        assertEquals("Server uptime", result.get(0).getRawData(ComponentType.DRIVE_HEALTH));
 
         verify(executorMock).execute("192.168.1.10", 22, "uptime");
     }
