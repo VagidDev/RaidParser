@@ -30,7 +30,6 @@ public class RaidParserService {
     private final DriveAnalyzer driveAnalyzer;
     private final PowerSupplyAnalyzer powerSupplyAnalyzer;
     private final BatteryAnalyzer batteryAnalyzer;
-    //TODO: need to adapt ServerHealthChecker
     private final DriveManualAnalyzer driveManualAnalyzer;
 
     private final RaidStatusParser<DriverStatus> driverStatusRaidParser;
@@ -64,8 +63,7 @@ public class RaidParserService {
     public List<ServerStatus<DriverStatus>> getManualDriverStatus() {
         List<ServerData> serverHealthDataList = serverHealthCheckService.checkServers();
         List<ServerStatus<DriverStatus>> driverManualStatus = driverStatusRaidParser.getParsedData(serverHealthDataList, driveManualAnalyzer);
-
-        return driverManualStatus;
+        return driverStatusDataSorter.sortByStatus(driverManualStatus);
     }
 
     public List<ServerStatus<DriverStatus>> getSortedFullDriveStatus(Path reportFilePath) {

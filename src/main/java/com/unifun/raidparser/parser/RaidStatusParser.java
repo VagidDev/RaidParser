@@ -9,6 +9,7 @@ import com.unifun.raidparser.dto.ServerStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,11 @@ public class RaidStatusParser<T extends Status> {
     private static final Logger LOGGER = LogManager.getLogger(RaidStatusParser.class);
 
     public List<ServerStatus<T>> getParsedData(List<ServerData> serversData, Analyzer<T> analyzer) {
+        if (CollectionUtils.isEmpty(serversData)){
+            LOGGER.warn("Got empty list for parsing");
+            return List.of();
+        }
+
         ComponentType supportedType = analyzer.getSupportedType();
         LOGGER.info("Got `{}` supported type", supportedType);
         List<ServerStatus<T>> serversStatus = new ArrayList<>();
