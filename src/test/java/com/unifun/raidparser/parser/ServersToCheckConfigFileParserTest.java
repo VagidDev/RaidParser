@@ -1,102 +1,152 @@
 package com.unifun.raidparser.parser;
 
-import com.unifun.raidparser.dto.ServerTask;
+import com.unifun.raidparser.core.component.HealthType;
+import com.unifun.raidparser.dto.HostCommand;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ServersToCheckConfigFileParserTest {
 
     private final ServersToCheckConfigFileParser parser = new ServersToCheckConfigFileParser();
 
-    @Test
-    void parse_shouldParseAllValidLines() {
-        List<String> input = List.of(
-                "server1 -> echo 1",
-                "server2 -> echo 2"
-        );
+    @TempDir
+    Path tempDir;
 
-        List<ServerTask> result = parser.parse(input);
-
-        assertEquals(2, result.size());
-        assertEquals(new ServerTask("server1", "echo 1", null), result.get(0));
-        assertEquals(new ServerTask("server2", "echo 2", null), result.get(1));
+    private Path writeYaml(String content) throws IOException {
+        Path file = tempDir.resolve("config.yaml");
+        Files.writeString(file, content);
+        return file;
     }
 
     @Test
-    void parse_shouldSkipInvalidLines() {
-        List<String> input = List.of(
-                "server1 -> echo 1",
-                "invalid line without delimiter",
-                "server2 -> echo 2"
-        );
+    void parsesValidConfigWithAllCommandTypes() throws IOException {
+        String yaml = """
+                commands:
+                  - host: "test_host_01"
+                    command: "cat /proc/mdstat"
+                    type: "drive_health"
+                  - host: "test_host_02"
+                    command: "sudo dmidecode -t 39"
+                    type: "psu_health"
+                  - host: "test_host_01"
+                    command: "sudo ssacli ctrl all show detail"
+                    type: "battery_health"
+                """;
+        Path configFile = writeYaml(yaml);
 
-        List<ServerTask> result = parser.parse(input);
+        List<HostCommand> result = parser.parse(configFile);
 
-        assertEquals(2, result.size());
-        assertTrue(result.stream().noneMatch(task -> task.getHostName().contains("invalid")));
+        assertThat(result).hasSize(3);
+        assertThat(result.get(0))
+                .isEqualTo(new HostCommand("test_host_01", "cat /proc/mdstat", HealthType.DRIVE_HEALTH));
+        assertThat(result.get(1).getType()).isEqualTo(HealthType.PSU_HEALTH);
+        assertThat(result.get(2).getType()).isEqualTo(HealthType.BATTERY_HEALTH);
     }
 
     @Test
-    void parse_shouldReturnEmptyList_whenAllLinesInvalid() {
-        List<String> input = List.of(
-                "invalid1",
-                "invalid2",
-                "another bad line"
-        );
+    void parsesConfigWithMultipleHostsForSameCommandType() throws IOException {
+        String yaml = """
+                commands:
+                  - host: "test_host_01"
+                    command: "cat /proc/mdstat"
+                    type: "drive_health"
+                  - host: "test_host_02"
+                    command: "cat /proc/mdstat"
+                    type: "drive_health"
+                """;
+        Path configFile = writeYaml(yaml);
 
-        List<ServerTask> result = parser.parse(input);
+        List<HostCommand> result = parser.parse(configFile);
 
-        assertTrue(result.isEmpty());
+        assertThat(result).hasSize(2)
+                .extracting(HostCommand::getHost)
+                .containsExactly("test_host_01", "test_host_02");
     }
 
     @Test
-    void parse_shouldTrimValues() {
-        List<String> input = List.of(
-                "   server1    ->    echo test   "
-        );
+    void returnsEmptyListWhenCommandsListIsEmpty() throws IOException {
+        Path configFile = writeYaml("commands: []\n");
 
-        List<ServerTask> result = parser.parse(input);
+        List<HostCommand> result = parser.parse(configFile);
 
-        assertEquals(1, result.size());
-        assertEquals("server1", result.get(0).getHostName());
-        assertEquals("echo test", result.get(0).getCommandToExecute());
+        assertThat(result).isEmpty();
     }
 
     @Test
-    void parse_shouldSkipLinesWithEmptyParts() {
-        List<String> input = List.of(
-                " -> echo test",
-                "server1 -> ",
-                "   ->   "
-        );
+    void returnsNullWhenCommandsKeyIsMissing_documentsCurrentBehavior() throws IOException {
+        Path configFile = writeYaml("someOtherKey: value\n");
 
-        List<ServerTask> result = parser.parse(input);
-        //TODO: fix this
-        assertTrue(result.isEmpty());
+        List<HostCommand> result = parser.parse(configFile);
+
+        assertThat(result).isEmpty();
     }
 
     @Test
-    void parse_shouldHandleMixedValidAndInvalidLines() {
-        List<String> input = List.of(
-                "server1 -> echo 1",
-                "bad line",
-                "server2 -> echo 2",
-                " -> broken",
-                "server3 -> echo 3"
-        );
+    void returnsEmptyListWhenFileIsCompletelyEmpty() throws IOException {
+        Path configFile = writeYaml("");
 
-        List<ServerTask> result = parser.parse(input);
-        //TODO: fix this
-        assertEquals(3, result.size());
+        List<HostCommand> result = parser.parse(configFile);
+
+        assertThat(result).isEmpty();
     }
 
     @Test
-    void parse_shouldReturnEmptyList_whenInputIsEmpty() {
-        List<ServerTask> result = parser.parse(List.of());
+    void returnsEmptyListWhenFileHasInvalidYamlSyntax() throws IOException {
+        Path configFile = writeYaml("""
+                commands:
+                  - host: "test_host_01"
+                  command: "broken indentation"
+                    type: "drive_health"
+                """);
 
-        assertTrue(result.isEmpty());
+        List<HostCommand> result = parser.parse(configFile);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void returnsEmptyListWhenTypeValueIsUnrecognized() throws IOException {
+        Path configFile = writeYaml("""
+                commands:
+                  - host: "test_host_01"
+                    command: "cat /proc/mdstat"
+                    type: "unknown_health"
+                """);
+
+        List<HostCommand> result = parser.parse(configFile);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void returnsEmptyListWhenFileDoesNotExist() {
+        Path configFile = tempDir.resolve("does_not_exist.yaml");
+
+        List<HostCommand> result = parser.parse(configFile);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void parsesCommandWithMissingHostFieldAsNull() throws IOException {
+        Path configFile = writeYaml("""
+                commands:
+                  - command: "cat /proc/mdstat"
+                    type: "drive_health"
+                """);
+
+        List<HostCommand> result = parser.parse(configFile);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getHost()).isNull();
+        assertThat(result.get(0).getCommand()).isEqualTo("cat /proc/mdstat");
+        assertThat(result.get(0).getType()).isEqualTo(HealthType.DRIVE_HEALTH);
     }
 }

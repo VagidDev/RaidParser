@@ -1,6 +1,8 @@
 package com.unifun.raidparser.handlers;
 
 import com.unifun.raidparser.config.ServersToCheckConfig;
+import com.unifun.raidparser.core.component.HealthType;
+import com.unifun.raidparser.dto.HostCommand;
 import com.unifun.raidparser.dto.ServerTask;
 import com.unifun.raidparser.parser.ServersToCheckConfigFileParser;
 import com.unifun.raidparser.service.CommandValidatorService;
@@ -53,40 +55,40 @@ class ServersToCheckConfigFileDataHandlerTest {
     }
 
     @Test
-    void getServerTasks_shouldLoadAndFilterValidCommands() {
+    void getHostCommands_shouldLoadAndFilterValidCommands() {
         List<String> fileData = List.of("line1", "line2");
 
-        ServerTask validTask = new ServerTask("server1", "cmd1", null);
-        ServerTask invalidTask = new ServerTask("server2", "cmd2", null);
+        HostCommand validCommand = new HostCommand("server1", "cmd1", HealthType.DRIVE_HEALTH);
+        HostCommand invalidCommand = new HostCommand("server2", "cmd2", HealthType.DRIVE_HEALTH);
 
-        when(parser.parse(any())).thenReturn(List.of(validTask, invalidTask));
+        when(parser.parse(any())).thenReturn(List.of(validCommand, invalidCommand));
         when(validator.isValid("cmd1")).thenReturn(true);
         when(validator.isValid("cmd2")).thenReturn(false);
 
-        List<ServerTask> result = handler.getServerTasks();
+        List<HostCommand> result = handler.getHostCommands();
 
         assertEquals(1, result.size());
-        assertEquals(validTask, result.get(0));
+        assertEquals(validCommand, result.get(0));
     }
 
     @Test
-    void getServerTasks_shouldReturnEmpty_whenFileIsEmpty() throws IOException {
+    void getHostCommands_shouldReturnEmpty_whenFileIsEmpty() throws IOException {
         Files.write(configFile, List.of());
 
-        List<ServerTask> result = handler.getServerTasks();
+        List<HostCommand> result = handler.getHostCommands();
 
         assertTrue(result == null || result.isEmpty());
     }
 
     @Test
-    void getServerTasks_shouldNotReload_whenCacheExists() {
-        ServerTask task = new ServerTask("server1", "cmd1", null);
+    void getHostCommands_shouldNotReload_whenCacheExists() {
+        HostCommand command = new HostCommand("server1", "cmd1", HealthType.DRIVE_HEALTH);
 
-        when(parser.parse(any())).thenReturn(List.of(task));
+        when(parser.parse(any())).thenReturn(List.of(command));
         when(validator.isValid("cmd1")).thenReturn(true);
 
-        List<ServerTask> firstCall = handler.getServerTasks();
-        List<ServerTask> secondCall = handler.getServerTasks();
+        List<HostCommand> firstCall = handler.getHostCommands();
+        List<HostCommand> secondCall = handler.getHostCommands();
 
         assertEquals(firstCall, secondCall);
 
@@ -96,15 +98,15 @@ class ServersToCheckConfigFileDataHandlerTest {
 
     @Test
     void clearCache_shouldClearData() {
-        ServerTask task = new ServerTask("server1", "cmd1", null);
+        HostCommand command = new HostCommand("server1", "cmd1", HealthType.DRIVE_HEALTH);
 
-        when(parser.parse(any())).thenReturn(List.of(task));
+        when(parser.parse(any())).thenReturn(List.of(command));
         when(validator.isValid("cmd1")).thenReturn(true);
 
-        handler.getServerTasks();
+        handler.getHostCommands();
         handler.clearCache();
 
-        List<ServerTask> result = handler.getServerTasks();
+        List<HostCommand> result = handler.getHostCommands();
 
         // после очистки кэша — снова загрузка
         verify(parser, times(2)).parse(any());
@@ -112,23 +114,23 @@ class ServersToCheckConfigFileDataHandlerTest {
     }
 
     @Test
-    void getServerTasks_shouldReturnNull_whenFileNotExists() {
+    void getHostCommands_shouldReturnNull_whenFileNotExists() {
         when(fileChecker.ensureFileExists(configFile)).thenReturn(false);
 
-        List<ServerTask> result = handler.getServerTasks();
+        List<HostCommand> result = handler.getHostCommands();
 
         assertTrue(result.isEmpty());
     }
 
     @Test
-    void getServerTasks_shouldHandleInvalidCommandsOnly() {
-        ServerTask invalid1 = new ServerTask("server1", "bad1", null);
-        ServerTask invalid2 = new ServerTask("server2", "bad2", null);
+    void getHostCommands_shouldHandleInvalidCommandsOnly() {
+        HostCommand invalid1 = new HostCommand("server1", "bad1", HealthType.DRIVE_HEALTH);
+        HostCommand invalid2 = new HostCommand("server2", "bad2", HealthType.DRIVE_HEALTH);
 
         when(parser.parse(any())).thenReturn(List.of(invalid1, invalid2));
         when(validator.isValid(any())).thenReturn(false);
 
-        List<ServerTask> result = handler.getServerTasks();
+        List<HostCommand> result = handler.getHostCommands();
 
         assertTrue(result.isEmpty());
     }

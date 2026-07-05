@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties("sheets.authorization")
 @Getter @Setter
 public class GoogleSheetAuthorizationConfig {
-    private String userCredentialsJson;
-    private String savingTokensDir;
-    private int tokenLifetimeInDays;
+    private String userCredentialsJson = "./config/credentials.json";
+    private String savingTokensDir = "./cache/tokens";
+    private int tokenLifetimeInDays = 5;
 }

@@ -9,9 +9,9 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties("sftp.local.file-rule")
 @Getter @Setter
 public class LocalFileRuleConfig {
-    private String directory;
-    private String mask;
-    private String dateFormat;
+    private String directory = "./sftp";
+    private String mask = "server_report_{date}";
+    private String dateFormat = "yyyy_MM_dd";
 
     public String getRegex() {
         return "^" + mask

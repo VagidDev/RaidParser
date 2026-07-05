@@ -23,6 +23,7 @@ public class ParsedRaidStatusDataHandler {
     private final ParsedRaidStatusDataCacheConfig parsedRaidStatusDataCacheConfig;
 
     private ParsedDataCache<DriverStatus> driverStatusParsedDataCache;
+    private ParsedDataCache<DriverStatus> manualDriverStatusParsedDataCache;
     private ParsedDataCache<DriverStatus> fullDriverStatusParsedDataCache;
     private ParsedDataCache<PowerSupplyStatus> powerSupplyStatusParsedDataCache;
     private ParsedDataCache<BatteryStatus> batteryStatusParsedDataCache;
@@ -30,6 +31,7 @@ public class ParsedRaidStatusDataHandler {
     @PostConstruct
     private void initialize() {
         driverStatusParsedDataCache = new ParsedDataCache<>(parsedRaidStatusDataCacheConfig.getDriveStatusAgeSeconds());
+        manualDriverStatusParsedDataCache = new ParsedDataCache<>(parsedRaidStatusDataCacheConfig.getDriveStatusAgeSeconds());
         fullDriverStatusParsedDataCache = new ParsedDataCache<>(parsedRaidStatusDataCacheConfig.getDriveStatusAgeSeconds());
         powerSupplyStatusParsedDataCache = new ParsedDataCache<>(parsedRaidStatusDataCacheConfig.getPowerSupplyStatusAgeSeconds());
         batteryStatusParsedDataCache = new ParsedDataCache<>(parsedRaidStatusDataCacheConfig.getBatteryStatusAgeSeconds());
@@ -67,4 +69,8 @@ public class ParsedRaidStatusDataHandler {
                 raidParserService::getSortedFullDriveStatus);
     }
 
+    public List<ServerStatus<DriverStatus>> getSortedManualDriveStatus(Path reportFilePath) {
+        return getFromCacheOrParse(manualDriverStatusParsedDataCache, reportFilePath,
+                raidParserService::getManualDriverStatus);
+    }
 }

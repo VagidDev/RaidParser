@@ -15,5 +15,5 @@ public class HostOverviewLoaderConfig {
     private String password;
     private String authorizationLink;
     private String dataLoaderLink;
-    private Path cacheFilePath;
+    private Path cacheFilePath = Path.of("./cache/hosts.tmp");
 }

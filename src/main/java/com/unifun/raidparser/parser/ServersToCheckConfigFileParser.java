@@ -1,38 +1,45 @@
 package com.unifun.raidparser.parser;
 
-import com.unifun.raidparser.dto.ServerTask;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.unifun.raidparser.config.ServerTasksConfig;
+import com.unifun.raidparser.dto.HostCommand;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class ServersToCheckConfigFileParser {
     private static final Logger LOGGER = LogManager.getLogger(ServersToCheckConfigFileParser.class);
 
-    public List<ServerTask> parse(List<String> configData) {
-        return configData.stream()
-                .map(this::parseLine)
-                .filter(Objects::nonNull)
-                .toList();
+    private ServerTasksConfig readConfig(Path configFile) throws IOException {
+        LOGGER.info("Parsing config file {}", configFile.toString());
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        return mapper.readValue(configFile.toFile(), ServerTasksConfig.class);
     }
 
-    private ServerTask parseLine(String configLine) {
-        LOGGER.debug("Parsing line {}", configLine);
-        String[] splitLine = configLine.split("->");
-        if (splitLine.length == 2 && !splitLine[0].isBlank() && !splitLine[1].isBlank()) {
-            return new ServerTask(
-                    splitLine[0].trim(),
-                    splitLine[1].trim(),
-                    null
-            );
-        } else {
-            LOGGER.warn("Cannot get server name and command from config line. Line to parse -> {}", configLine);
-            return null;
+    public List<HostCommand> parse(Path configFile) {
+        try {
+            ServerTasksConfig serverTasksConfig = readConfig(configFile);
+            if (serverTasksConfig == null) {
+                LOGGER.warn("ServerTasksConfig is null");
+                return List.of();
+            } else if (CollectionUtils.isEmpty(serverTasksConfig.getCommands())) {
+                LOGGER.warn("No commands in config file `{}`", configFile.toString());
+                return List.of();
+            }
+
+            return serverTasksConfig.getCommands();
+        } catch (Exception exception) {
+            LOGGER.error("Error while reading config file `{}`. Error -> {}", configFile, exception.getMessage(), exception);
+            return List.of();
         }
     }
 

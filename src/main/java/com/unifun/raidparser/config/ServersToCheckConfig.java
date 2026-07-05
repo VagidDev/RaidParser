@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties("health-checker")
 @Getter @Setter
 public class ServersToCheckConfig {
-    private String savingDirectory;
-    private String serversToCheckConfigFile;
-    private String proxyServerIp;
+    private String savingDirectory = "./status";
+    private String serversToCheckConfigFile = "./config/servers-to-check.conf";
+    private String proxyServerIp = "127.0.0.1";
 }
