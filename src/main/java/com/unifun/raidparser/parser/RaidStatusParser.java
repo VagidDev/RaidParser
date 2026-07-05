@@ -1,7 +1,7 @@
 package com.unifun.raidparser.parser;
 
 import com.unifun.raidparser.core.analyzer.Analyzer;
-import com.unifun.raidparser.core.component.ComponentType;
+import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Status;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 import com.unifun.raidparser.dto.ServerData;
@@ -24,7 +24,7 @@ public class RaidStatusParser<T extends Status> {
             return List.of();
         }
 
-        ComponentType supportedType = analyzer.getSupportedType();
+        HealthType supportedType = analyzer.getSupportedType();
         LOGGER.info("Got `{}` supported type", supportedType);
         List<ServerStatus<T>> serversStatus = new ArrayList<>();
 

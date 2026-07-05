@@ -2,10 +2,10 @@ package com.unifun.raidparser.service;
 
 import com.unifun.raidparser.config.ServersToCheckConfig;
 import com.unifun.raidparser.config.SshUserConfig;
-import com.unifun.raidparser.core.component.ComponentType;
+import com.unifun.raidparser.core.component.HealthType;
+import com.unifun.raidparser.dto.HostCommand;
 import com.unifun.raidparser.dto.HostInformation;
 import com.unifun.raidparser.dto.ServerData;
-import com.unifun.raidparser.dto.ServerTask;
 import com.unifun.raidparser.handlers.ServersToCheckConfigFileDataHandler;
 import com.unifun.raidparser.util.RemoteCommandExecutor;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,8 +50,8 @@ class ServerHealthCheckServiceTest {
 
     @Test
     void checkServers_SuccessfulCheckedServer() {
-        when(serversToCheckConfigFileDataHandler.getServerTasks())
-                .thenReturn(List.of(new ServerTask("test-server", "echo 'Hello world!'", "")));
+        when(serversToCheckConfigFileDataHandler.getHostCommands())
+                .thenReturn(List.of(new HostCommand("test-server", "echo 'Hello world!'", HealthType.DRIVE_HEALTH)));
         when(hostOverviewService.getPhysicalServerWithCorrectPortByName(anyString()))
                 .thenReturn(new HostInformation("test-server", 2223, "127.0.0.1", "HP", "Proxy"));
         when(serversToCheckConfig.getProxyServerIp())
@@ -60,15 +60,15 @@ class ServerHealthCheckServiceTest {
         List<ServerData> completedTasks = serverHealthCheckService.checkServers();
 
         assertFalse(completedTasks.isEmpty());
-        System.out.println("Command output: " + completedTasks.get(0).getRawData(ComponentType.DRIVE_HEALTH));
-        assertTrue(completedTasks.get(0).getRawData(ComponentType.DRIVE_HEALTH).contains("Hello world!"));
+        System.out.println("Command output: " + completedTasks.get(0).getRawData(HealthType.DRIVE_HEALTH));
+        assertTrue(completedTasks.get(0).getRawData(HealthType.DRIVE_HEALTH).contains("Hello world!"));
     }
 
     @Test
     void checkServers_ShouldCheckDirectServerSuccessfully() {
 
-        ServerTask serverTask =
-                new ServerTask("direct-server", "uptime", "");
+        HostCommand hostCommand =
+                new HostCommand("direct-server", "uptime", HealthType.DRIVE_HEALTH);
 
         HostInformation hostInformation =
                 new HostInformation("direct-server",
@@ -77,8 +77,8 @@ class ServerHealthCheckServiceTest {
                         "Dell",
                         "direct");
 
-        when(serversToCheckConfigFileDataHandler.getServerTasks())
-                .thenReturn(List.of(serverTask));
+        when(serversToCheckConfigFileDataHandler.getHostCommands())
+                .thenReturn(List.of(hostCommand));
 
         when(hostOverviewService.getPhysicalServerWithCorrectPortByName(anyString()))
                 .thenReturn(hostInformation);
@@ -101,18 +101,18 @@ class ServerHealthCheckServiceTest {
         List<ServerData> result = serverHealthCheckService.checkServers();
 
         assertEquals(1, result.size());
-        assertEquals("Server uptime", result.get(0).getRawData(ComponentType.DRIVE_HEALTH));
+        assertEquals("Server uptime", result.get(0).getRawData(HealthType.DRIVE_HEALTH));
 
         verify(executorMock).execute("192.168.1.10", 22, "uptime");
     }
 
     @Test
     void checkServers_ShouldReturnEmptyServerTaskList_WhenHostInformationIsNull() {
-        ServerTask serverTask =
-                new ServerTask("unknown-server", "pwd", "");
+        HostCommand hostCommand =
+                new HostCommand("unknown-server", "pwd", HealthType.DRIVE_HEALTH);
 
-        when(serversToCheckConfigFileDataHandler.getServerTasks())
-                .thenReturn(List.of(serverTask));
+        when(serversToCheckConfigFileDataHandler.getHostCommands())
+                .thenReturn(List.of(hostCommand));
 
         when(hostOverviewService.getPhysicalServerWithCorrectPortByName(anyString()))
                 .thenReturn(null);
@@ -125,8 +125,8 @@ class ServerHealthCheckServiceTest {
     @Test
     void getHostsToCheck_ShouldReturnCorrectMap() {
 
-        ServerTask serverTask =
-                new ServerTask("server1", "df -h", "");
+        HostCommand hostCommand =
+                new HostCommand("server1", "df -h", HealthType.DRIVE_HEALTH);
 
         HostInformation hostInformation =
                 new HostInformation("server1",
@@ -139,13 +139,13 @@ class ServerHealthCheckServiceTest {
                 .thenReturn(hostInformation);
 
         var result = serverHealthCheckService
-                .getHostsToCheck(List.of(serverTask));
+                .getHostsToCheck(List.of(hostCommand));
 
         assertEquals(1, result.size());
 
         assertEquals(
                 hostInformation,
-                result.get(serverTask)
+                result.get(hostCommand)
         );
     }
 }

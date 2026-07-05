@@ -11,7 +11,7 @@
     </parent>
     <groupId>com.unifun</groupId>
     <artifactId>raid_parser</artifactId>
-    <version>4.0</version>
+    <version>4.1-BETA</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -112,13 +112,13 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Source: https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
-<!--        <dependency>-->
-<!--            <groupId>org.junit.jupiter</groupId>-->
-<!--            <artifactId>junit-jupiter-api</artifactId>-->
-<!--            <version>5.13.3</version>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
+        <!-- Source: https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-yaml -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>2.17.2</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
     <build>
@@ -140,19 +140,6 @@
                     <target>21</target>
                 </configuration>
             </plugin>
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-jar-plugin</artifactId>-->
-<!--                <version>3.1.0</version>-->
-<!--                <configuration>-->
-<!--                    <archive>-->
-<!--                        <manifest>-->
-<!--                            <addClasspath>true</addClasspath>-->
-<!--                            <mainClass>com.unifun.raidparser.RaidParserApp</mainClass> &lt;!&ndash; Main class for executable jar &ndash;&gt;-->
-<!--                        </manifest>-->
-<!--                    </archive>-->
-<!--                </configuration>-->
-<!--            </plugin>-->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

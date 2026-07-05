@@ -1,10 +1,9 @@
 package com.unifun.raidparser.service;
 
 import com.unifun.raidparser.config.ServersToCheckConfig;
-import com.unifun.raidparser.core.component.ComponentType;
+import com.unifun.raidparser.dto.HostCommand;
 import com.unifun.raidparser.dto.HostInformation;
 import com.unifun.raidparser.dto.ServerData;
-import com.unifun.raidparser.dto.ServerTask;
 import com.unifun.raidparser.handlers.ServersToCheckConfigFileDataHandler;
 import com.unifun.raidparser.util.RemoteCommandExecutor;
 import lombok.RequiredArgsConstructor;
@@ -28,22 +27,22 @@ public class ServerHealthCheckService {
     private final HostOverviewService hostOverviewService;
 
     public List<ServerData> checkServers() {
-        List<ServerTask> serverTasks = serversToCheckConfigFileDataHandler.getServerTasks();
-        if (serverTasks == null) {
+        List<HostCommand> hostCommands = serversToCheckConfigFileDataHandler.getHostCommands();
+        if (hostCommands == null) {
             LOGGER.warn("No tasks to check!");
             return List.of();
         }
-        Map<ServerTask, HostInformation> hostsToCheck = getHostsToCheck(serverTasks);
+        Map<HostCommand, HostInformation> hostsToCheck = getHostsToCheck(hostCommands);
         return hostsToCheck.entrySet().stream().
                 map(entry -> checkServer(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
-    public Map<ServerTask, HostInformation> getHostsToCheck(List<ServerTask> serverTasks) {
-        return serverTasks.stream()
+    public Map<HostCommand, HostInformation> getHostsToCheck(List<HostCommand> hostCommands) {
+        return hostCommands.stream()
                 .map(serverTask -> new AbstractMap.SimpleEntry<>(
                         serverTask,
-                        hostOverviewService.getPhysicalServerWithCorrectPortByName(serverTask.getHostName())
+                        hostOverviewService.getPhysicalServerWithCorrectPortByName(serverTask.getHost())
                 ))
                 .filter(entry -> {
                     if (entry.getValue() == null) {
@@ -58,26 +57,24 @@ public class ServerHealthCheckService {
                 ));
     }
 
-    private ServerData checkServer(ServerTask serverTask, HostInformation hostInformation){
+    private ServerData checkServer(HostCommand hostCommand, HostInformation hostInformation){
         String commandOutput = "";
         if (hostInformation.getConnectionType().equalsIgnoreCase("proxy"))
             commandOutput = remoteCommandExecutor.execute(
                     serversToCheckConfig.getProxyServerIp(),
                     hostInformation.getPort(),
-                    serverTask.getCommandToExecute()
+                    hostCommand.getCommand()
             );
         else
             commandOutput = remoteCommandExecutor.execute(
                     hostInformation.getIp(),
                     22,
-                    serverTask.getCommandToExecute()
+                    hostCommand.getCommand()
             );
-        LOGGER.debug("Output of the command {} is: {}", serverTask.getCommandToExecute(), commandOutput);
-        // I made this instead of simple editing of existing object so it will be more logically and easier to understand
-        //TODO: Need to fix this Hard Code Value of Component Type
+        LOGGER.debug("Output of the command {} is: {}", hostCommand.getCommand(), commandOutput);
         return new ServerData(
-                serverTask.getHostName(),
-                Map.of(ComponentType.DRIVE_HEALTH, commandOutput)
+                hostCommand.getCommand(),
+                Map.of(hostCommand.getType(), commandOutput)
         );
     }
 

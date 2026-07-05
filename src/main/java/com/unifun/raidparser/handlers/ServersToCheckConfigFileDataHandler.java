@@ -1,7 +1,7 @@
 package com.unifun.raidparser.handlers;
 
 import com.unifun.raidparser.config.ServersToCheckConfig;
-import com.unifun.raidparser.dto.ServerTask;
+import com.unifun.raidparser.dto.HostCommand;
 import com.unifun.raidparser.parser.ServersToCheckConfigFileParser;
 import com.unifun.raidparser.service.CommandValidatorService;
 import com.unifun.raidparser.util.FileChecker;
@@ -25,54 +25,38 @@ public class ServersToCheckConfigFileDataHandler {
     private final ServersToCheckConfig serversToCheckConfig;
     private final FileChecker fileChecker;
 
-    private List<ServerTask> serverTaskList;
+    private List<HostCommand> hostCommands;
 
     private boolean loadServerTasks() {
         Path configFile = Path.of(serversToCheckConfig.getServersToCheckConfigFile());
         if (!fileChecker.ensureFileExists(configFile)) {
-            LOGGER.warn("Cannot load server tasks due to config file `{}` does not exist!", configFile);
+            LOGGER.warn("Cannot load server tasks due to config file `{}` does not exist! Creating file... Please complete the config `{}`", configFile, configFile);
             return false;
         }
 
-        List<String> configData = readConfigFileData(configFile);
-        if (CollectionUtils.isEmpty(configData)) {
-            LOGGER.warn("Configuration file {} is empty!", configFile);
-            return false;
-        }
-
-        this.serverTaskList = serversToCheckConfigFileParser.parse(configData).stream()
-                .filter(serverTask -> commandValidatorService.isValid(serverTask.getCommandToExecute()))
+        this.hostCommands = serversToCheckConfigFileParser.parse(configFile).stream()
+                .filter(hostCommand -> commandValidatorService.isValid(hostCommand.getCommand()))
                 .toList();
 
         return true;
     }
 
-    private List<String> readConfigFileData(Path file) {
-        try {
-            LOGGER.info("Reading configuration file {}", file);
-            return Files.readAllLines(file);
-        } catch (IOException e) {
-            LOGGER.error("Error while trying to read data from file {}", file);
-            return null;
-        }
-    }
-
     public void clearCache() {
-        if (serverTaskList != null) {
+        if (hostCommands != null) {
             LOGGER.warn("Cache is cleared!");
-            this.serverTaskList = null;
+            this.hostCommands = null;
         }
     }
 
-    public List<ServerTask> getServerTasks() {
-        if (CollectionUtils.isEmpty(serverTaskList)) {
+    public List<HostCommand> getHostCommands() {
+        if (CollectionUtils.isEmpty(hostCommands)) {
             if (loadServerTasks()) {
                 LOGGER.info("Successfully load server task from config file");
             } else {
                 LOGGER.warn("Cannot load server task from config file!");
             }
         }
-        return serverTaskList == null ? List.of() : serverTaskList;
+        return hostCommands == null ? List.of() : hostCommands;
     }
 
 }

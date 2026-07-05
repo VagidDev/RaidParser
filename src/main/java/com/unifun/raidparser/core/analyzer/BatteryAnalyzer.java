@@ -1,10 +1,8 @@
 package com.unifun.raidparser.core.analyzer;
 
-import com.unifun.raidparser.core.component.ComponentType;
+import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.battery.*;
-import com.unifun.raidparser.core.response.AnalyzeResponse;
-import com.unifun.raidparser.parser.ReportFileParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,8 +22,8 @@ public class BatteryAnalyzer extends AbstractAnalyzer<BatteryStatus> {
     );
 
     @Override
-    public ComponentType getSupportedType() {
-        return ComponentType.BATTERY_HEALTH;
+    public HealthType getSupportedType() {
+        return HealthType.BATTERY_HEALTH;
     }
 
 

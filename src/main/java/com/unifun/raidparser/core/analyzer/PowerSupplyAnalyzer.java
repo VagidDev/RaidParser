@@ -1,10 +1,8 @@
 package com.unifun.raidparser.core.analyzer;
 
-import com.unifun.raidparser.core.component.ComponentType;
+import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.power.*;
-import com.unifun.raidparser.core.response.AnalyzeResponse;
-import com.unifun.raidparser.parser.ReportFileParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +30,7 @@ public class PowerSupplyAnalyzer extends AbstractAnalyzer<PowerSupplyStatus> {
     }
 
     @Override
-    public ComponentType getSupportedType() {
-        return ComponentType.PSU_HEALTH;
+    public HealthType getSupportedType() {
+        return HealthType.PSU_HEALTH;
     }
 }

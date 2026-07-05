@@ -1,9 +1,8 @@
 package com.unifun.raidparser.core.analyzer;
 
-import com.unifun.raidparser.core.component.ComponentType;
+import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.driver.*;
-import com.unifun.raidparser.core.response.AnalyzeResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,7 +25,7 @@ public class DriveManualAnalyzer extends AbstractAnalyzer<DriverStatus> {
     }
 
     @Override
-    public ComponentType getSupportedType() {
-        return ComponentType.DRIVE_HEALTH;
+    public HealthType getSupportedType() {
+        return HealthType.DRIVE_HEALTH;
     }
 }

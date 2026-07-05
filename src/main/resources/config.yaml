@@ -54,8 +54,8 @@ host-overview:
     data-loader-link: http...
     cache-file-path: ./cache/host-overview-servers.tmp
 health-checker:
-  saving-directory: "./server-health/"
-  servers-to-check-config-file: "./config/servers-to-check.conf"
+  saving-directory: "./status/"
+  servers-to-check-config-file: "./config/servers-to-check.yaml"
   proxy-server-ip: "127.0.0.1"
 sheets:
   authorization:

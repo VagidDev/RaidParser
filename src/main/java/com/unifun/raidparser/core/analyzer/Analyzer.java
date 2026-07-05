@@ -1,9 +1,9 @@
 package com.unifun.raidparser.core.analyzer;
 
-import com.unifun.raidparser.core.component.ComponentType;
+import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 
 public interface Analyzer<T> {
-    ComponentType getSupportedType();
+    HealthType getSupportedType();
     AnalyzeResponse<T> analyze(String rawData);
 }
