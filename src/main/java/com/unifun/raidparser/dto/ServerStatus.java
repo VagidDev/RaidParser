@@ -6,4 +6,10 @@ import com.unifun.raidparser.core.response.AnalyzeResponse;
 public record ServerStatus<T extends Status>(
         String serverName,
         AnalyzeResponse<T> analyzeResponse
-){}
+){
+
+    public String getPrettyFormat() {
+        return "Server Name: " + serverName
+                + " -> " + analyzeResponse.getStatus() + " -> " + analyzeResponse().getErrorText();
+    }
+}

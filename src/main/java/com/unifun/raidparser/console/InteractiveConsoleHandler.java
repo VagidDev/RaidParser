@@ -107,9 +107,9 @@ public class InteractiveConsoleHandler {
             System.out.println("\n" + SEPARATOR);
             printMsg("ШАГ 2: ДЕЙСТВИЯ (Файл: " + reportFilePath.getFileName() + ")");
             System.out.println("доступные команды:");
-            System.out.println(" [1] parse  - Парсинг отчета (Drive, PSU, Battery)");
-            System.out.println(" [2] check-full-driver - Вывод в консоль полного статуса для дисков (включая mdadm)");
-            System.out.println(" [3] check-report-driver - Вывод в консоль статуса для дисков из статус файла");
+            System.out.println(" [1] parse-report - Парсинг отчета и вывод в консоль");
+            System.out.println(" [2] check-health - Проверка состояния в ручную командами и вывод в консоль ");
+            System.out.println(" [3] full-check - Парсинг отчета и проверка состояния - вывод в консоль");
             System.out.println(" [4] file-export - Экспорт в статус-файлы");
             System.out.println(" [5] sheets-export - Экспорт в Google Sheets");
             System.out.println(" [back]     - Выбрать другой файл/дату");
@@ -119,16 +119,16 @@ public class InteractiveConsoleHandler {
             String input = consoleInput.nextLine().trim().toLowerCase();
 
             switch (input) {
-                case "1", "parse" -> executeParsing(reportFilePath);
-                case "2", "check-full-driver" -> executeChecking(
+                case "1", "parse-report" -> executeParsing(reportFilePath);
+                case "2", "check-health" -> executeChecking(
+                        reportFilePath,
+                        parsedRaidStatusDataHandler::getSortedManualDriveStatus,
+                        "дисков командами (mdadm)"
+                );
+                case "3", "full-check" -> executeChecking(
                         reportFilePath,
                         parsedRaidStatusDataHandler::getSortedFullDriveStatus,
-                        "всех дисков (включая mdadm)"
-                );
-                case "3", "check-report-driver" -> executeChecking(
-                        reportFilePath,
-                        parsedRaidStatusDataHandler::getSortedDriveStatus,
-                        "дисков только из статус-файла"
+                        "полный отчет дисков включая команды"
                 );
                 case "4", "file-export" -> exportToFile(reportFilePath);
                 case "5", "sheets-export" -> exportToGoogleSheets(reportFilePath);
@@ -143,18 +143,26 @@ public class InteractiveConsoleHandler {
         printMsg("Запуск процесса парсинга...");
 
         try {
-            int drives = parsedRaidStatusDataHandler.getSortedDriveStatus(reportFilePath).size();
-            int psu = parsedRaidStatusDataHandler.getSortedPowerSupplyStatus(reportFilePath).size();
-            int battery = parsedRaidStatusDataHandler.getSortedBatteryStatus(reportFilePath).size();
+            List<ServerStatus<DriverStatus>> driveStatus = parsedRaidStatusDataHandler.getSortedDriveStatus(reportFilePath);
+            List<ServerStatus<PowerSupplyStatus>> psuStatus = parsedRaidStatusDataHandler.getSortedPowerSupplyStatus(reportFilePath);
+            List<ServerStatus<BatteryStatus>> batteryStatus = parsedRaidStatusDataHandler.getSortedBatteryStatus(reportFilePath);
 
             System.out.println("----------------------------------------------------");
             printMsg("РЕЗУЛЬТАТЫ ПАРСИНГА:");
-            System.out.printf(" - Диски (Drive Status): %d серверов%n", drives);
-            System.out.printf(" - Блоки питания (PSU):  %d серверов%n", psu);
-            System.out.printf(" - Батареи (Battery):    %d серверов%n", battery);
+            System.out.printf(" - Диски (Drive Status): %d серверов%n", driveStatus.size());
+            System.out.printf(" - Блоки питания (PSU):  %d серверов%n", psuStatus.size());
+            System.out.printf(" - Батареи (Battery):    %d серверов%n", batteryStatus.size());
             System.out.println("----------------------------------------------------");
 
-            LOGGER.info("Successfully parsed report {}. D:{}, P:{}, B:{}", reportFilePath, drives, psu, battery);
+            printMsg("ВЫВОД:");
+            printMsg("Статус дисков:");
+            driveStatus.forEach(serverStatus -> printMsg(serverStatus.getPrettyFormat()));
+            printMsg("Статус Блоков питания:");
+            psuStatus.forEach(serverStatus -> printMsg(serverStatus.getPrettyFormat()));
+            printMsg("Статус батареек:");
+            batteryStatus.forEach(serverStatus -> printMsg(serverStatus.getPrettyFormat()));
+
+            LOGGER.info("Successfully parsed report {}. D:{}, P:{}, B:{}", reportFilePath, driveStatus.size(), psuStatus.size(), batteryStatus.size());
         } catch (Exception e) {
             printError("Ошибка при парсинге: " + e.getMessage());
             LOGGER.error("Parsing error", e);

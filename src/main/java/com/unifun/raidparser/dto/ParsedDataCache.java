@@ -26,7 +26,7 @@ public class ParsedDataCache<T extends Status> {
         this.cacheMaxAgeSeconds = cacheMaxAgeSeconds;
     }
 
-    public boolean isDataValid(Path reportFilePath) {
+    public synchronized boolean isDataValid(Path reportFilePath) {
         // чем дальше в лес, if else ... if else
         if (reportFilePath == null) {
             LOGGER.info("Empty stored report file!");

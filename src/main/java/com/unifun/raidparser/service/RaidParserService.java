@@ -59,8 +59,8 @@ public class RaidParserService {
         List<ServerStatus<BatteryStatus>> batteryServerStatuses = batteryStatusRaidParser.getParsedData(serversData, batteryAnalyzer);
         return batteryStatusDataSorter.sortByStatus(batteryServerStatuses);
     }
-
-    public List<ServerStatus<DriverStatus>> getManualDriverStatus() {
+    //TODO: fix that code, maybe one day
+    public List<ServerStatus<DriverStatus>> getManualDriverStatus(Path reportFilePath) {
         List<ServerData> serverHealthDataList = serverHealthCheckService.checkServers();
         List<ServerStatus<DriverStatus>> driverManualStatus = driverStatusRaidParser.getParsedData(serverHealthDataList, driveManualAnalyzer);
         return driverStatusDataSorter.sortByStatus(driverManualStatus);
@@ -69,7 +69,7 @@ public class RaidParserService {
     public List<ServerStatus<DriverStatus>> getSortedFullDriveStatus(Path reportFilePath) {
         List<ServerData> serversData = serverDataHandler.getServerData(reportFilePath);
         List<ServerStatus<DriverStatus>> driveServerStatuses = driverStatusRaidParser.getParsedData(serversData, driveAnalyzer);
-        List<ServerStatus<DriverStatus>> manualServerStatuses = getManualDriverStatus();
+        List<ServerStatus<DriverStatus>> manualServerStatuses = getManualDriverStatus(reportFilePath);
 
         driveServerStatuses.replaceAll(serverReportStatus -> {
                     ServerStatus<DriverStatus> manualServerStatus = manualServerStatuses.stream()
