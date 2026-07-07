@@ -2,7 +2,9 @@ package com.unifun.raidparser.core.analyzer;
 
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Filter;
-import com.unifun.raidparser.core.filters.driver.*;
+import com.unifun.raidparser.core.filters.drive.*;
+import com.unifun.raidparser.core.filters.drive.mdadm.DriveDegradedFilter;
+import com.unifun.raidparser.core.filters.drive.mdadm.DriveOkFilter;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,8 +12,8 @@ import java.util.List;
 @Service
 public class DriveManualAnalyzer extends AbstractAnalyzer<DriverStatus> {
     private static final List<Filter<DriverStatus>> FILTERS = List.of(
-            new DriveFailedManualFilter(),
-            new DriveOkManualFilter()
+            new DriveDegradedFilter(),
+            new DriveOkFilter()
     );
 
     @Override

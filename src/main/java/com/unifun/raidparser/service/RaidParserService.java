@@ -8,7 +8,7 @@ import com.unifun.raidparser.core.analyzer.DriveAnalyzer;
 import com.unifun.raidparser.core.analyzer.DriveManualAnalyzer;
 import com.unifun.raidparser.core.analyzer.PowerSupplyAnalyzer;
 import com.unifun.raidparser.core.filters.battery.BatteryStatus;
-import com.unifun.raidparser.core.filters.driver.DriverStatus;
+import com.unifun.raidparser.core.filters.drive.DriverStatus;
 import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
 import com.unifun.raidparser.handlers.ServerDataHandler;
 import com.unifun.raidparser.util.ServerDataSorter;

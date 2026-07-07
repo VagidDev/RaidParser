@@ -5,12 +5,7 @@ import com.unifun.raidparser.core.response.AnalyzeResponse;
 
 public class PowerSupplyEmptyFilter extends EmptyFilter<PowerSupplyStatus> implements PowerSupplyFilter {
     @Override
-    protected AnalyzeResponse<PowerSupplyStatus> getValidResponse() {
-        return new AnalyzeResponse<>(PowerSupplyStatus.OK, "");
-    }
-
-    @Override
-    protected AnalyzeResponse<PowerSupplyStatus> getInvalidResponse() {
+    public AnalyzeResponse<PowerSupplyStatus> getFilterResponse(String text) {
         return new AnalyzeResponse<>(PowerSupplyStatus.EMPTY, "Empty response, please check manually");
     }
 }

@@ -3,6 +3,9 @@ package com.unifun.raidparser.core.analyzer;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.power.*;
+import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyFailedFilter;
+import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyNotPresentFilter;
+import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyOkFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

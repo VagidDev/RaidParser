@@ -3,7 +3,7 @@ package com.unifun.raidparser.console;
 import com.unifun.raidparser.config.OutputStatusFileConfig;
 import com.unifun.raidparser.core.filters.Status;
 import com.unifun.raidparser.core.filters.battery.BatteryStatus;
-import com.unifun.raidparser.core.filters.driver.DriverStatus;
+import com.unifun.raidparser.core.filters.drive.DriverStatus;
 import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
 import com.unifun.raidparser.dto.DateParseResponse;
 import com.unifun.raidparser.dto.ServerStatus;
@@ -217,7 +217,7 @@ public class InteractiveConsoleHandler {
     // Вспомогательные методы для красоты
     private void printHeader() {
         System.out.println("\n" + LOGO);
-        System.out.println("             System Administration Tool v4.1");
+        System.out.println("             System Administration Tool v5.0");
         System.out.println(SEPARATOR);
     }
 

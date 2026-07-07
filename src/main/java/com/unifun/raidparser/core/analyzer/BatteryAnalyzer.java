@@ -3,6 +3,7 @@ package com.unifun.raidparser.core.analyzer;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.battery.*;
+import com.unifun.raidparser.core.filters.battery.hpe.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

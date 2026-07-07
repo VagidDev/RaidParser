@@ -1,4 +1,4 @@
-package com.unifun.raidparser.core.filters.driver;
+package com.unifun.raidparser.core.filters.drive;
 
 import com.unifun.raidparser.core.filters.Filter;
 

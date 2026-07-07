@@ -1,9 +1,11 @@
-package com.unifun.raidparser.core.filters.power;
+package com.unifun.raidparser.core.filters.power.ipmitool;
 
 import com.unifun.raidparser.core.filters.AbstractFilter;
+import com.unifun.raidparser.core.filters.power.PowerSupplyFilter;
+import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 
-public class PowerSupplyNotPresentFilter extends AbstractFilter<PowerSupplyStatus> implements PowerSupplyFilter{
+public class PowerSupplyNotPresentFilter extends AbstractFilter<PowerSupplyStatus> implements PowerSupplyFilter {
     @Override
     public AnalyzeResponse<PowerSupplyStatus> filter(String text) {
         if (text.contains("power supply not present"))
