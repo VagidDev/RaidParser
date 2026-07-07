@@ -6,6 +6,7 @@ import com.unifun.raidparser.core.filters.power.*;
 import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyFailedFilter;
 import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyNotPresentFilter;
 import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyOkFilter;
+import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyUnclaimedFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

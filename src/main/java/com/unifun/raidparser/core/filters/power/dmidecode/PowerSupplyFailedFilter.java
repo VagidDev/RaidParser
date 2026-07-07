@@ -8,13 +8,15 @@ import com.unifun.raidparser.core.response.AnalyzeResponse;
 public class PowerSupplyFailedFilter extends AbstractFilter<PowerSupplyStatus> implements PowerSupplyFilter {
     @Override
     public boolean filter(String text) {
-        return text.contains("failure detected");
+        return (text.contains("condition: failed")
+                || text.contains("redundant: no")
+        );
     }
 
     @Override
     public AnalyzeResponse<PowerSupplyStatus> getFilterResponse(String text) {
         return new AnalyzeResponse<>(PowerSupplyStatus.FAILED,
-                buildErrorText(text,  "failure detected", "power supplies", "input", "output")
+                buildErrorText(text,  "condition: failed", "power supply #", "redundant: no")
         );
     }
 //    text.contains("condition: failed")
