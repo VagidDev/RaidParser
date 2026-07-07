@@ -123,12 +123,12 @@ public class InteractiveConsoleHandler {
                 case "2", "check-health" -> executeChecking(
                         reportFilePath,
                         parsedRaidStatusDataHandler::getSortedManualDriveStatus,
-                        "дисков командами (mdadm)"
+                        "проверки дисков командами (mdadm)"
                 );
                 case "3", "full-check" -> executeChecking(
                         reportFilePath,
                         parsedRaidStatusDataHandler::getSortedFullDriveStatus,
-                        "полный отчет дисков включая команды"
+                        "полный отчет дисков включая команды из конфига"
                 );
                 case "4", "file-export" -> exportToFile(reportFilePath);
                 case "5", "sheets-export" -> exportToGoogleSheets(reportFilePath);
@@ -174,7 +174,7 @@ public class InteractiveConsoleHandler {
             Function<Path, List<ServerStatus<T>>> parser,
             String checkingElementLog
     ) {
-        printMsg(String.format("Запуск процесса сбора статуса для %s ...", checkingElementLog));
+        printMsg(String.format("Запуск процесса %s ...", checkingElementLog));
         List<ServerStatus<T>> serverData = parser.apply(reportFilePath);
         printMsg("Печатаю текущий статус ниже:");
 
@@ -187,7 +187,7 @@ public class InteractiveConsoleHandler {
                         )
                 )
         );
-        printMsg(String.format("Статус по %s собран!", checkingElementLog));
+        printMsg(String.format("Процесс %s выполнен!", checkingElementLog));
     }
 
     private void exportToFile(Path reportFilePath) {
@@ -217,7 +217,7 @@ public class InteractiveConsoleHandler {
     // Вспомогательные методы для красоты
     private void printHeader() {
         System.out.println("\n" + LOGO);
-        System.out.println("             System Administration Tool v4.0");
+        System.out.println("             System Administration Tool v4.1");
         System.out.println(SEPARATOR);
     }
 
