@@ -10,9 +10,9 @@ public enum BatteryStatus implements Status {
     NO_BATTERY(2, "No battery"),
     NOT_SAFE(3, "OK(Not safe)"),
     CACHE_DISABLED(4, "Permanently Disabled"),
-    UNKNOWN(5, "UNKNOWN"),
-    EMPTY(6, "Empty"),
-    OK(Integer.MAX_VALUE, "Ok");
+    EMPTY(5, "Empty"),
+    OK(6, "Ok"),
+    UNKNOWN(Integer.MAX_VALUE, "UNKNOWN");
 
 
     private final int priority;
