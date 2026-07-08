@@ -11,7 +11,7 @@ public enum DriverStatus implements Status {
     FAILED(2, "OK(Failed)"),
     EMPTY(3, "Empty"),
     OK(4, "OK"),
-    UNKNOW(Integer.MAX_VALUE, "UNKNOWN");
+    UNKNOWN(Integer.MAX_VALUE, "UNKNOWN");
 
     private final int priority;
     private final String name;

@@ -1,5 +1,6 @@
-package com.unifun.raidparser.core.analyzer;
+package com.unifun.raidparser.core.analyzer.psu;
 
+import com.unifun.raidparser.core.analyzer.AbstractAnalyzer;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.power.*;
@@ -7,14 +8,17 @@ import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyFailedFilter
 import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyNotPresentFilter;
 import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyOkFilter;
 import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyUnclaimedFilter;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
-public class PowerSupplyAnalyzer extends AbstractAnalyzer<PowerSupplyStatus> {
+@Component
+public class IpmitoolPowerSupplyAnalyzer extends AbstractAnalyzer<PowerSupplyStatus> {
+    @Override
+    public boolean isSupportedRawData(String text) {
+        return text.contains("Power Supply") && text.contains("Power Supplies");
+    }
+
     private final List<Filter<PowerSupplyStatus>> powerSupplyFilters = List.of(
                 new PowerSupplyEmptyFilter(),
                 new PowerSupplyFailedFilter(),
@@ -29,12 +33,12 @@ public class PowerSupplyAnalyzer extends AbstractAnalyzer<PowerSupplyStatus> {
     }
 
     @Override
-    protected PowerSupplyStatus getSuccessfulStatus() {
-        return PowerSupplyStatus.OK;
+    public HealthType getSupportedType() {
+        return HealthType.PSU_HEALTH;
     }
 
     @Override
-    public HealthType getSupportedType() {
-        return HealthType.PSU_HEALTH;
+    protected PowerSupplyStatus getUnknownStatus() {
+        return PowerSupplyStatus.UNKNOWN;
     }
 }

@@ -1,5 +1,6 @@
-package com.unifun.raidparser.core.analyzer;
+package com.unifun.raidparser.core.analyzer.drive;
 
+import com.unifun.raidparser.core.analyzer.AbstractAnalyzer;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.drive.*;
@@ -7,20 +8,23 @@ import com.unifun.raidparser.core.filters.drive.hpe.DriveFailedFilter;
 import com.unifun.raidparser.core.filters.drive.hpe.DriveOkFilter;
 import com.unifun.raidparser.core.filters.drive.hpe.DriverInterimRecoveryModeFilter;
 import com.unifun.raidparser.core.filters.drive.hpe.DriverPredictiveFailureFilter;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
-public class DriveAnalyzer extends AbstractAnalyzer<DriverStatus> {
+@Component
+public class HpeDriveAnalyzer extends AbstractAnalyzer<DriverStatus> {
     private final List<Filter<DriverStatus>> driveFilters = List.of(new DriverInterimRecoveryModeFilter(),
             new DriveFailedFilter(),
             new DriverPredictiveFailureFilter(),
             new DriveEmptyFilter(),
             new DriveOkFilter()
     );
+
+    @Override
+    public boolean isSupportedRawData(String text) {
+        return text.contains("logicaldrive") && text.contains("physicaldrive");
+    }
 
     @Override
     public HealthType getSupportedType() {
@@ -33,7 +37,8 @@ public class DriveAnalyzer extends AbstractAnalyzer<DriverStatus> {
     }
 
     @Override
-    protected DriverStatus getSuccessfulStatus() {
-        return DriverStatus.OK;
+    protected DriverStatus getUnknownStatus() {
+        return DriverStatus.UNKNOWN;
     }
+
 }

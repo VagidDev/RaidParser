@@ -3,10 +3,10 @@ package com.unifun.raidparser.service;
 import com.unifun.raidparser.dto.ServerData;
 import com.unifun.raidparser.dto.ServerStatus;
 import com.unifun.raidparser.parser.RaidStatusParser;
-import com.unifun.raidparser.core.analyzer.BatteryAnalyzer;
-import com.unifun.raidparser.core.analyzer.DriveAnalyzer;
-import com.unifun.raidparser.core.analyzer.DriveManualAnalyzer;
-import com.unifun.raidparser.core.analyzer.PowerSupplyAnalyzer;
+import com.unifun.raidparser.core.analyzer.battery.HpeBatteryAnalyzer;
+import com.unifun.raidparser.core.analyzer.drive.HpeDriveAnalyzer;
+import com.unifun.raidparser.core.analyzer.drive.MdadmDriveAnalyzer;
+import com.unifun.raidparser.core.analyzer.psu.IpmitoolPowerSupplyAnalyzer;
 import com.unifun.raidparser.core.filters.battery.BatteryStatus;
 import com.unifun.raidparser.core.filters.drive.DriverStatus;
 import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
@@ -27,10 +27,10 @@ public class RaidParserService {
 
     private final ServerDataHandler serverDataHandler;
 
-    private final DriveAnalyzer driveAnalyzer;
-    private final PowerSupplyAnalyzer powerSupplyAnalyzer;
-    private final BatteryAnalyzer batteryAnalyzer;
-    private final DriveManualAnalyzer driveManualAnalyzer;
+    private final HpeDriveAnalyzer driveAnalyzer;
+    private final IpmitoolPowerSupplyAnalyzer ipmitoolPowerSupplyAnalyzer;
+    private final HpeBatteryAnalyzer hpeBatteryAnalyzer;
+    private final MdadmDriveAnalyzer mdadmDriveAnalyzer;
 
     private final RaidStatusParser<DriverStatus> driverStatusRaidParser;
     private final RaidStatusParser<PowerSupplyStatus> powerSupplyStatusRaidParser;
@@ -50,19 +50,19 @@ public class RaidParserService {
 
     public List<ServerStatus<PowerSupplyStatus>> getSortedPowerSuppliesStatus(Path reportFilePath) {
         List<ServerData> serversData = serverDataHandler.getServerData(reportFilePath);
-        List<ServerStatus<PowerSupplyStatus>> powerSupplyServerStatuses = powerSupplyStatusRaidParser.getParsedData(serversData, powerSupplyAnalyzer);
+        List<ServerStatus<PowerSupplyStatus>> powerSupplyServerStatuses = powerSupplyStatusRaidParser.getParsedData(serversData, ipmitoolPowerSupplyAnalyzer);
         return powerSupplyStatusDataSorter.sortByStatus(powerSupplyServerStatuses);
     }
 
     public List<ServerStatus<BatteryStatus>> getSortedBatteriesStatus(Path reportFilePath) {
         List<ServerData> serversData = serverDataHandler.getServerData(reportFilePath);
-        List<ServerStatus<BatteryStatus>> batteryServerStatuses = batteryStatusRaidParser.getParsedData(serversData, batteryAnalyzer);
+        List<ServerStatus<BatteryStatus>> batteryServerStatuses = batteryStatusRaidParser.getParsedData(serversData, hpeBatteryAnalyzer);
         return batteryStatusDataSorter.sortByStatus(batteryServerStatuses);
     }
     //TODO: fix that code, maybe one day
     public List<ServerStatus<DriverStatus>> getManualDriverStatus(Path reportFilePath) {
         List<ServerData> serverHealthDataList = serverHealthCheckService.checkServers();
-        List<ServerStatus<DriverStatus>> driverManualStatus = driverStatusRaidParser.getParsedData(serverHealthDataList, driveManualAnalyzer);
+        List<ServerStatus<DriverStatus>> driverManualStatus = driverStatusRaidParser.getParsedData(serverHealthDataList, mdadmDriveAnalyzer);
         return driverStatusDataSorter.sortByStatus(driverManualStatus);
     }
 

@@ -1,6 +1,6 @@
 package com.unifun.raidparser.parser;
 
-import com.unifun.raidparser.core.analyzer.DriveManualAnalyzer;
+import com.unifun.raidparser.core.analyzer.drive.MdadmDriveAnalyzer;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.drive.DriverStatus;
 import com.unifun.raidparser.dto.ServerData;
@@ -20,10 +20,10 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class RaidStatusParserManualDriverTest {
-    private final DriveManualAnalyzer driveManualAnalyzer = new DriveManualAnalyzer();
+    private final MdadmDriveAnalyzer mdadmDriveAnalyzer = new MdadmDriveAnalyzer();
     private final RaidStatusParser<DriverStatus> driverStatusRaidStatusParser = new RaidStatusParser<>();
 
-    @Mock private DriveManualAnalyzer mockedDriveManualAnalyzer;
+    @Mock private MdadmDriveAnalyzer mockedMdadmDriveAnalyzer;
     @Mock private ServerHealthCheckService serverHealthCheckService;
     // ------------------------------------------------------------------ //
     // 1. Пустой список от checkServers() → пустой результат, analyze не вызван
@@ -33,11 +33,11 @@ class RaidStatusParserManualDriverTest {
         when(serverHealthCheckService.checkServers()).thenReturn(List.of());
         List<ServerStatus<DriverStatus>> result = driverStatusRaidStatusParser.getParsedData(
                 serverHealthCheckService.checkServers(),
-                mockedDriveManualAnalyzer
+                mockedMdadmDriveAnalyzer
         );
 
         assertThat(result).isEmpty();
-        verifyNoInteractions(mockedDriveManualAnalyzer);
+        verifyNoInteractions(mockedMdadmDriveAnalyzer);
     }
 
     // ------------------------------------------------------------------ //
@@ -51,7 +51,7 @@ class RaidStatusParserManualDriverTest {
 
         ServerData server = new ServerData("host-ok", Map.of(HealthType.DRIVE_HEALTH, healthData));
 
-        List<ServerStatus<DriverStatus>> result = driverStatusRaidStatusParser.getParsedData(List.of(server), driveManualAnalyzer);
+        List<ServerStatus<DriverStatus>> result = driverStatusRaidStatusParser.getParsedData(List.of(server), mdadmDriveAnalyzer);
 
         assertThat(result).hasSize(1);
         ServerStatus<DriverStatus> status = result.get(0);
@@ -71,7 +71,7 @@ class RaidStatusParserManualDriverTest {
 
         ServerData server = new ServerData("host-degraded", Map.of(HealthType.DRIVE_HEALTH, healthData));
 
-        List<ServerStatus<DriverStatus>> result = driverStatusRaidStatusParser.getParsedData(List.of(server), driveManualAnalyzer);
+        List<ServerStatus<DriverStatus>> result = driverStatusRaidStatusParser.getParsedData(List.of(server), mdadmDriveAnalyzer);
 
         assertThat(result).hasSize(1);
         ServerStatus<DriverStatus> status = result.get(0);
@@ -96,7 +96,7 @@ class RaidStatusParserManualDriverTest {
                 new ServerData("host-c", Map.of(HealthType.DRIVE_HEALTH, badData2))
         );
 
-        List<ServerStatus<DriverStatus>> result =driverStatusRaidStatusParser.getParsedData(servers, driveManualAnalyzer);
+        List<ServerStatus<DriverStatus>> result =driverStatusRaidStatusParser.getParsedData(servers, mdadmDriveAnalyzer);
 
         assertThat(result).hasSize(3);
 
@@ -125,14 +125,14 @@ class RaidStatusParserManualDriverTest {
                 new ServerData("srv-1", Map.of(HealthType.DRIVE_HEALTH, dataA)),
                 new ServerData("srv-2", Map.of(HealthType.DRIVE_HEALTH, dataB))
         );
-        when(mockedDriveManualAnalyzer.getSupportedType()).thenReturn(HealthType.DRIVE_HEALTH);
+        when(mockedMdadmDriveAnalyzer.getSupportedType()).thenReturn(HealthType.DRIVE_HEALTH);
 
-        driverStatusRaidStatusParser.getParsedData(servers, mockedDriveManualAnalyzer);
+        driverStatusRaidStatusParser.getParsedData(servers, mockedMdadmDriveAnalyzer);
 
         // InOrder гарантирует последовательность вызовов
-        var inOrder = inOrder(mockedDriveManualAnalyzer);
-        inOrder.verify(mockedDriveManualAnalyzer).analyze(dataA);
-        inOrder.verify(mockedDriveManualAnalyzer).analyze(dataB);
-        verifyNoMoreInteractions(mockedDriveManualAnalyzer);
+        var inOrder = inOrder(mockedMdadmDriveAnalyzer);
+        inOrder.verify(mockedMdadmDriveAnalyzer).analyze(dataA);
+        inOrder.verify(mockedMdadmDriveAnalyzer).analyze(dataB);
+        verifyNoMoreInteractions(mockedMdadmDriveAnalyzer);
     }
 }

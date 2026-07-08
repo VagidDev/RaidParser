@@ -1,17 +1,16 @@
-package com.unifun.raidparser.core.analyzer;
+package com.unifun.raidparser.core.analyzer.battery;
 
+import com.unifun.raidparser.core.analyzer.AbstractAnalyzer;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.battery.*;
 import com.unifun.raidparser.core.filters.battery.hpe.*;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
-public class BatteryAnalyzer extends AbstractAnalyzer<BatteryStatus> {
+@Component
+public class HpeBatteryAnalyzer extends AbstractAnalyzer<BatteryStatus> {
     private final List<Filter<BatteryStatus>> batteryFilters = List.of(
             new BatteryEmptyFilter(),
             new BatteryFailedFilter(),
@@ -27,14 +26,18 @@ public class BatteryAnalyzer extends AbstractAnalyzer<BatteryStatus> {
         return HealthType.BATTERY_HEALTH;
     }
 
-
     @Override
     protected List<Filter<BatteryStatus>> getFilters() {
         return batteryFilters;
     }
 
     @Override
-    protected BatteryStatus getSuccessfulStatus() {
-        return BatteryStatus.OK;
+    public boolean isSupportedRawData(String text) {
+        return text.contains("Smart Array") && text.contains("Cache Board Present: True");
+    }
+
+    @Override
+    protected BatteryStatus getUnknownStatus() {
+        return BatteryStatus.UNKNOWN;
     }
 }
