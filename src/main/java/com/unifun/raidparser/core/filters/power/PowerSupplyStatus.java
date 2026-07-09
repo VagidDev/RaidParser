@@ -10,6 +10,7 @@ public enum PowerSupplyStatus implements Status {
     UNCLAIMED(2, "Unclaimed"),
     EMPTY(3, "Empty"),
     OK(4, "OK"),
+    UNSUPPORTED_TYPE(Integer.MAX_VALUE, "UNSUPPORTED_TYPE"),
     UNKNOWN(Integer.MAX_VALUE, "UNKNOWN");
 
     private final int priority;

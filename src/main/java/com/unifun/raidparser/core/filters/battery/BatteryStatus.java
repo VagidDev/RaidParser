@@ -12,6 +12,7 @@ public enum BatteryStatus implements Status {
     CACHE_DISABLED(4, "Permanently Disabled"),
     EMPTY(5, "Empty"),
     OK(6, "Ok"),
+    UNSUPPORTED_TYPE(Integer.MAX_VALUE, "UNSUPPORTED_TYPE"),
     UNKNOWN(Integer.MAX_VALUE, "UNKNOWN");
 
 
