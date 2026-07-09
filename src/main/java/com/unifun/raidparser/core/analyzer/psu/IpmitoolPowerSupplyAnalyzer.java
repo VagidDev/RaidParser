@@ -38,7 +38,7 @@ public class IpmitoolPowerSupplyAnalyzer extends AbstractAnalyzer<PowerSupplySta
     }
 
     @Override
-    protected PowerSupplyStatus getUnknownStatus() {
+    public PowerSupplyStatus getUnknownStatus() {
         return PowerSupplyStatus.UNKNOWN;
     }
 }

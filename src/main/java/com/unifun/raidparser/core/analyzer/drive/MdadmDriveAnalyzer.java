@@ -38,7 +38,7 @@ public class MdadmDriveAnalyzer extends AbstractAnalyzer<DriverStatus> {
     }
 
     @Override
-    protected DriverStatus getUnknownStatus() {
+    public DriverStatus getUnknownStatus() {
         return DriverStatus.UNKNOWN;
     }
 }

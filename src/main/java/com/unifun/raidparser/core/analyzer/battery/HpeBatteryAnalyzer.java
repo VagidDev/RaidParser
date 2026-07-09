@@ -37,7 +37,7 @@ public class HpeBatteryAnalyzer extends AbstractAnalyzer<BatteryStatus> {
     }
 
     @Override
-    protected BatteryStatus getUnknownStatus() {
+    public BatteryStatus getUnknownStatus() {
         return BatteryStatus.UNKNOWN;
     }
 }

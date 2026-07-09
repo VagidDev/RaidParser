@@ -8,7 +8,6 @@ import java.util.List;
 
 public abstract class AbstractAnalyzer<T extends Status> implements Analyzer<T> {
     protected abstract List<Filter<T>> getFilters();
-    protected abstract T getUnknownStatus();
 
     public AnalyzeResponse<T> analyze(String data) {
         for (Filter<T> filter : getFilters()) {

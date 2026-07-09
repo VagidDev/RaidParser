@@ -6,6 +6,7 @@ import com.unifun.raidparser.core.response.AnalyzeResponse;
 
 public interface Analyzer<T extends Status> {
     boolean isSupportedRawData(String text);
-    HealthType getSupportedType();
     AnalyzeResponse<T> analyze(String rawData);
+    HealthType getSupportedType();
+    T getUnknownStatus();
 }
