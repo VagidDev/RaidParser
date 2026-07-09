@@ -4,11 +4,12 @@ import com.unifun.raidparser.core.filters.AbstractFilter;
 import com.unifun.raidparser.core.filters.battery.BatteryFilter;
 import com.unifun.raidparser.core.filters.battery.BatteryStatus;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
+import com.unifun.raidparser.util.TextSearcher;
 
 public class BatteryRechargingFilter extends AbstractFilter<BatteryStatus> implements BatteryFilter {
     @Override
     public boolean filter(String text) {
-        return text.contains("recharging");
+        return TextSearcher.containsAll(text, "recharging");
     }
 
     @Override

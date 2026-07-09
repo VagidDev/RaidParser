@@ -4,11 +4,12 @@ import com.unifun.raidparser.core.filters.AbstractFilter;
 import com.unifun.raidparser.core.filters.power.PowerSupplyFilter;
 import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
+import com.unifun.raidparser.util.TextSearcher;
 
 public class PowerSupplyNotPresentFilter extends AbstractFilter<PowerSupplyStatus> implements PowerSupplyFilter {
     @Override
     public boolean filter(String text) {
-        return text.contains("power supply not present");
+        return TextSearcher.containsAll(text, "power supply not present");
     }
 
     @Override

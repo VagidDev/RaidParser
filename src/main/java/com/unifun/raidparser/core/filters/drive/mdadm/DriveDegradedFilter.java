@@ -4,18 +4,14 @@ import com.unifun.raidparser.core.filters.AbstractFilter;
 import com.unifun.raidparser.core.filters.drive.DriveFilter;
 import com.unifun.raidparser.core.filters.drive.DriverStatus;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
+import com.unifun.raidparser.util.TextSearcher;
 
 public class DriveDegradedFilter extends AbstractFilter<DriverStatus> implements DriveFilter {
 
     @Override
     public boolean filter(String text) {
-        return (text.contains("active raid1")
-                && text.contains("blocks super")
-                && (text.contains("[1/2] [_U]")
-                || text.contains("[1/2] [U_]")
-                || text.contains("[2/1] [_U]")
-                || text.contains("[2/1] [U_]")
-        )
+        return (TextSearcher.containsAll(text, "active raid1", "blocks super")
+                && TextSearcher.containsAny(text, "[1/2] [_U]", "[1/2] [U_]","[2/1] [_U]","[2/1] [U_]")
         );
     }
 

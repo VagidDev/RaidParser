@@ -4,11 +4,12 @@ import com.unifun.raidparser.core.filters.AbstractFilter;
 import com.unifun.raidparser.core.filters.drive.DriveFilter;
 import com.unifun.raidparser.core.filters.drive.DriverStatus;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
+import com.unifun.raidparser.util.TextSearcher;
 
 public class DriverPredictiveFailureFilter extends AbstractFilter<DriverStatus> implements DriveFilter {
     @Override
     public boolean filter(String text) {
-        return text.contains("predictive failure");
+        return TextSearcher.containsAll(text, "predictive failure");
     }
 
     @Override

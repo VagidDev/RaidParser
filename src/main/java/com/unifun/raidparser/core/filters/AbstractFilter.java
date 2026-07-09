@@ -1,6 +1,7 @@
 package com.unifun.raidparser.core.filters;
 
 import com.unifun.raidparser.core.response.AnalyzeResponse;
+import com.unifun.raidparser.util.TextSearcher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +13,7 @@ public abstract class AbstractFilter<T extends Status> implements Filter<T>{
 
         for (String row : lines) {
             for (String pattern : patterns) {
-                if (row.toLowerCase().contains(pattern)) {
+                if (TextSearcher.containsAll(row, pattern)) {
                     matchedLines.add(row);
                     break;
                 }

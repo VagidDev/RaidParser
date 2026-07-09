@@ -4,13 +4,14 @@ import com.unifun.raidparser.core.filters.AbstractFilter;
 import com.unifun.raidparser.core.filters.battery.BatteryFilter;
 import com.unifun.raidparser.core.filters.battery.BatteryStatus;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
+import com.unifun.raidparser.util.TextSearcher;
 
 public class BatteryNoBatteryWriteCacheEnableFilter extends AbstractFilter<BatteryStatus> implements BatteryFilter {
     @Override
     public boolean filter(String text) {
-        return (text.contains("no-battery write cache: enabled")
-                && text.contains("battery/capacitor status: ok")
-        );
+        return TextSearcher.containsAll(
+                text,
+                "no-battery write cache: enabled", "battery/capacitor status: ok");
     }
 
     @Override

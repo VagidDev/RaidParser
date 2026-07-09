@@ -4,11 +4,12 @@ import com.unifun.raidparser.core.filters.AbstractFilter;
 import com.unifun.raidparser.core.filters.power.PowerSupplyFilter;
 import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
+import com.unifun.raidparser.util.TextSearcher;
 
 public class PowerSupplyUnclaimedFilter extends AbstractFilter<PowerSupplyStatus> implements PowerSupplyFilter {
     @Override
     public boolean filter(String text) {
-        return text.contains("unclaimed");
+        return TextSearcher.containsAll(text, "unclaimed");
     }
 
     @Override
