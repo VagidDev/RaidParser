@@ -1,5 +1,6 @@
 package com.unifun.raidparser.handlers;
 
+import com.unifun.raidparser.builder.ServerStatusBuilder;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Status;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
@@ -9,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -17,38 +17,58 @@ public class ServerStatusDataHandler {
     private static final Logger LOGGER = LogManager.getLogger(ServerStatusDataHandler.class);
     private final ConcurrentHashMap<String, ServerStatus> serverStatuses = new ConcurrentHashMap<>();;
 
+    public void updateStatus(ServerStatus newServerStatus) {
+        String serverName = newServerStatus.serverName();
+        LOGGER.debug("Updating status for server: {}", serverName);
+
+        serverStatuses.compute(newServerStatus.serverName(), (key, currentServerStatus) -> {
+            ServerStatusBuilder builder = new ServerStatusBuilder()
+                    .serverName(newServerStatus.serverName());
+
+            if (currentServerStatus != null) {
+                currentServerStatus.healthStatusMap().forEach(builder::addHealthStatus);
+            }
+
+            newServerStatus.healthStatusMap().forEach((type, newResponse) -> {
+                AnalyzeResponse<? extends Status> currentResponse = (currentServerStatus != null)
+                        ? currentServerStatus.healthStatusMap().get(type)
+                        : null;
+                if (currentResponse == null) {
+                    builder.addHealthStatus(type, newResponse);
+                } else if (newResponse.getStatus().getPriority() < currentResponse.getStatus().getPriority()) {
+                    LOGGER.info("Server '{}' for [{}] status changed from '{}' to '{}' due to higher priority",
+                            serverName, type, currentResponse.getStatus(), newResponse.getStatus());
+                    builder.addHealthStatus(type, newResponse);
+                }
+            });
+
+            return builder.build();
+        });
+
+    }
+
     public void updateStatus(String serverName, HealthType type, AnalyzeResponse<Status> newResponse) {
         LOGGER.debug("Updating status for server: {}, component: {}, new status: {}", serverName, type, newResponse.getStatus());
 
+        ServerStatusBuilder builder = new ServerStatusBuilder().serverName(serverName);
         serverStatuses.compute(serverName, (key, currentServerStatus) -> {
             if (currentServerStatus == null) {
-                ConcurrentHashMap<HealthType, AnalyzeResponse<? extends Status>> initialMap = new ConcurrentHashMap<>();
-                initialMap.put(type, newResponse);
-                return new ServerStatus(serverName, initialMap);
+                return builder.addHealthStatus(type, newResponse).build();
             }
 
-            Map<HealthType, AnalyzeResponse<? extends Status>> healthMap = currentServerStatus.healthStatusMap();
+            currentServerStatus.healthStatusMap().forEach(builder::addHealthStatus);
+            AnalyzeResponse<? extends Status> currentResponse = currentServerStatus.healthStatusMap().get(type);
 
-            healthMap.compute(type, (componentKey, currentResponse) -> {
-                if (currentResponse == null) {
-                    return newResponse;
-                }
+            if (currentResponse == null) {
+                builder.addHealthStatus(type, newResponse);
+            } else if (newResponse.getStatus().getPriority() < currentResponse.getStatus().getPriority()) {
+                LOGGER.info("Server '{}' [{}] status changed from '{}' to '{}' due to higher priority",
+                        serverName, type, currentResponse.getStatus(), newResponse.getStatus());
+                builder.addHealthStatus(type, newResponse);
+            }
 
-                if (newResponse.getStatus().getPriority() < currentResponse.getStatus().getPriority()) {
-                    LOGGER.info("Server '{}' [{}] status changed from '{}' to '{}' due to higher priority",
-                            serverName, type, currentResponse.getStatus(), newResponse.getStatus());
-                    return newResponse;
-                }
-
-                return currentResponse;
-            });
-
-            return currentServerStatus;
+            return builder.build();
         });
-    }
-
-    public void add(ServerStatus serverStatus) {
-        serverStatuses.put(serverStatus.serverName(), serverStatus);
     }
 
     public ServerStatus get(String serverName) {

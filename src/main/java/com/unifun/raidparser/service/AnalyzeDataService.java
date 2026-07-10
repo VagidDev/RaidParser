@@ -2,15 +2,8 @@ package com.unifun.raidparser.service;
 
 import com.unifun.raidparser.builder.ServerStatusBuilder;
 import com.unifun.raidparser.core.analyzer.Analyzer;
-import com.unifun.raidparser.core.analyzer.battery.HpeBatteryAnalyzer;
-import com.unifun.raidparser.core.analyzer.drive.HpeDriveAnalyzer;
-import com.unifun.raidparser.core.analyzer.drive.MdadmDriveAnalyzer;
-import com.unifun.raidparser.core.analyzer.psu.IpmitoolPowerSupplyAnalyzer;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Status;
-import com.unifun.raidparser.core.filters.battery.BatteryStatus;
-import com.unifun.raidparser.core.filters.drive.DriverStatus;
-import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 import com.unifun.raidparser.dto.ServerData;
 import com.unifun.raidparser.dto.ServerStatus;
@@ -29,7 +22,6 @@ public class AnalyzeDataService {
     private static final Logger LOGGER = LogManager.getLogger(AnalyzeDataService.class);
 
     private final List<Analyzer<? extends Status>> analyzerList;
-
 
     public ServerStatus analyze(ServerData serverData) {
         if (serverData == null || CollectionUtils.isEmpty(serverData.rawDataByComponent())) {
