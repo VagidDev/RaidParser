@@ -1,17 +1,17 @@
 package com.unifun.raidparser.console;
 
 import com.unifun.raidparser.config.OutputStatusFileConfig;
-import com.unifun.raidparser.core.filters.Status;
-import com.unifun.raidparser.core.filters.battery.BatteryStatus;
-import com.unifun.raidparser.core.filters.drive.DriverStatus;
-import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
+import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.dto.DateParseResponse;
+import com.unifun.raidparser.dto.ReportServerData;
 import com.unifun.raidparser.dto.ServerStatus;
+import com.unifun.raidparser.exporter.ExportDataMapper;
 import com.unifun.raidparser.exporter.FileExporter;
 import com.unifun.raidparser.exporter.GoogleSheetExporter;
-import com.unifun.raidparser.handlers.ParsedRaidStatusDataHandler;
 import com.unifun.raidparser.parser.DateParser;
+import com.unifun.raidparser.service.RaidParserService;
 import com.unifun.raidparser.service.SftpFileService;
+import com.unifun.raidparser.util.ServerStatusSorter;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +21,6 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
-import java.util.function.Function;
 
 @Component
 @RequiredArgsConstructor
@@ -31,10 +30,12 @@ public class InteractiveConsoleHandler {
     private final OutputStatusFileConfig outputStatusFileConfig;
 
     //Services
-    private final ParsedRaidStatusDataHandler parsedRaidStatusDataHandler;
-    private final FileExporter fileExporter;
     private final GoogleSheetExporter googleSheetExporter;
+    private final ServerStatusSorter serverStatusSorter;
+    private final RaidParserService raidParserService;
+    private final ExportDataMapper exportDataMapper;
     private final SftpFileService sftpFileService;
+    private final FileExporter fileExporter;
     private final DateParser dateParser;
 
     // Константы для оформления
@@ -108,10 +109,10 @@ public class InteractiveConsoleHandler {
             printMsg("ШАГ 2: ДЕЙСТВИЯ (Файл: " + reportFilePath.getFileName() + ")");
             System.out.println("доступные команды:");
             System.out.println(" [1] parse-report - Парсинг отчета и вывод в консоль");
-            System.out.println(" [2] check-health - Проверка состояния в ручную командами и вывод в консоль ");
+            System.out.println(" [2] check-health - Проверка состояния в ручную командами и вывод в консоль");
             System.out.println(" [3] full-check - Парсинг отчета и проверка состояния - вывод в консоль");
-            System.out.println(" [4] file-export - Экспорт в статус-файлы");
-            System.out.println(" [5] sheets-export - Экспорт в Google Sheets");
+            System.out.println(" [4] file-export - Экспорт статуса из кэша в статус-файлы");
+            System.out.println(" [5] sheets-export - Экспорт статуса из кэша в Google Sheets");
             System.out.println(" [back]     - Выбрать другой файл/дату");
             System.out.println(" [exit]     - Выйти из программы");
             System.out.print("> ");
@@ -120,18 +121,15 @@ public class InteractiveConsoleHandler {
 
             switch (input) {
                 case "1", "parse-report" -> executeParsing(reportFilePath);
-                case "2", "check-health" -> executeChecking(
-                        reportFilePath,
-                        parsedRaidStatusDataHandler::getSortedManualDriveStatus,
-                        "проверки дисков командами (mdadm)"
-                );
-                case "3", "full-check" -> executeChecking(
-                        reportFilePath,
-                        parsedRaidStatusDataHandler::getSortedFullDriveStatus,
-                        "полный отчет дисков включая команды из конфига"
-                );
-                case "4", "file-export" -> exportToFile(reportFilePath);
-                case "5", "sheets-export" -> exportToGoogleSheets(reportFilePath);
+                case "2", "check-health" -> executeChecking();
+                case "3", "full-check" -> {
+                    raidParserService.clearCache();
+                    raidParserService.analyzeStatusFromReportFile(reportFilePath);
+                    raidParserService.analyzeStatusFromServers();
+                    printStatus(raidParserService.getCachedStatus());
+                }
+                case "4", "file-export" -> exportToFile();
+                case "5", "sheets-export" -> exportToGoogleSheets();
                 case "back" -> { return false; }
                 case "exit", "stop" -> System.exit(0);
                 default -> printError("Неизвестная команда. Попробуйте еще раз.");
@@ -140,76 +138,128 @@ public class InteractiveConsoleHandler {
     }
 
     private void executeParsing(Path reportFilePath) {
-        printMsg("Запуск процесса парсинга...");
-
-        try {
-            List<ServerStatus<DriverStatus>> driveStatus = parsedRaidStatusDataHandler.getSortedDriveStatus(reportFilePath);
-            List<ServerStatus<PowerSupplyStatus>> psuStatus = parsedRaidStatusDataHandler.getSortedPowerSupplyStatus(reportFilePath);
-            List<ServerStatus<BatteryStatus>> batteryStatus = parsedRaidStatusDataHandler.getSortedBatteryStatus(reportFilePath);
-
-            System.out.println("----------------------------------------------------");
-            printMsg("РЕЗУЛЬТАТЫ ПАРСИНГА:");
-            System.out.printf(" - Диски (Drive Status): %d серверов%n", driveStatus.size());
-            System.out.printf(" - Блоки питания (PSU):  %d серверов%n", psuStatus.size());
-            System.out.printf(" - Батареи (Battery):    %d серверов%n", batteryStatus.size());
-            System.out.println("----------------------------------------------------");
-
-            printMsg("ВЫВОД:");
-            printMsg("Статус дисков:");
-            driveStatus.forEach(serverStatus -> printMsg(serverStatus.getPrettyFormat()));
-            printMsg("Статус Блоков питания:");
-            psuStatus.forEach(serverStatus -> printMsg(serverStatus.getPrettyFormat()));
-            printMsg("Статус батареек:");
-            batteryStatus.forEach(serverStatus -> printMsg(serverStatus.getPrettyFormat()));
-
-            LOGGER.info("Successfully parsed report {}. D:{}, P:{}, B:{}", reportFilePath, driveStatus.size(), psuStatus.size(), batteryStatus.size());
-        } catch (Exception e) {
-            printError("Ошибка при парсинге: " + e.getMessage());
-            LOGGER.error("Parsing error", e);
-        }
+        printMsg(String.format("Запуск процесса парсинга статуса из файла %s ...", reportFilePath.toString()));
+        List<ServerStatus> serverStatuses = raidParserService.analyzeStatusFromReportFile(reportFilePath);
+        printMsg("Распарсил " + serverStatuses.size() + " серверов");
+        printStatus(serverStatuses);
     }
 
-    private <T extends Status> void executeChecking(
-            Path reportFilePath,
-            Function<Path, List<ServerStatus<T>>> parser,
-            String checkingElementLog
-    ) {
-        printMsg(String.format("Запуск процесса %s ...", checkingElementLog));
-        List<ServerStatus<T>> serverData = parser.apply(reportFilePath);
+    private void printStatus(List<ServerStatus> serverStatuses) {
+        printMsg("Вывод статуса в консоль...");
+        List<ReportServerData> driveStatus = exportDataMapper.map(
+                serverStatusSorter.sortByHealthStatus(serverStatuses, HealthType.DRIVE_HEALTH),
+                HealthType.DRIVE_HEALTH
+        );
+        List<ReportServerData> psuStatus = exportDataMapper.map(
+                serverStatusSorter.sortByHealthStatus(serverStatuses, HealthType.PSU_HEALTH),
+                HealthType.PSU_HEALTH
+        );
+        List<ReportServerData> batteryStatus = exportDataMapper.map(
+                serverStatusSorter.sortByHealthStatus(serverStatuses, HealthType.BATTERY_HEALTH),
+                HealthType.BATTERY_HEALTH
+        );
+
+        System.out.println("----------------------------------------------------");
+        printMsg("РЕЗУЛЬТАТЫ ПАРСИНГА:");
+        System.out.printf(" - Диски (Drive Status): %d серверов%n", driveStatus.size());
+        System.out.printf(" - Блоки питания (PSU):  %d серверов%n", psuStatus.size());
+        System.out.printf(" - Батареи (Battery):    %d серверов%n", batteryStatus.size());
+        System.out.println("----------------------------------------------------");
+
+        printMsg("ВЫВОД:");
+        printMsg("Статус дисков:");
+        driveStatus.forEach(serverStatus -> printMsg(serverStatus.getPrettyFormat()));
+        printMsg("Статус Блоков питания:");
+        psuStatus.forEach(serverStatus -> printMsg(serverStatus.getPrettyFormat()));
+        printMsg("Статус батареек:");
+        batteryStatus.forEach(serverStatus -> printMsg(serverStatus.getPrettyFormat()));
+
+        LOGGER.info("Successfully parsed report D:{}, P:{}, B:{}", driveStatus.size(), psuStatus.size(), batteryStatus.size());
+    }
+
+    private void executeChecking() {
+        printMsg("Запуск процесса проверки статуса на серверах ...");
+        List<ServerStatus> serverData = serverStatusSorter.sortByHealthStatus(
+                raidParserService.analyzeStatusFromServers(),
+                HealthType.DRIVE_HEALTH
+        );
         printMsg("Печатаю текущий статус ниже:");
 
-        serverData.forEach(serverStatus -> printMsg(
+         exportDataMapper.map(serverData, HealthType.DRIVE_HEALTH).forEach(reportServerData -> printMsg(
                         String.format(
                                 "Сервер: %s -> Статус: %s -> Текст статуса %s",
-                                serverStatus.serverName(),
-                                serverStatus.analyzeResponse().getStatus().getName(),
-                                serverStatus.analyzeResponse().getErrorText()
+                                reportServerData.serverName(),
+                                reportServerData.healthStatus(),
+                                reportServerData.errorText()
                         )
                 )
         );
-        printMsg(String.format("Процесс %s выполнен!", checkingElementLog));
+        printMsg("Процесс проверки статуса выполнен выполнен!");
     }
 
-    private void exportToFile(Path reportFilePath) {
-        printMsg("Запуск процесса экспорта в файл...");
+    private void exportToFile() {
+        printMsg("Запуск процесса экспорта статусов из кэша в файл...");
 
         Path driveFileStatusPath = Path.of(outputStatusFileConfig.getDriveStatus());
         Path powerSupplyFileStatusPath = Path.of(outputStatusFileConfig.getPsuStatus());
         Path batteryFileStatusPath = Path.of(outputStatusFileConfig.getBatteryStatus());
 
-        fileExporter.export(driveFileStatusPath, parsedRaidStatusDataHandler.getSortedFullDriveStatus(reportFilePath));
-        fileExporter.export(powerSupplyFileStatusPath, parsedRaidStatusDataHandler.getSortedPowerSupplyStatus(reportFilePath));
-        fileExporter.export(batteryFileStatusPath, parsedRaidStatusDataHandler.getSortedBatteryStatus(reportFilePath));
+        List<ServerStatus> serverStatusList = raidParserService.getCachedStatus();
+
+        fileExporter.export(driveFileStatusPath, exportDataMapper.map(
+                serverStatusSorter.sortByHealthStatus(
+                        serverStatusList,
+                        HealthType.DRIVE_HEALTH
+                ),
+                HealthType.DRIVE_HEALTH
+        ));
+        fileExporter.export(powerSupplyFileStatusPath, exportDataMapper.map(
+                serverStatusSorter.sortByHealthStatus(
+                        serverStatusList,
+                        HealthType.PSU_HEALTH
+                ),
+                HealthType.PSU_HEALTH
+        ));
+
+        fileExporter.export(batteryFileStatusPath, exportDataMapper.map(
+                serverStatusSorter.sortByHealthStatus(
+                        serverStatusList,
+                        HealthType.BATTERY_HEALTH
+                ),
+                HealthType.BATTERY_HEALTH
+        ));
 
         printMsg(String.format("Данные успешно экспортированы в файлы: %s | %s | %s", driveFileStatusPath, powerSupplyFileStatusPath, batteryFileStatusPath));
     }
 
-    private void exportToGoogleSheets(Path reportFilePath) {
-        printMsg("Запуск процесса экспорта в Google Sheets...");
+    private void exportToGoogleSheets() {
+        printMsg("Запуск процесса экспорта статуса из кэша в Google Sheets...");
 
-        googleSheetExporter.export(parsedRaidStatusDataHandler.getSortedFullDriveStatus(reportFilePath), DriverStatus.class);
-        googleSheetExporter.export(parsedRaidStatusDataHandler.getSortedPowerSupplyStatus(reportFilePath), PowerSupplyStatus.class);
-        googleSheetExporter.export(parsedRaidStatusDataHandler.getSortedBatteryStatus(reportFilePath), BatteryStatus.class);
+        List<ServerStatus> serverStatusList = raidParserService.getCachedStatus();
+
+        googleSheetExporter.export(exportDataMapper.map(
+                serverStatusSorter.sortByHealthStatus(
+                        serverStatusList,
+                        HealthType.DRIVE_HEALTH
+                ),
+                HealthType.DRIVE_HEALTH
+        ), HealthType.DRIVE_HEALTH);
+
+        googleSheetExporter.export(exportDataMapper.map(
+                serverStatusSorter.sortByHealthStatus(
+                        serverStatusList,
+                        HealthType.PSU_HEALTH
+                ),
+                HealthType.PSU_HEALTH
+        ), HealthType.PSU_HEALTH);
+
+        googleSheetExporter.export(exportDataMapper.map(
+                serverStatusSorter.sortByHealthStatus(
+                        serverStatusList,
+                        HealthType.BATTERY_HEALTH
+                ),
+                HealthType.BATTERY_HEALTH
+        ), HealthType.BATTERY_HEALTH);
 
         printMsg("Данные успешно экспортированы в Google Sheets!");
     }

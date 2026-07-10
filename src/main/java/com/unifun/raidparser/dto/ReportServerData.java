@@ -5,4 +5,8 @@ public record ReportServerData(
         String healthStatus,
         String errorText
 ) {
+    public String getPrettyFormat() {
+        return "Server Name: " + serverName
+                + " -> " + healthStatus + " -> " + errorText;
+    }
 }
