@@ -5,6 +5,7 @@ import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.battery.*;
 import com.unifun.raidparser.core.filters.battery.hpe.*;
+import com.unifun.raidparser.util.TextSearcher;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public class HpeBatteryAnalyzer extends AbstractAnalyzer<BatteryStatus> {
 
     @Override
     public boolean isSupportedRawData(String text) {
-        return text.contains("Smart Array") && text.contains("Cache Board Present: True");
+        return TextSearcher.containsAll(text, "Smart Array", "Cache Board Present: True");
     }
 
     @Override

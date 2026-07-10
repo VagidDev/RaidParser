@@ -18,7 +18,7 @@ public abstract class AbstractAnalyzer<T extends Status> implements Analyzer<T> 
 
         return new AnalyzeResponse<>(
                 getUnknownStatus(),
-                ""
+                "Cannot analyze received data -> " + data
         );
     }
 

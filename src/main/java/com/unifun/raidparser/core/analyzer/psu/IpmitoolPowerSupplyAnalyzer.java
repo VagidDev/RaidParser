@@ -8,6 +8,7 @@ import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyFailedFilter
 import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyNotPresentFilter;
 import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyOkFilter;
 import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyUnclaimedFilter;
+import com.unifun.raidparser.util.TextSearcher;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,7 +17,7 @@ import java.util.List;
 public class IpmitoolPowerSupplyAnalyzer extends AbstractAnalyzer<PowerSupplyStatus> {
     @Override
     public boolean isSupportedRawData(String text) {
-        return text.contains("Power Supply") && text.contains("Power Supplies");
+        return TextSearcher.containsAll(text, "Power Supply","Power Supplies");
     }
 
     private final List<Filter<PowerSupplyStatus>> powerSupplyFilters = List.of(

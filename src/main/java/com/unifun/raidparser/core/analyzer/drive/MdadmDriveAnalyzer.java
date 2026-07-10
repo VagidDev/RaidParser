@@ -6,6 +6,7 @@ import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.drive.*;
 import com.unifun.raidparser.core.filters.drive.mdadm.DriveDegradedFilter;
 import com.unifun.raidparser.core.filters.drive.mdadm.DriveOkFilter;
+import com.unifun.raidparser.util.TextSearcher;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -24,12 +25,7 @@ public class MdadmDriveAnalyzer extends AbstractAnalyzer<DriverStatus> {
 
     @Override
     public boolean isSupportedRawData(String text) {
-        return (text.contains("Personalities")
-                && text.contains("md")
-                && text.contains("raid")
-                && text.contains("active")
-                && text.contains("blocks super")
-        ); //md raid active blocks super
+        return TextSearcher.containsAll(text, "Personalities", "md", "raid", "active", "blocks super"); //md raid active blocks super
     }
 
     @Override

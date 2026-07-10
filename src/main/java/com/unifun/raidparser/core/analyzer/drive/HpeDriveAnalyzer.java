@@ -8,6 +8,7 @@ import com.unifun.raidparser.core.filters.drive.hpe.DriveFailedFilter;
 import com.unifun.raidparser.core.filters.drive.hpe.DriveOkFilter;
 import com.unifun.raidparser.core.filters.drive.hpe.DriverInterimRecoveryModeFilter;
 import com.unifun.raidparser.core.filters.drive.hpe.DriverPredictiveFailureFilter;
+import com.unifun.raidparser.util.TextSearcher;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public class HpeDriveAnalyzer extends AbstractAnalyzer<DriverStatus> {
 
     @Override
     public boolean isSupportedRawData(String text) {
-        return text.contains("logicaldrive") && text.contains("physicaldrive");
+        return TextSearcher.containsAll(text, "logicaldrive", "physicaldrive");
     }
 
     @Override
