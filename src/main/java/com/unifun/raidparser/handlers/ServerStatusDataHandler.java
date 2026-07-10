@@ -17,6 +17,10 @@ public class ServerStatusDataHandler {
     private static final Logger LOGGER = LogManager.getLogger(ServerStatusDataHandler.class);
     private final ConcurrentHashMap<String, ServerStatus> serverStatuses = new ConcurrentHashMap<>();;
 
+    public void updateAll(List<ServerStatus> serverStatuses) {
+        serverStatuses.forEach(this::updateStatus);
+    }
+
     public void updateStatus(ServerStatus newServerStatus) {
         String serverName = newServerStatus.serverName();
         LOGGER.debug("Updating status for server: {}", serverName);
@@ -77,5 +81,10 @@ public class ServerStatusDataHandler {
 
     public List<ServerStatus> getAll() {
         return List.copyOf(serverStatuses.values());
+    }
+
+    public void clear() {
+        LOGGER.debug("Clear server status cache");
+        serverStatuses.clear();
     }
 }
