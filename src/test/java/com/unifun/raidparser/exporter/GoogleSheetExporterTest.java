@@ -78,9 +78,9 @@ class GoogleSheetExporterTest {
     // компактным конструктором, замени мок на реальный конструктор.
 
     @SuppressWarnings("unchecked")
-    private <T extends Status> ServerStatus<T> mockServerStatus(String serverName, T status, String errorText) {
-        ServerStatus<T> serverStatus = mock(ServerStatus.class);
-        AnalyzeResponse<T> analyzedResponse = mock(com.unifun.raidparser.core.response.AnalyzeResponse.class);
+    private ServerStatus mockServerStatus(String serverName, Status status, String errorText) {
+        ServerStatus serverStatus = mock(ServerStatus.class);
+        AnalyzeResponse<? extends Status> analyzedResponse = mock(com.unifun.raidparser.core.response.AnalyzeResponse.class);
         when(serverStatus.serverName()).thenReturn(serverName);
         when(serverStatus.analyzeResponse()).thenReturn(analyzedResponse);
         when(analyzedResponse.getStatus()).thenReturn(status);
