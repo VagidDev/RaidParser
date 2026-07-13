@@ -22,8 +22,8 @@ public class GoogleSheetExporter {
     private final GoogleSheetExportConfig googleSheetExportConfig;
 
     public void export(List<ReportServerData> reportServerData, HealthType healthType) {
-        if (reportServerData == null || reportServerData.isEmpty()) {
-            LOGGER.warn("Got empty data for export to Google Sheets");
+        if (reportServerData == null || healthType == null || reportServerData.isEmpty()) {
+            LOGGER.warn("Got empty data for export to Google Sheets. Report Data -> {} Health Type -> {}", reportServerData, healthType);
             return;
         }
 
@@ -37,7 +37,7 @@ public class GoogleSheetExporter {
         try {
             googleSheetsService.upload(googleSheetExportConfig.getSpreadsheetId(), range, reportServerData);
         } catch (Exception e) {
-            LOGGER.error("Error, while trying export data to google-sheet. Trying to remove old token, to fix error. Error message -> {}", e.getMessage(), e);
+            LOGGER.error("Error, while trying upload data to google-sheet. Error message -> {}", e.getMessage(), e);
         }
     }
 

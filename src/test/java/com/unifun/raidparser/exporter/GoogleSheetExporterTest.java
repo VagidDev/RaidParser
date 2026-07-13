@@ -1,6 +1,7 @@
 package com.unifun.raidparser.exporter;
 
 import com.unifun.raidparser.config.GoogleSheetExportConfig;
+import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Status;
 import com.unifun.raidparser.core.filters.battery.BatteryStatus;
 import com.unifun.raidparser.core.filters.drive.DriverStatus;
@@ -78,32 +79,12 @@ class GoogleSheetExporterTest {
     // компактным конструктором, замени мок на реальный конструктор.
 
     @SuppressWarnings("unchecked")
-    private ServerStatus mockServerStatus(String serverName, Status status, String errorText) {
-        ServerStatus serverStatus = mock(ServerStatus.class);
-        AnalyzeResponse<? extends Status> analyzedResponse = mock(com.unifun.raidparser.core.response.AnalyzeResponse.class);
-        when(serverStatus.serverName()).thenReturn(serverName);
-        when(serverStatus.analyzeResponse()).thenReturn(analyzedResponse);
-        when(analyzedResponse.getStatus()).thenReturn(status);
-        when(analyzedResponse.getErrorText()).thenReturn(errorText);
-        return serverStatus;
-    }
-
-    private DriverStatus mockDriverStatus(String name) {
-        DriverStatus status = mock(DriverStatus.class);
-        when(status.getName()).thenReturn(name);
-        return status;
-    }
-
-    private PowerSupplyStatus mockPowerSupplyStatus(String name) {
-        PowerSupplyStatus status = mock(PowerSupplyStatus.class);
-        when(status.getName()).thenReturn(name);
-        return status;
-    }
-
-    private BatteryStatus mockBatteryStatus(String name) {
-        BatteryStatus status = mock(BatteryStatus.class);
-        when(status.getName()).thenReturn(name);
-        return status;
+    private ReportServerData mockReportServerData(String serverName, String healthStatus, String errorText) {
+//        ReportServerData reportServerData = mock(ReportServerData.class);
+//        when(reportServerData.serverName()).thenReturn(serverName);
+//        when(reportServerData.healthStatus()).thenReturn(healthStatus);
+//        when(reportServerData.errorText()).thenReturn(errorText);
+        return new ReportServerData(serverName, healthStatus, errorText);
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -120,9 +101,9 @@ class GoogleSheetExporterTest {
             when(googleSheetExportConfig.getDiskRange()).thenReturn(DISK_RANGE);
             when(googleSheetExportConfig.getSpreadsheetId()).thenReturn(SPREADSHEET_ID);
 
-            ServerStatus<DriverStatus> server = mockServerStatus("srv-1", mockDriverStatus("OK"), "");
+            ReportServerData server = mockReportServerData("srv-1", "OK", "");
 
-            exporter.export(List.of(server), DriverStatus.class);
+            exporter.export(List.of(server), HealthType.DRIVE_HEALTH);
 
             verify(googleSheetsService).upload(eq(SPREADSHEET_ID), eq(DISK_RANGE), anyList());
         }
@@ -133,9 +114,9 @@ class GoogleSheetExporterTest {
             when(googleSheetExportConfig.getPsuRange()).thenReturn(PSU_RANGE);
             when(googleSheetExportConfig.getSpreadsheetId()).thenReturn(SPREADSHEET_ID);
 
-            ServerStatus<PowerSupplyStatus> server = mockServerStatus("srv-1", mockPowerSupplyStatus("OK"), "");
+            ReportServerData server = mockReportServerData("srv-1", "OK", "");
 
-            exporter.export(List.of(server), PowerSupplyStatus.class);
+            exporter.export(List.of(server), HealthType.PSU_HEALTH);
 
             verify(googleSheetsService).upload(eq(SPREADSHEET_ID), eq(PSU_RANGE), anyList());
         }
@@ -146,9 +127,9 @@ class GoogleSheetExporterTest {
             when(googleSheetExportConfig.getBatteryRange()).thenReturn(BATTERY_RANGE);
             when(googleSheetExportConfig.getSpreadsheetId()).thenReturn(SPREADSHEET_ID);
 
-            ServerStatus<BatteryStatus> server = mockServerStatus("srv-1", mockBatteryStatus("OK"), "");
+            ReportServerData server = mockReportServerData("srv-1", "OK", "");
 
-            exporter.export(List.of(server), BatteryStatus.class);
+            exporter.export(List.of(server), HealthType.BATTERY_HEALTH);
 
             verify(googleSheetsService).upload(eq(SPREADSHEET_ID), eq(BATTERY_RANGE), anyList());
         }
@@ -156,9 +137,9 @@ class GoogleSheetExporterTest {
         @Test
         @DisplayName("Неизвестный тип статуса -> IllegalArgumentException")
         void unknownStatusClass_throwsIllegalArgumentException() {
-            ServerStatus<Status> server = mockServerStatus("srv-1", mock(Status.class), "");
+            ReportServerData server = mockReportServerData("srv-1", "", "");
 
-            assertThatThrownBy(() -> exporter.export(List.of(server), Status.class))
+            assertThatThrownBy(() -> exporter.export(List.of(server), HealthType.UNKNOWN))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Unknown status type");
 
@@ -180,10 +161,10 @@ class GoogleSheetExporterTest {
             when(googleSheetExportConfig.getDiskRange()).thenReturn(DISK_RANGE);
             when(googleSheetExportConfig.getSpreadsheetId()).thenReturn(SPREADSHEET_ID);
 
-            ServerStatus<DriverStatus> server =
-                    mockServerStatus("server-01", mockDriverStatus("DEGRADED"), "Disk read error");
+            ReportServerData server =
+                    mockReportServerData("server-01", "DEGRADED", "Disk read error");
 
-            exporter.export(List.of(server), DriverStatus.class);
+            exporter.export(List.of(server), HealthType.DRIVE_HEALTH);
 
             ArgumentCaptor<List<ReportServerData>> captor = ArgumentCaptor.forClass(List.class);
             verify(googleSheetsService).upload(anyString(), anyString(), captor.capture());
@@ -201,10 +182,10 @@ class GoogleSheetExporterTest {
             when(googleSheetExportConfig.getDiskRange()).thenReturn(DISK_RANGE);
             when(googleSheetExportConfig.getSpreadsheetId()).thenReturn(SPREADSHEET_ID);
 
-            ServerStatus<DriverStatus> server1 = mockServerStatus("server-01", mockDriverStatus("OK"), "");
-            ServerStatus<DriverStatus> server2 = mockServerStatus("server-02", mockDriverStatus("FAIL"), "Timeout");
+            ReportServerData server1 = mockReportServerData("server-01", "OK", "");
+            ReportServerData server2 = mockReportServerData("server-02", "FAIL", "Timeout");
 
-            exporter.export(List.of(server1, server2), DriverStatus.class);
+            exporter.export(List.of(server1, server2), HealthType.DRIVE_HEALTH);
 
             ArgumentCaptor<List<ReportServerData>> captor = ArgumentCaptor.forClass(List.class);
             verify(googleSheetsService).upload(anyString(), anyString(), captor.capture());
@@ -228,7 +209,7 @@ class GoogleSheetExporterTest {
         @Test
         @DisplayName("Пустой список serverStatuses — upload не вызывается")
         void emptyList_doesNotCallUpload() {
-            exporter.export(Collections.emptyList(), DriverStatus.class);
+            exporter.export(Collections.emptyList(), HealthType.DRIVE_HEALTH);
 
             verifyNoInteractions(googleSheetsService);
             verifyNoInteractions(googleSheetExportConfig);
@@ -240,7 +221,7 @@ class GoogleSheetExporterTest {
             // Документирует текущий баг: serverStatuses.isEmpty() падает на null без явной проверки.
             // После фикса (добавления null-проверки с ранним выходом) этот тест нужно
             // переписать на ожидание false/early-return вместо NPE.
-            assertThatCode(() -> exporter.export(null, DriverStatus.class))
+            assertThatCode(() -> exporter.export(null, HealthType.DRIVE_HEALTH))
                     .doesNotThrowAnyException();
         }
     }
@@ -261,10 +242,10 @@ class GoogleSheetExporterTest {
             doThrow(new IOException("Sheets API unreachable"))
                     .when(googleSheetsService).upload(anyString(), anyString(), anyList());
 
-            ServerStatus<DriverStatus> server = mockServerStatus("srv-1", mockDriverStatus("OK"), "");
+            ReportServerData server = mockReportServerData("srv-1", "OK", "");
 
             // export() не должен пробрасывать исключение наружу — оно только логируется
-            assertThatCode(() -> exporter.export(List.of(server), DriverStatus.class))
+            assertThatCode(() -> exporter.export(List.of(server), HealthType.DRIVE_HEALTH))
                     .doesNotThrowAnyException();
         }
 
@@ -276,9 +257,9 @@ class GoogleSheetExporterTest {
             doThrow(new RuntimeException("Unexpected"))
                     .when(googleSheetsService).upload(anyString(), anyString(), anyList());
 
-            ServerStatus<DriverStatus> server = mockServerStatus("srv-1", mockDriverStatus("OK"), "");
+            ReportServerData server = mockReportServerData("srv-1", "OK", "");
 
-            assertThatCode(() -> exporter.export(List.of(server), DriverStatus.class))
+            assertThatCode(() -> exporter.export(List.of(server), HealthType.DRIVE_HEALTH))
                     .doesNotThrowAnyException();
         }
 
@@ -294,9 +275,9 @@ class GoogleSheetExporterTest {
             doThrow(new IOException("fail"))
                     .when(googleSheetsService).upload(anyString(), anyString(), anyList());
 
-            ServerStatus<DriverStatus> server = mockServerStatus("srv-1", mockDriverStatus("OK"), "");
+            ReportServerData server = mockReportServerData("srv-1", "OK", "");
 
-            exporter.export(List.of(server), DriverStatus.class);
+            exporter.export(List.of(server), HealthType.DRIVE_HEALTH);
 
             // Только один вызов upload, никаких дополнительных взаимодействий с сервисами токенов
             verify(googleSheetsService, times(1)).upload(anyString(), anyString(), anyList());

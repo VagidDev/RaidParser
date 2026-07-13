@@ -1,5 +1,6 @@
 package com.unifun.raidparser.core.component;
 
+import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public enum HealthType {
@@ -8,5 +9,8 @@ public enum HealthType {
     @JsonProperty("psu_health")
     PSU_HEALTH,
     @JsonProperty("battery_health")
-    BATTERY_HEALTH
+    BATTERY_HEALTH,
+
+    @JsonEnumDefaultValue
+    UNKNOWN
 }
