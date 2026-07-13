@@ -15,7 +15,8 @@ import java.util.List;
 
 @Component
 public class HpeDriveAnalyzer extends AbstractAnalyzer<DriverStatus> {
-    private final List<Filter<DriverStatus>> driveFilters = List.of(new DriverInterimRecoveryModeFilter(),
+    private final List<Filter<DriverStatus>> driveFilters = List.of(
+            new DriverInterimRecoveryModeFilter(),
             new DriveFailedFilter(),
             new DriverPredictiveFailureFilter(),
             new DriveEmptyFilter(),

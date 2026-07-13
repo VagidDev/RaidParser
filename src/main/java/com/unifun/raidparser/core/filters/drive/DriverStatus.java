@@ -7,8 +7,8 @@ import lombok.Getter;
 public enum DriverStatus implements Status {
     INTERIM_RECOVERY_MODE(0, "Interim Recovery Mode"),
     DEGRADED(0, "Degraded"),
-    PREDICTIVE_FAILURE(1, "OK(Predictive Failure)"),
-    FAILED(2, "OK(Failed)"),
+    FAILED(1, "OK(Failed)"),
+    PREDICTIVE_FAILURE(2, "OK(Predictive Failure)"),
     EMPTY(3, "Empty"),
     OK(4, "OK"),
     UNSUPPORTED_TYPE(Integer.MAX_VALUE, "UNSUPPORTED_TYPE"),
