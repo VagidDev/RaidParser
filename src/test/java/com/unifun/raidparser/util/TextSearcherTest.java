@@ -40,6 +40,14 @@ class TextSearcherTest {
         assertFalse(TextSearcher.containsAll(TEXT)); // Без передачи слов
     }
 
+    @Test
+    void testContainsAll_MultilineText_MatchesWordsOnDifferentLines() {
+        // Регрессия: "." без DOTALL не матчит "\n", из-за чего containsAll
+        // ломался на многострочном выводе (реальные данные с raid-контроллеров).
+        String multilineText = "line one\nCache Status: OK\nBattery/Capacitor Status: OK\nline four";
+        assertTrue(TextSearcher.containsAll(multilineText, "cache status: ok", "battery/capacitor status: ok"));
+    }
+
 
     // =========================================================================
     // ТЕСТЫ ДЛЯ МЕТОДА containsAny (Хотя бы ОДНО слово)
@@ -66,5 +74,11 @@ class TextSearcherTest {
         assertFalse(TextSearcher.containsAny(null, "java"));
         assertFalse(TextSearcher.containsAny(TEXT, (String[]) null));
         assertFalse(TextSearcher.containsAny(TEXT)); // Без передачи слов
+    }
+
+    @Test
+    void testContainsAny_MultilineText_MatchesWordOnMiddleLine() {
+        String multilineText = "line one\nBoot camp\nline three";
+        assertTrue(TextSearcher.containsAny(multilineText, "C++", "boot camp", "Ruby"));
     }
 }

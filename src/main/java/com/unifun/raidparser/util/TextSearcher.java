@@ -7,7 +7,7 @@ public class TextSearcher {
         }
 
         for (String word : words) {
-            String regex = "(?i).*\\Q" + word + "\\E.*";
+            String regex = "(?is).*\\Q" + word + "\\E.*";
             if (!text.matches(regex)) {
                 return false;
             }
@@ -20,7 +20,7 @@ public class TextSearcher {
             return false;
         }
 
-        StringBuilder sb = new StringBuilder("(?i).*(");
+        StringBuilder sb = new StringBuilder("(?is).*(");
         for (int i = 0; i < words.length; i++) {
             sb.append("\\Q").append(words[i]).append("\\E");
             if (i < words.length - 1) {
