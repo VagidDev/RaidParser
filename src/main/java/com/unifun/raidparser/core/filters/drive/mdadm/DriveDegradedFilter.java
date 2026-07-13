@@ -18,7 +18,7 @@ public class DriveDegradedFilter extends AbstractFilter<DriverStatus> implements
     @Override
     public AnalyzeResponse<DriverStatus> getFilterResponse(String text) {
         return new AnalyzeResponse<>(
-                DriverStatus.INTERIM_RECOVERY_MODE,
+                DriverStatus.DEGRADED,
                 buildErrorText(text, "md", "blocks super")
         );
     }

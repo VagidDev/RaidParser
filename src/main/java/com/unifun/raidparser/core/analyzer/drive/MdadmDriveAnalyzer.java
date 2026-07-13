@@ -14,6 +14,7 @@ import java.util.List;
 @Component
 public class MdadmDriveAnalyzer extends AbstractAnalyzer<DriverStatus> {
     private static final List<Filter<DriverStatus>> FILTERS = List.of(
+            new DriveEmptyFilter(),
             new DriveDegradedFilter(),
             new DriveOkFilter()
     );
