@@ -7,24 +7,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class IpmitoolPowerSupplyAnalyzerTest {
-    private final IpmitoolPowerSupplyAnalyzer analyzer = new IpmitoolPowerSupplyAnalyzer();
+class DmidecodePowerSupplyAnalyzerTest {
+    private final DmidecodePowerSupplyAnalyzer analyzer = new DmidecodePowerSupplyAnalyzer();
 
     @Test
     void isSupportedRawData_returnsTrue_whenAllMarkersPresent() {
-        String text = """
-                Power Supply 1   | 3Dh | ok  | 10.1 | 50 Watts, Presence detected
-                PS 1 Output      | 3Eh | ok  | 10.1 | 50 Watts
-                PS 1 Presence    | 3Fh | ok  | 10.1 | Device Present
-                Power Supply 2   | 40h | ok  | 10.2 | 25 Watts, Presence detected
-                PS 2 Output      | 41h | ok  | 10.2 | 25 Watts
-                PS 2 Presence    | 42h | ok  | 10.2 | Device Present
-                Power Supplies   | 45h | ok  | 10.3 | Fully Redundant""";
-        assertTrue(analyzer.isSupportedRawData(text));
-    }
-
-    @Test
-    void isSupportedRawData_returnsFalse_whenAnotherTypeOfPsuIsUsed() {
         String text = """
                 Power supply #1
                 	Present  : Yes
@@ -39,6 +26,22 @@ class IpmitoolPowerSupplyAnalyzerTest {
                 	Hotplug  : Supported
                 	Power    : 45 Watts
                 """;
+
+        assertTrue(analyzer.isSupportedRawData(text));
+    }
+
+    @Test
+    void isSupportedRawData_returnsFalse_whenAnotherTypeOfPsuIsUsed() {
+        String text = """
+                Power Supply 1   | 3Dh | ok  | 10.1 | 50 Watts, Presence detected
+                PS 1 Output      | 3Eh | ok  | 10.1 | 50 Watts
+                PS 1 Presence    | 3Fh | ok  | 10.1 | Device Present
+                Power Supply 2   | 40h | ok  | 10.2 | 25 Watts, Presence detected
+                PS 2 Output      | 41h | ok  | 10.2 | 25 Watts
+                PS 2 Presence    | 42h | ok  | 10.2 | Device Present
+                Power Supplies   | 45h | ok  | 10.3 | Fully Redundant
+                """;
+
         assertFalse(analyzer.isSupportedRawData(text));
     }
 
@@ -65,13 +68,18 @@ class IpmitoolPowerSupplyAnalyzerTest {
     @Test
     void analyze_okText_returnsOk() {
         String text = """
-                Power Supply 1   | 3Dh | ok  | 10.1 | 50 Watts, Presence detected
-                PS 1 Output      | 3Eh | ok  | 10.1 | 50 Watts
-                PS 1 Presence    | 3Fh | ok  | 10.1 | Device Present
-                Power Supply 2   | 40h | ok  | 10.2 | 25 Watts, Presence detected
-                PS 2 Output      | 41h | ok  | 10.2 | 25 Watts
-                PS 2 Presence    | 42h | ok  | 10.2 | Device Present
-                Power Supplies   | 45h | ok  | 10.3 | Fully Redundant
+                Power supply #1
+                	Present  : Yes
+                	Redundant: Yes
+                	Condition: Ok
+                	Hotplug  : Supported
+                	Power    : 35 Watts
+                Power supply #2
+                	Present  : Yes
+                	Redundant: Yes
+                	Condition: Ok
+                	Hotplug  : Supported
+                	Power    : 45 Watts
                 """;
 
         AnalyzeResponse<PowerSupplyStatus> response = analyzer.analyze(text);
@@ -83,40 +91,60 @@ class IpmitoolPowerSupplyAnalyzerTest {
     @Test
     void analyze_failedText_returnsFailed() {
         String text = """
-                Power Supply 1   | 32h | ok  | 10.1 | Presence detected
-                PS 1 Output      | 3Ah | ok  | 10.1 | 80 Watts
-                Power Supply 2   | 33h | ok  | 10.2 | Presence detected, Failure detected, Power Supply AC lost
-                PS 2 Output      | 3Bh | ok  | 10.2 | 0 Watts
-                Power Supplies   | 42h | ok  | 19.1 | Redundancy Lost
+                Power supply #1
+                	Present  : Yes
+                	Redundant: No
+                	Condition: Ok
+                	Hotplug  : Supported
+                Power supply #2
+                	Present  : Yes
+                	Redundant: No
+                	Condition: FAILED
+                	Hotplug  : Supported
                 """;
 
         AnalyzeResponse<PowerSupplyStatus> response = analyzer.analyze(text);
 
         assertEquals(PowerSupplyStatus.FAILED, response.getStatus());
-        assertTrue(response.getErrorText().toLowerCase().contains("Power Supply 2   | 33h | ok  | 10.2 | Presence detected, Failure detected, Power Supply AC lost".toLowerCase()));
+        assertTrue(response.getErrorText().toLowerCase().contains("Condition: FAILED".toLowerCase()));
     }
 
     @Test
     void analyze_onePsuText_returnsNotPresent() {
         String text = """
-                Power Supply 1   | 32h | ok  | 10.1 | Presence detected
-                PS 1 Output      | 3Ah | ok  | 10.1 | 40 Watts
-                Power Supply 2   | 33h | ok  | 10.2 |\s
-                PS 2 Output      | 3Bh | ns  | 10.2 | Disabled
+                Power supply #1
+                	Present  : Yes
+                	Redundant: No
+                	Condition: Ok
+                	Hotplug  : Supported
+                	Power    : 70 Watts
+                Power supply #2
+                	Power Supply not present
                 """;
 
         AnalyzeResponse<PowerSupplyStatus> response = analyzer.analyze(text);
 
         assertEquals(PowerSupplyStatus.NOT_PRESENT, response.getStatus());
-        assertTrue(response.getErrorText().toLowerCase().contains("PS 2 Output      | 3Bh | ns  | 10.2 | Disabled".toLowerCase()));
+        assertTrue(response.getErrorText().toLowerCase().contains("Power Supply not present".toLowerCase()));
     }
 
     @Test
     void analyze_unclaimed_returnsUnclaimed() {
         String text = """
-                Power Supply 1   | 04h | lnc | 10.1 | 0 unspecified
-                Power Supply 2   | 05h | lnc | 10.2 | 0 unspecified
-                Power Supplies   | 06h | lnc | 10.3 | 0 unspecified
+                *-power:0 UNCLAIMED
+                     description: Power Supply 1
+                     product: 720478-B21
+                     vendor: HP
+                     physical id: 1
+                     serial: 5DMVV0C4D8S7VI
+                     capacity: 500mWh
+                *-power:1 UNCLAIMED
+                     description: Power Supply 2
+                     product: 720478-B21
+                     vendor: HP
+                     physical id: 2
+                     serial: 5DMWA0CLL9C4DC
+                     capacity: 500mWh
                 """;
 
         AnalyzeResponse<PowerSupplyStatus> response = analyzer.analyze(text);
@@ -134,5 +162,4 @@ class IpmitoolPowerSupplyAnalyzerTest {
         assertEquals(PowerSupplyStatus.UNKNOWN, response.getStatus());
         assertTrue(response.getErrorText().contains(text));
     }
-
 }

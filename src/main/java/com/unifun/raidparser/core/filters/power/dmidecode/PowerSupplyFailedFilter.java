@@ -9,7 +9,7 @@ import com.unifun.raidparser.util.TextSearcher;
 public class PowerSupplyFailedFilter extends AbstractFilter<PowerSupplyStatus> implements PowerSupplyFilter {
     @Override
     public boolean filter(String text) {
-        return TextSearcher.containsAny(text, "condition: failed","redundant: no");
+        return TextSearcher.containsAll(text, "condition: failed","redundant: no");
     }
 
     @Override
