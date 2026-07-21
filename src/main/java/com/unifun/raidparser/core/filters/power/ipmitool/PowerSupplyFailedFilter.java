@@ -15,7 +15,7 @@ public class PowerSupplyFailedFilter extends AbstractFilter<PowerSupplyStatus> i
     @Override
     public AnalyzeResponse<PowerSupplyStatus> getFilterResponse(String text) {
         return new AnalyzeResponse<>(PowerSupplyStatus.FAILED,
-                buildErrorText(text,  "failure detected", "power supplies", "input", "output")
+                buildErrorText(text,  "failure detected", "power supplies")
         );
     }
 //    text.contains("condition: failed")
