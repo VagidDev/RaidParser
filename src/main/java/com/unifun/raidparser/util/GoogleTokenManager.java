@@ -1,5 +1,6 @@
 package com.unifun.raidparser.util;
 
+import com.google.api.client.auth.oauth2.Credential;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -19,45 +20,37 @@ import java.util.stream.Stream;
 public class GoogleTokenManager {
     private static final Logger LOGGER = LogManager.getLogger(GoogleTokenManager.class);
 
-    public boolean ensureActualityOfToken(String tokenDir, int tokenLifetimeDays) {
-        if (!StringUtils.hasText(tokenDir)) {
-            LOGGER.warn("Cannot ensure token validity in directory `{}`", tokenDir);
-            return false;
+    public void validateCredential(Credential credential) throws IOException {
+        if (credential.getRefreshToken() == null) {
+            throw new IOException(
+                    "Google OAuth refresh token is missing. Reauthorization is required."
+            );
         }
 
-        Path tokenDirPath = Path.of(tokenDir);
+        Long expiresInSeconds = credential.getExpiresInSeconds();
 
-        try (Stream<Path> storedTokens = Files.walk(tokenDirPath)) {
-            Path token = storedTokens
-                    .filter(path -> path.compareTo(tokenDirPath) != 0)
-                    .findFirst()
-                    .orElse(null);
+        boolean tokenMissing = credential.getAccessToken() == null;
+        boolean tokenExpiresSoon =
+                expiresInSeconds != null && expiresInSeconds <= 120;
 
-            if (token == null) {
-                LOGGER.info("Token in directory `{}` does not exists, can create new token", tokenDirPath);
-                return true;
-            }
-
-            BasicFileAttributes attributes = Files.readAttributes(token, BasicFileAttributes.class);
-            LocalDateTime creationDateTime = LocalDateTime.ofInstant(attributes.lastModifiedTime().toInstant(), ZoneId.systemDefault());
-            LocalDateTime today = LocalDateTime.now();
-
-            if (tokenLifetimeDays > ChronoUnit.DAYS.between(creationDateTime, today)) {
-                LOGGER.info("Token `{}` is valid. Token creation time -> {}", token, creationDateTime.format(DateTimeFormatter.ISO_DATE_TIME));
-                return true;
-            }
-
-            boolean isDeleted = Files.deleteIfExists(token);
-            if (isDeleted) {
-                LOGGER.info("Token was deleted: {} ", token.getFileName());
-                return true;
-            } else {
-                LOGGER.error("Cannot delete Token: {}", token.getFileName());
-                return false;
-            }
-        } catch (IOException e) {
-            LOGGER.error("Input/Output exception while deleting old credential! Path to token -> {}, StackTrace -> {}", tokenDirPath, e.getMessage(), e);
-            return false;
+        if (!tokenMissing && !tokenExpiresSoon) {
+            LOGGER.info(
+                    "Google access token is valid for approximately {} seconds",
+                    expiresInSeconds
+            );
+            return;
         }
+
+        LOGGER.info("Google access token is missing or expires soon. Refreshing it.");
+
+        boolean refreshed = credential.refreshToken();
+
+        if (!refreshed) {
+            throw new IOException(
+                    "Google access token could not be refreshed. Reauthorization is required."
+            );
+        }
+
+        LOGGER.info("Google access token was successfully refreshed.");
     }
 }

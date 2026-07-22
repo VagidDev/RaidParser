@@ -44,25 +44,45 @@ public class GoogleSheetConfig {
     }
 
     private Credential getCredentials(NetHttpTransport httpTransport) throws IOException {
-        if (!googleTokenManager.ensureActualityOfToken(authorizationConfig.getSavingTokensDir(), authorizationConfig.getTokenLifetimeInDays())) {
-            throw new IOException(String.format("Cannot ensure actuality of token in directory %s", authorizationConfig.getSavingTokensDir()));
+        GoogleClientSecrets clientSecrets;
+
+        try (InputStream in = Files.newInputStream(
+                Path.of(authorizationConfig.getUserCredentialsJson()),
+                StandardOpenOption.READ)) {
+
+            clientSecrets = GoogleClientSecrets.load(
+                    GsonFactory.getDefaultInstance(),
+                    new InputStreamReader(in)
+            );
         }
 
-        InputStream in = Files.newInputStream(
-                Path.of(authorizationConfig.getUserCredentialsJson()), StandardOpenOption.READ);
-        GoogleClientSecrets clientSecrets =
-                GoogleClientSecrets.load(GsonFactory.getDefaultInstance(), new InputStreamReader(in));
+        GoogleAuthorizationCodeFlow flow =
+                new GoogleAuthorizationCodeFlow.Builder(
+                        httpTransport,
+                        GsonFactory.getDefaultInstance(),
+                        clientSecrets,
+                        List.of("https://www.googleapis.com/auth/spreadsheets")
+                )
+                        .setDataStoreFactory(
+                                new FileDataStoreFactory(
+                                        new File(authorizationConfig.getSavingTokensDir())
+                                )
+                        )
+                        .setAccessType("offline")
+                        .build();
 
-        List<String> scopes = List.of("https://www.googleapis.com/auth/spreadsheets");
+        LocalServerReceiver receiver =
+                new LocalServerReceiver.Builder()
+                        .setPort(8888)
+                        .build();
 
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                httpTransport, GsonFactory.getDefaultInstance(), clientSecrets, scopes)
-                .setDataStoreFactory(new FileDataStoreFactory(new File(authorizationConfig.getSavingTokensDir())))
-                .setAccessType("offline")
-                .build();
+        Credential credential =
+                new AuthorizationCodeInstalledApp(flow, receiver)
+                        .authorize("user");
 
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
+        googleTokenManager.validateCredential(credential);
+
+        return credential;
     }
 
 
