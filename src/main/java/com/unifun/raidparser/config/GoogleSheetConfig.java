@@ -38,52 +38,17 @@ public class GoogleSheetConfig {
     @Bean
     public Sheets sheetsService() throws GeneralSecurityException, IOException {
         final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-        return new Sheets.Builder(httpTransport, GsonFactory.getDefaultInstance(), getCredentials(httpTransport))
+        return new Sheets.Builder(
+                httpTransport,
+                GsonFactory.getDefaultInstance(),
+                googleTokenManager.getCredentials(
+                        httpTransport,
+                        authorizationConfig.getUserCredentialsJson(),
+                        authorizationConfig.getSavingTokensDir()
+                )
+        )
                 .setApplicationName(APPLICATION_NAME)
                 .build();
+
     }
-
-    private Credential getCredentials(NetHttpTransport httpTransport) throws IOException {
-        GoogleClientSecrets clientSecrets;
-
-        try (InputStream in = Files.newInputStream(
-                Path.of(authorizationConfig.getUserCredentialsJson()),
-                StandardOpenOption.READ)) {
-
-            clientSecrets = GoogleClientSecrets.load(
-                    GsonFactory.getDefaultInstance(),
-                    new InputStreamReader(in)
-            );
-        }
-
-        GoogleAuthorizationCodeFlow flow =
-                new GoogleAuthorizationCodeFlow.Builder(
-                        httpTransport,
-                        GsonFactory.getDefaultInstance(),
-                        clientSecrets,
-                        List.of("https://www.googleapis.com/auth/spreadsheets")
-                )
-                        .setDataStoreFactory(
-                                new FileDataStoreFactory(
-                                        new File(authorizationConfig.getSavingTokensDir())
-                                )
-                        )
-                        .setAccessType("offline")
-                        .build();
-
-        LocalServerReceiver receiver =
-                new LocalServerReceiver.Builder()
-                        .setPort(8888)
-                        .build();
-
-        Credential credential =
-                new AuthorizationCodeInstalledApp(flow, receiver)
-                        .authorize("user");
-
-        googleTokenManager.validateCredential(credential);
-
-        return credential;
-    }
-
-
 }
