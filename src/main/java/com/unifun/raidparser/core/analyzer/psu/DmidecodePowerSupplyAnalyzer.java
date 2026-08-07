@@ -6,6 +6,7 @@ import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.power.PowerSupplyEmptyFilter;
 import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
 import com.unifun.raidparser.core.filters.power.dmidecode.*;
+import com.unifun.raidparser.core.vendors.Dmidecode;
 import com.unifun.raidparser.util.TextSearcher;
 import org.springframework.stereotype.Component;
 
@@ -13,13 +14,11 @@ import java.util.List;
 
 @Component
 public class DmidecodePowerSupplyAnalyzer extends AbstractAnalyzer<PowerSupplyStatus> {
-    private final List<Filter<PowerSupplyStatus>> powerSupplyFilters = List.of(
-            new PowerSupplyEmptyFilter(),
-            new PowerSupplyFailedFilter(),
-            new PowerSupplyNotPresentFilter(),
-            new PowerSupplyUnclaimedFilter(),
-            new PowerSupplyOkFilter()
-    );
+    private final List<Filter<PowerSupplyStatus>> powerSupplyFilters;
+
+    public DmidecodePowerSupplyAnalyzer(@Dmidecode List<Filter<PowerSupplyStatus>> powerSupplyFilters) {
+        this.powerSupplyFilters = powerSupplyFilters;
+    }
 
     @Override
     public boolean isSupportedRawData(String text) {

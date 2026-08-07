@@ -1,14 +1,33 @@
 package com.unifun.raidparser.core.analyzer.drive;
 
 import com.unifun.raidparser.core.component.HealthType;
+import com.unifun.raidparser.core.filters.drive.DriveEmptyFilter;
 import com.unifun.raidparser.core.filters.drive.DriverStatus;
+import com.unifun.raidparser.core.filters.drive.mdadm.DriveDegradedFilter;
+import com.unifun.raidparser.core.filters.drive.mdadm.DriveOkFilter;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class MdadmDriveAnalyzerTest {
-    private final MdadmDriveAnalyzer analyzer = new MdadmDriveAnalyzer();
+    private MdadmDriveAnalyzer analyzer;
+
+    public MdadmDriveAnalyzerTest() {
+        initialize();
+    }
+
+    private void initialize() {
+        analyzer = new MdadmDriveAnalyzer(
+                List.of(
+                        new DriveOkFilter(),
+                        new DriveDegradedFilter(),
+                        new DriveEmptyFilter()
+                )
+        );
+    }
 
     @Test
     void isSupportedRawData_returnsTrue_whenAllMarkersPresent() {

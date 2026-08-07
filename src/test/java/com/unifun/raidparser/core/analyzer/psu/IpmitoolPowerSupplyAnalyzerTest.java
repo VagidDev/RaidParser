@@ -1,14 +1,37 @@
 package com.unifun.raidparser.core.analyzer.psu;
 
 import com.unifun.raidparser.core.component.HealthType;
+import com.unifun.raidparser.core.filters.power.PowerSupplyEmptyFilter;
 import com.unifun.raidparser.core.filters.power.PowerSupplyStatus;
+import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyFailedFilter;
+import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyNotPresentFilter;
+import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyOkFilter;
+import com.unifun.raidparser.core.filters.power.ipmitool.PowerSupplyUnclaimedFilter;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class IpmitoolPowerSupplyAnalyzerTest {
-    private final IpmitoolPowerSupplyAnalyzer analyzer = new IpmitoolPowerSupplyAnalyzer();
+    private IpmitoolPowerSupplyAnalyzer analyzer;
+
+    public IpmitoolPowerSupplyAnalyzerTest() {
+        initialize();
+    }
+
+    private void initialize() {
+        analyzer = new IpmitoolPowerSupplyAnalyzer(
+                List.of(
+                        new PowerSupplyNotPresentFilter(),
+                        new PowerSupplyEmptyFilter(),
+                        new PowerSupplyFailedFilter(),
+                        new PowerSupplyOkFilter(),
+                        new PowerSupplyUnclaimedFilter()
+                )
+        );
+    }
 
     @Test
     void isSupportedRawData_returnsTrue_whenAllMarkersPresent() {

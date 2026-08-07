@@ -10,11 +10,24 @@ public abstract class AbstractAnalyzer<T extends Status> implements Analyzer<T> 
     protected abstract List<Filter<T>> getFilters();
 
     public AnalyzeResponse<T> analyze(String data) {
+        // TODO: make logic more beautiful
+        AnalyzeResponse<T> response = null;
         for (Filter<T> filter : getFilters()) {
+
             if (filter.filter(data)) {
-                return filter.getFilterResponse(data);
+                AnalyzeResponse<T> newResponse = filter.getFilterResponse(data);
+
+                if (newResponse == null)
+                    continue;
+
+                if (response == null)
+                    response = newResponse;
+                else if (response.getStatus().getPriority() > newResponse.getStatus().getPriority())
+                    response = newResponse;
             }
         }
+
+        if (response != null) return response;
 
         return new AnalyzeResponse<>(
                 getUnknownStatus(),

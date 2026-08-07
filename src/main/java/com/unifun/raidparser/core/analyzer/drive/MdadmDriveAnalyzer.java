@@ -6,6 +6,7 @@ import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.drive.*;
 import com.unifun.raidparser.core.filters.drive.mdadm.DriveDegradedFilter;
 import com.unifun.raidparser.core.filters.drive.mdadm.DriveOkFilter;
+import com.unifun.raidparser.core.vendors.Mdadm;
 import com.unifun.raidparser.util.TextSearcher;
 import org.springframework.stereotype.Component;
 
@@ -13,15 +14,15 @@ import java.util.List;
 
 @Component
 public class MdadmDriveAnalyzer extends AbstractAnalyzer<DriverStatus> {
-    private static final List<Filter<DriverStatus>> FILTERS = List.of(
-            new DriveEmptyFilter(),
-            new DriveDegradedFilter(),
-            new DriveOkFilter()
-    );
+    private final List<Filter<DriverStatus>> filters;
+
+    public MdadmDriveAnalyzer(@Mdadm List<Filter<DriverStatus>> filters) {
+        this.filters = filters;
+    }
 
     @Override
     protected List<Filter<DriverStatus>> getFilters() {
-        return FILTERS;
+        return filters;
     }
 
     @Override

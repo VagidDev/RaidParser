@@ -4,23 +4,20 @@ import com.unifun.raidparser.core.analyzer.AbstractAnalyzer;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.battery.*;
-import com.unifun.raidparser.core.filters.battery.hpe.*;
+import com.unifun.raidparser.core.vendors.Ssacli;
 import com.unifun.raidparser.util.TextSearcher;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class HpeBatteryAnalyzer extends AbstractAnalyzer<BatteryStatus> {
-    private final List<Filter<BatteryStatus>> batteryFilters = List.of(
-            new BatteryEmptyFilter(),
-            new BatteryFailedFilter(),
-            new BatteryRechargingFilter(),
-            new BatteryNotPresentFilter(),
-            new BatteryCachePermanentlyDisabledFilter(),
-            new BatteryNoBatteryWriteCacheEnableFilter(),
-            new BatteryOkFilter()
-    );
+public class SsacliBatteryAnalyzer extends AbstractAnalyzer<BatteryStatus> {
+    private final List<Filter<BatteryStatus>> batteryFilters;
+
+    public SsacliBatteryAnalyzer(@Ssacli List<Filter<BatteryStatus>> batteryFilters) {
+        this.batteryFilters = batteryFilters;
+    }
 
     @Override
     public HealthType getSupportedType() {

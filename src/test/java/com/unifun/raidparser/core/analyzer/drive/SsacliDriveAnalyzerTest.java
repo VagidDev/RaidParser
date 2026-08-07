@@ -1,14 +1,36 @@
 package com.unifun.raidparser.core.analyzer.drive;
 
 import com.unifun.raidparser.core.component.HealthType;
+import com.unifun.raidparser.core.filters.drive.DriveEmptyFilter;
 import com.unifun.raidparser.core.filters.drive.DriverStatus;
+import com.unifun.raidparser.core.filters.drive.ssacli.DriveFailedFilter;
+import com.unifun.raidparser.core.filters.drive.ssacli.DriveOkFilter;
+import com.unifun.raidparser.core.filters.drive.ssacli.DriverInterimRecoveryModeFilter;
+import com.unifun.raidparser.core.filters.drive.ssacli.DriverPredictiveFailureFilter;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-class HpeDriveAnalyzerTest {
-    private final HpeDriveAnalyzer analyzer = new HpeDriveAnalyzer();
+class SsacliDriveAnalyzerTest {
+    private SsacliDriveAnalyzer analyzer;
+
+    public SsacliDriveAnalyzerTest() {
+        initialize();
+    }
+    private void initialize() {
+        analyzer = new SsacliDriveAnalyzer(
+                List.of(
+                        new DriverPredictiveFailureFilter(),
+                        new DriveFailedFilter(),
+                        new DriveOkFilter(),
+                        new DriverInterimRecoveryModeFilter(),
+                        new DriveEmptyFilter()
+                )
+        );
+    }
 
     @Test
     void isSupportedRawData_returnsTrue_whenBothMarkersPresent() {

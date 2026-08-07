@@ -1,19 +1,42 @@
 package com.unifun.raidparser.core.analyzer.battery;
 
 import com.unifun.raidparser.core.component.HealthType;
+import com.unifun.raidparser.core.filters.battery.BatteryEmptyFilter;
 import com.unifun.raidparser.core.filters.battery.BatteryStatus;
+import com.unifun.raidparser.core.filters.battery.ssacli.*;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-class HpeBatteryAnalyzerTest {
-
-    private final HpeBatteryAnalyzer analyzer = new HpeBatteryAnalyzer();
+//@SpringBootTest
+class SsacliBatteryAnalyzerTest {
+    //@Autowired
+    private SsacliBatteryAnalyzer analyzer; //= new HpeBatteryAnalyzer();
 
     // =========================================================================
     // isSupportedRawData / getSupportedType / getUnknownStatus
     // =========================================================================
+
+    public SsacliBatteryAnalyzerTest() {
+        initialize();
+    }
+
+    private void initialize() {
+        analyzer = new SsacliBatteryAnalyzer(
+                List.of(
+                        new BatteryRechargingFilter(),
+                        new BatteryFailedFilter(),
+                        new BatteryCachePermanentlyDisabledFilter(),
+                        new BatteryOkFilter(),
+                        new BatteryNoBatteryWriteCacheEnableFilter(),
+                        new BatteryEmptyFilter(),
+                        new BatteryNotPresentFilter()
+                )
+        );
+    }
 
     @Test
     void isSupportedRawData_returnsTrue_whenBothMarkersPresent() {
