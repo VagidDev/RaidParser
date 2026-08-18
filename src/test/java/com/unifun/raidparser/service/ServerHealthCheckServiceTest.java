@@ -7,6 +7,7 @@ import com.unifun.raidparser.dto.HostCommand;
 import com.unifun.raidparser.dto.HostInformation;
 import com.unifun.raidparser.dto.ServerData;
 import com.unifun.raidparser.handlers.ServersToCheckConfigFileDataHandler;
+import com.unifun.raidparser.mapper.ServerTaskMapper;
 import com.unifun.raidparser.util.RemoteCommandExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,10 @@ class ServerHealthCheckServiceTest {
     private HostOverviewService hostOverviewService;
     @Mock
     private ServersToCheckConfig serversToCheckConfig;
+    @Mock
+    private HostExecutorService hostExecutorService;
+    @Mock
+    private ServerTaskMapper serverTaskMapper;
     private RemoteCommandExecutor remoteCommandExecutor;
 
     private ServerHealthCheckService serverHealthCheckService;
@@ -43,8 +48,10 @@ class ServerHealthCheckServiceTest {
         serverHealthCheckService = new ServerHealthCheckService(
                 serversToCheckConfigFileDataHandler,
                 remoteCommandExecutor,
+                hostExecutorService,
                 serversToCheckConfig,
-                hostOverviewService
+                hostOverviewService,
+                serverTaskMapper
         );
     }
 
@@ -94,8 +101,10 @@ class ServerHealthCheckServiceTest {
         serverHealthCheckService = new ServerHealthCheckService(
                 serversToCheckConfigFileDataHandler,
                 executorMock,
+                hostExecutorService,
                 serversToCheckConfig,
-                hostOverviewService
+                hostOverviewService,
+                serverTaskMapper
         );
 
         List<ServerData> result = serverHealthCheckService.checkServers();

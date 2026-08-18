@@ -10,6 +10,7 @@ import com.unifun.raidparser.exporter.FileExporter;
 import com.unifun.raidparser.exporter.GoogleSheetExporter;
 import com.unifun.raidparser.parser.DateParser;
 import com.unifun.raidparser.service.RaidParserService;
+import com.unifun.raidparser.service.ServerHealthCheckService;
 import com.unifun.raidparser.service.SftpFileService;
 import com.unifun.raidparser.util.ServerStatusSorter;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,8 @@ public class InteractiveConsoleHandler {
     private final SftpFileService sftpFileService;
     private final FileExporter fileExporter;
     private final DateParser dateParser;
+    //temporary
+    private final ServerHealthCheckService serverHealthCheckService;
 
     // Константы для оформления
     private static final String SEPARATOR = "====================================================";
@@ -113,6 +116,7 @@ public class InteractiveConsoleHandler {
             System.out.println(" [3] full-check - Парсинг отчета и проверка состояния - вывод в консоль");
             System.out.println(" [4] file-export - Экспорт статуса из кэша в статус-файлы");
             System.out.println(" [5] sheets-export - Экспорт статуса из кэша в Google Sheets");
+            System.out.println(" [11] test - вывод в консоль результата выполнения команд параллельного hostExecutors");
             System.out.println(" [back]     - Выбрать другой файл/дату");
             System.out.println(" [exit]     - Выйти из программы");
             System.out.print("> ");
@@ -130,6 +134,9 @@ public class InteractiveConsoleHandler {
                 }
                 case "4", "file-export" -> exportToFile();
                 case "5", "sheets-export" -> exportToGoogleSheets();
+                case "11", "test" -> serverHealthCheckService
+                        .checkServersParallel()
+                        .forEach(v -> System.out.printf("%s\n======================\n", v.toString()));
                 case "back" -> { return false; }
                 case "exit", "stop" -> System.exit(0);
                 default -> printError("Неизвестная команда. Попробуйте еще раз.");
