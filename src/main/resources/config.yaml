@@ -28,6 +28,8 @@ ssh:
     login: testuser
     password: password
     private-key:
+  parallel:
+    threads: 8
 raid:
   parser:
     report-file:

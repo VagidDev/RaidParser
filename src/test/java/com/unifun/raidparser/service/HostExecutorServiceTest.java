@@ -1,5 +1,6 @@
 package com.unifun.raidparser.service;
 
+import com.unifun.raidparser.config.HostExecutorConfig;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.dto.ServerData;
 import com.unifun.raidparser.dto.ServerTask;
@@ -26,11 +27,15 @@ class HostExecutorServiceTest {
     @Mock
     private RemoteCommandExecutor remoteCommandExecutor;
 
+    @Mock
+    private HostExecutorConfig hostExecutorConfig;
+
     @InjectMocks
     private HostExecutorService hostExecutorService;
 
     @BeforeEach
     public void initialize() {
+        when(hostExecutorConfig.getThreads()).thenReturn(8);
         hostExecutorService.initialize();
     }
 

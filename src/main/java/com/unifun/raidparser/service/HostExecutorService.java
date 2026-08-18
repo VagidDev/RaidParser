@@ -1,5 +1,6 @@
 package com.unifun.raidparser.service;
 
+import com.unifun.raidparser.config.HostExecutorConfig;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.dto.ServerData;
 import com.unifun.raidparser.dto.ServerTask;
@@ -23,14 +24,15 @@ public class HostExecutorService {
     private static final Logger LOGGER = LogManager.getLogger(HostExecutorService.class);
 
     private final RemoteCommandExecutor remoteCommandExecutor;
+    private final HostExecutorConfig hostExecutorConfig;
 
     private ExecutorService sshExecutor;
 
     @PostConstruct
     public void initialize() {
-        //temporary solution
-        int maxParallelConnections = 8;
-        this.sshExecutor = Executors.newFixedThreadPool(maxParallelConnections);
+        this.sshExecutor = Executors.newFixedThreadPool(
+                hostExecutorConfig.getThreads()
+        );
     }
 
     public List<ServerData> execute(List<ServerTask> serverTasks) {
