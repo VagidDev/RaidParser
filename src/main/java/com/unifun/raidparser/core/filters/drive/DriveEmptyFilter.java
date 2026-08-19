@@ -1,7 +1,6 @@
 package com.unifun.raidparser.core.filters.drive;
 
 import com.unifun.raidparser.core.filters.EmptyFilter;
-import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 import com.unifun.raidparser.core.vendors.Mdadm;
 import com.unifun.raidparser.core.vendors.Ssacli;

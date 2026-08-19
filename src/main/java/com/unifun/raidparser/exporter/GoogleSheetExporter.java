@@ -2,9 +2,7 @@ package com.unifun.raidparser.exporter;
 
 import com.unifun.raidparser.config.GoogleSheetExportConfig;
 import com.unifun.raidparser.core.component.HealthType;
-import com.unifun.raidparser.core.filters.Status;
 import com.unifun.raidparser.dto.ReportServerData;
-import com.unifun.raidparser.dto.ServerStatus;
 import com.unifun.raidparser.service.GoogleSheetsService;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;

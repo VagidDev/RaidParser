@@ -5,7 +5,7 @@ import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.dto.DateParseResponse;
 import com.unifun.raidparser.dto.ReportServerData;
 import com.unifun.raidparser.dto.ServerStatus;
-import com.unifun.raidparser.exporter.ExportDataMapper;
+import com.unifun.raidparser.mapper.ExportDataMapper;
 import com.unifun.raidparser.exporter.FileExporter;
 import com.unifun.raidparser.exporter.GoogleSheetExporter;
 import com.unifun.raidparser.parser.DateParser;

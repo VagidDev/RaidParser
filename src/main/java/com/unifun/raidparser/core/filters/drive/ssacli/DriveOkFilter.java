@@ -1,7 +1,6 @@
 package com.unifun.raidparser.core.filters.drive.ssacli;
 
 import com.unifun.raidparser.core.filters.AbstractFilter;
-import com.unifun.raidparser.core.filters.Filter;
 import com.unifun.raidparser.core.filters.drive.DriverStatus;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 import com.unifun.raidparser.core.vendors.Ssacli;

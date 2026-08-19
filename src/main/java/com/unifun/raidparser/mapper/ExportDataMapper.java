@@ -1,4 +1,4 @@
-package com.unifun.raidparser.exporter;
+package com.unifun.raidparser.mapper;
 
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.dto.ReportServerData;

@@ -1,7 +1,6 @@
 package com.unifun.raidparser.util;
 
 import com.unifun.raidparser.core.component.HealthType;
-import com.unifun.raidparser.core.filters.Status;
 import com.unifun.raidparser.dto.ServerStatus;
 import org.springframework.stereotype.Service;
 

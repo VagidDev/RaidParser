@@ -2,7 +2,6 @@ package com.unifun.raidparser.exporter;
 
 import com.unifun.raidparser.core.filters.Status;
 import com.unifun.raidparser.dto.ReportServerData;
-import com.unifun.raidparser.dto.ServerStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;

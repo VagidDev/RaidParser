@@ -10,7 +10,7 @@ import org.springframework.context.annotation.FullyQualifiedAnnotationBeanNameGe
 @SpringBootApplication
 @ComponentScan(
         basePackages = "com.unifun.raidparser",
-        nameGenerator = FullyQualifiedAnnotationBeanNameGenerator.class // <-- Включает генерацию имён с учётом пакетов
+        nameGenerator = FullyQualifiedAnnotationBeanNameGenerator.class
 )
 public class RaidParserApp {
     public static void main(String[] args) {
