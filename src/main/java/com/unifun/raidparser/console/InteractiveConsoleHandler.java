@@ -116,7 +116,8 @@ public class InteractiveConsoleHandler {
             System.out.println(" [3] full-check - Парсинг отчета и проверка состояния - вывод в консоль");
             System.out.println(" [4] file-export - Экспорт статуса из кэша в статус-файлы");
             System.out.println(" [5] sheets-export - Экспорт статуса из кэша в Google Sheets");
-            System.out.println(" [11] test - вывод в консоль результата выполнения команд параллельного hostExecutors");
+            System.out.println(" [8] print-cache - Показать кэш");
+            System.out.println(" [9] clear-cache - Очистить кэш");
             System.out.println(" [back]     - Выбрать другой файл/дату");
             System.out.println(" [exit]     - Выйти из программы");
             System.out.print("> ");
@@ -125,18 +126,17 @@ public class InteractiveConsoleHandler {
 
             switch (input) {
                 case "1", "parse-report" -> executeParsing(reportFilePath);
-                case "2", "check-health" -> executeChecking();
+                case "2", "check-health" -> executeHardDriveChecking();
                 case "3", "full-check" -> {
                     raidParserService.clearCache();
                     raidParserService.analyzeStatusFromReportFile(reportFilePath);
-                    raidParserService.analyzeStatusFromServers();
+                    raidParserService.analyzeStatusFromHosts();
                     printStatus(raidParserService.getCachedStatus());
                 }
                 case "4", "file-export" -> exportToFile();
                 case "5", "sheets-export" -> exportToGoogleSheets();
-                case "11", "test" -> serverHealthCheckService
-                        .checkServersParallel()
-                        .forEach(v -> System.out.printf("%s\n======================\n", v.toString()));
+                case "8", "print-cache" -> printStatus(raidParserService.getCachedStatus());
+                case "9", "clear-cache" -> raidParserService.clearCache();
                 case "back" -> { return false; }
                 case "exit", "stop" -> System.exit(0);
                 default -> printError("Неизвестная команда. Попробуйте еще раз.");
@@ -184,15 +184,15 @@ public class InteractiveConsoleHandler {
         LOGGER.info("Successfully parsed report D:{}, P:{}, B:{}", driveStatus.size(), psuStatus.size(), batteryStatus.size());
     }
 
-    private void executeChecking() {
+    private void executeHardDriveChecking() {
         printMsg("Запуск процесса проверки статуса на серверах ...");
         List<ServerStatus> serverData = serverStatusSorter.sortByHealthStatus(
-                raidParserService.analyzeStatusFromServers(),
+                raidParserService.analyzeStatusFromHosts(),
                 HealthType.DRIVE_HEALTH
         );
         printMsg("Печатаю текущий статус ниже:");
 
-         exportDataMapper.map(serverData, HealthType.DRIVE_HEALTH).forEach(reportServerData -> printMsg(
+        exportDataMapper.map(serverData, HealthType.DRIVE_HEALTH).forEach(reportServerData -> printMsg(
                         String.format(
                                 "Сервер: %s -> Статус: %s -> Текст статуса %s",
                                 reportServerData.serverName(),

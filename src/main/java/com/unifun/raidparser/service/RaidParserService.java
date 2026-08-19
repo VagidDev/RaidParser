@@ -27,8 +27,14 @@ public class RaidParserService {
         return analyzeData(serverDataList);
     }
 
+    @Deprecated
     public List<ServerStatus> analyzeStatusFromServers() {
         List<ServerData> serverDataList = serverHealthCheckService.checkServers();
+        return analyzeData(serverDataList);
+    }
+
+    public List<ServerStatus> analyzeStatusFromHosts() {
+        List<ServerData> serverDataList = serverHealthCheckService.checkServersParallel();
         return analyzeData(serverDataList);
     }
 
