@@ -3,15 +3,38 @@ package com.unifun.raidparser.validators.command;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-class WhitelistCommandValidatorTest {
+class CommandValidatorTest {
 
-    private RaidCommandValidator validator;
+    private CommandValidator validator;
 
     @BeforeEach
     void setUp() {
-        validator = new RaidCommandValidator();
+        validator = new ConfigCommandValidator(Stream.of(
+                "^cat /proc/mdstat$",
+                "^mdadm --detail$",
+                "^mdadm --detail --scan$",
+                "^megacli -ldinfo -lall -aall$",
+                "^megacli -pdlist -aall$",
+                "^storcli /c\\d+ show$",
+                "^storcli /c\\d+/vall show$",
+                "^storcli /call/vall show$",
+                "^hpssacli ctrl all show config$",
+                "^ssacli ctrl all show config$",
+                "^perccli /c\\d+ show$",
+                "^perccli /call/vall show$",
+                "^lsblk$",
+                "^lsblk -o NAME,SIZE,TYPE,MOUNTPOINT$",
+                "^df -h$",
+                "^free -m$",
+                "^uptime$",
+                "^ps aux$"
+
+        ).map(Pattern::compile).toList());
     }
 
     @Test
