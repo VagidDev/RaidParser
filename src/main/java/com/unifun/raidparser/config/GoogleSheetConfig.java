@@ -38,32 +38,17 @@ public class GoogleSheetConfig {
     @Bean
     public Sheets sheetsService() throws GeneralSecurityException, IOException {
         final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-        return new Sheets.Builder(httpTransport, GsonFactory.getDefaultInstance(), getCredentials(httpTransport))
+        return new Sheets.Builder(
+                httpTransport,
+                GsonFactory.getDefaultInstance(),
+                googleTokenManager.getCredentials(
+                        httpTransport,
+                        authorizationConfig.getUserCredentialsJson(),
+                        authorizationConfig.getSavingTokensDir()
+                )
+        )
                 .setApplicationName(APPLICATION_NAME)
                 .build();
+
     }
-
-    private Credential getCredentials(NetHttpTransport httpTransport) throws IOException {
-        if (!googleTokenManager.ensureActualityOfToken(authorizationConfig.getSavingTokensDir(), authorizationConfig.getTokenLifetimeInDays())) {
-            throw new IOException(String.format("Cannot ensure actuality of token in directory %s", authorizationConfig.getSavingTokensDir()));
-        }
-
-        InputStream in = Files.newInputStream(
-                Path.of(authorizationConfig.getUserCredentialsJson()), StandardOpenOption.READ);
-        GoogleClientSecrets clientSecrets =
-                GoogleClientSecrets.load(GsonFactory.getDefaultInstance(), new InputStreamReader(in));
-
-        List<String> scopes = List.of("https://www.googleapis.com/auth/spreadsheets");
-
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                httpTransport, GsonFactory.getDefaultInstance(), clientSecrets, scopes)
-                .setDataStoreFactory(new FileDataStoreFactory(new File(authorizationConfig.getSavingTokensDir())))
-                .setAccessType("offline")
-                .build();
-
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
-    }
-
-
 }

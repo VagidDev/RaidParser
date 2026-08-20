@@ -1,9 +1,8 @@
 package com.unifun.raidparser.exporter;
 
 import com.unifun.raidparser.config.GoogleSheetExportConfig;
-import com.unifun.raidparser.core.filters.Status;
+import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.dto.ReportServerData;
-import com.unifun.raidparser.dto.ServerStatus;
 import com.unifun.raidparser.service.GoogleSheetsService;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -20,31 +19,23 @@ public class GoogleSheetExporter {
     private final GoogleSheetsService googleSheetsService;
     private final GoogleSheetExportConfig googleSheetExportConfig;
 
-    public <T extends Status> void export(List<ServerStatus<T>> serverStatuses, Class<T> statusClass) {
-        if (serverStatuses == null || serverStatuses.isEmpty()) {
-            LOGGER.warn("Got empty data for export to Google Sheets");
+    public void export(List<ReportServerData> reportServerData, HealthType healthType) {
+        if (reportServerData == null || healthType == null || reportServerData.isEmpty()) {
+            LOGGER.warn("Got empty data for export to Google Sheets. Report Data -> {} Health Type -> {}", reportServerData, healthType);
             return;
         }
 
-        List<ReportServerData> reportServerDataList = serverStatuses.stream()
-                .map(server -> new ReportServerData(
-                                server.serverName(),
-                                server.analyzeResponse().getStatus().getName(),
-                                server.analyzeResponse().getErrorText()
-                        )
-                )
-                .toList();
-        String range = switch (statusClass.getSimpleName()) {
-            case "DriverStatus" -> googleSheetExportConfig.getDiskRange();
-            case "PowerSupplyStatus" -> googleSheetExportConfig.getPsuRange();
-            case "BatteryStatus" -> googleSheetExportConfig.getBatteryRange();
-            default -> throw new IllegalArgumentException("Unknown status type: " + statusClass);
+        String range = switch (healthType) {
+            case DRIVE_HEALTH -> googleSheetExportConfig.getDiskRange();
+            case PSU_HEALTH -> googleSheetExportConfig.getPsuRange();
+            case BATTERY_HEALTH -> googleSheetExportConfig.getBatteryRange();
+            default -> throw new IllegalArgumentException("Unknown status type: " + healthType);
         };
 
         try {
-            googleSheetsService.upload(googleSheetExportConfig.getSpreadsheetId(), range, reportServerDataList);
+            googleSheetsService.upload(googleSheetExportConfig.getSpreadsheetId(), range, reportServerData);
         } catch (Exception e) {
-            LOGGER.error("Error, while trying export data to google-sheet. Trying to remove old token, to fix error. Error message -> {}", e.getMessage(), e);
+            LOGGER.error("Error, while trying upload data to google-sheet. Error message -> {}", e.getMessage(), e);
         }
     }
 

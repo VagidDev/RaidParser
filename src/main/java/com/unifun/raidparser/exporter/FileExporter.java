@@ -1,7 +1,7 @@
 package com.unifun.raidparser.exporter;
 
 import com.unifun.raidparser.core.filters.Status;
-import com.unifun.raidparser.dto.ServerStatus;
+import com.unifun.raidparser.dto.ReportServerData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -35,18 +35,18 @@ public class FileExporter {
         }
     }
 
-    public <T extends Status> void export(Path path, List<ServerStatus<T>> serverStatuses) {
+    public <T extends Status> void export(Path path, List<ReportServerData> reportServerDataList) {
         StringBuilder builder = new StringBuilder();
-        for (ServerStatus<T> serverStatus: serverStatuses) {
+        for (ReportServerData reportServerData : reportServerDataList) {
             builder
-                    .append(serverStatus.serverName()).append(" -> ")
-                    .append(serverStatus.analyzeResponse().getStatus())
+                    .append(reportServerData.serverName()).append(" -> ")
+                    .append(reportServerData.healthStatus())
                     .append("\n");
 
-            if (!serverStatus.analyzeResponse().getErrorText().isBlank()) {
+            if (!reportServerData.errorText().isBlank()) {
                 builder
                         .append("------------------\n")
-                        .append(serverStatus.analyzeResponse().getErrorText())
+                        .append(reportServerData.errorText())
                         .append("\n====================\n");
             }
         }

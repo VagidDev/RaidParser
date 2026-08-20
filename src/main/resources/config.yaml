@@ -6,6 +6,26 @@ util:
       '[dd-MM-yyyy]': '^(0[1-9]|[1-2][0-9]|3[01])-(0[1-9]|1[0-2])-\d{4}$'
       '[yyyy-MM-dd]': '^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[01])$'
       '[MM/dd/yyyy]': '^(0[1-9]|1[0-2])/(0[1-9]|[1-2][0-9]|3[01])/\d{4}$'
+  commands:
+    whitelist:
+      - '^cat /proc/mdstat$'
+      - '^mdadm --detail$'
+      - '^mdadm --detail --scan$'
+      - '^megacli -ldinfo -lall -aall$'
+      - '^megacli -pdlist -aall$'
+      - '^storcli /c\d+ show$'
+      - '^storcli /c\d+/vall show$'
+      - '^storcli /call/vall show$'
+      - '^hpssacli ctrl all show config$'
+      - '^ssacli ctrl all show config$'
+      - '^perccli /c\d+ show$'
+      - '^perccli /call/vall show$'
+      - '^lsblk$'
+      - '^lsblk -o NAME,SIZE,TYPE,MOUNTPOINT$'
+      - '^df -h$'
+      - '^free -m$'
+      - '^uptime$'
+      - '^ps aux$'
 
 sftp:
   remote:
@@ -28,6 +48,8 @@ ssh:
     login: testuser
     password: password
     private-key:
+  parallel:
+    threads: 8
 raid:
   parser:
     report-file:

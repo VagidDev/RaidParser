@@ -1,14 +1,14 @@
 package com.unifun.raidparser.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class ServerTask {
-    private String hostName;
-    private String commandToExecute;
-    private String commandOutput;
+import com.unifun.raidparser.core.component.HealthType;
+
+import java.util.Map;
+
+public record ServerTask(
+        String hostname,
+        String ip,
+        int port,
+        Map<HealthType, String> healthCommand
+) {
 }

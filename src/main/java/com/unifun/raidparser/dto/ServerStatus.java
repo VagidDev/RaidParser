@@ -1,15 +1,12 @@
 package com.unifun.raidparser.dto;
 
+import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.core.filters.Status;
 import com.unifun.raidparser.core.response.AnalyzeResponse;
 
-public record ServerStatus<T extends Status>(
-        String serverName,
-        AnalyzeResponse<T> analyzeResponse
-){
+import java.util.concurrent.ConcurrentHashMap;
 
-    public String getPrettyFormat() {
-        return "Server Name: " + serverName
-                + " -> " + analyzeResponse.getStatus() + " -> " + analyzeResponse().getErrorText();
-    }
-}
+public record ServerStatus(
+        String serverName,
+        ConcurrentHashMap<HealthType, AnalyzeResponse<? extends Status>> healthStatusMap
+) {}

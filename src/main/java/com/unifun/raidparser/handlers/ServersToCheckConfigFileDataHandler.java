@@ -5,25 +5,32 @@ import com.unifun.raidparser.dto.HostCommand;
 import com.unifun.raidparser.parser.ServersToCheckConfigFileParser;
 import com.unifun.raidparser.service.CommandValidatorService;
 import com.unifun.raidparser.util.FileChecker;
-import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class ServersToCheckConfigFileDataHandler {
     private static final Logger LOGGER = LogManager.getLogger(ServersToCheckConfigFileDataHandler.class);
     private final ServersToCheckConfigFileParser serversToCheckConfigFileParser;
     private final CommandValidatorService commandValidatorService;
     private final ServersToCheckConfig serversToCheckConfig;
     private final FileChecker fileChecker;
+
+    public ServersToCheckConfigFileDataHandler(
+            ServersToCheckConfigFileParser serversToCheckConfigFileParser,
+            CommandValidatorService commandValidatorService,
+            ServersToCheckConfig serversToCheckConfig,
+            FileChecker fileChecker) {
+        this.serversToCheckConfigFileParser = serversToCheckConfigFileParser;
+        this.commandValidatorService = commandValidatorService;
+        this.serversToCheckConfig = serversToCheckConfig;
+        this.fileChecker = fileChecker;
+    }
 
     private List<HostCommand> hostCommands;
 

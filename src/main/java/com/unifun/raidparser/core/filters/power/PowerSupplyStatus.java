@@ -8,9 +8,10 @@ public enum PowerSupplyStatus implements Status {
     FAILED(0, "Failed"),
     NOT_PRESENT(1, "Power Supply Not Present"),
     UNCLAIMED(2, "Unclaimed"),
-    UNKNOWN(3, "UNKNOWN"),
-    EMPTY(4, "Empty"),
-    OK(Integer.MAX_VALUE, "OK");
+    EMPTY(3, "Empty"),
+    OK(4, "OK"),
+    UNSUPPORTED_TYPE(Integer.MAX_VALUE, "UNSUPPORTED_TYPE"),
+    UNKNOWN(Integer.MAX_VALUE, "UNKNOWN");
 
     private final int priority;
     private final String name;

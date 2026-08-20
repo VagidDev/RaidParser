@@ -40,12 +40,19 @@ public class RaidCommandValidator implements CommandValidator {
             Pattern.compile("^df -h$")
     );
 
+    List<Pattern> TEST = List.of(
+            Pattern.compile("^free -m$"),
+            Pattern.compile("^uptime$"),
+            Pattern.compile("^ps aux$")
+    );
+
     private final List<Pattern> whiteList = Stream.of(
             LINUX_MDADM,
             MEGARAID,
             HP_RAID,
             DELL_RAID,
-            GENERIC
+            GENERIC,
+            TEST
     ).flatMap(List::stream).toList();
 
 
