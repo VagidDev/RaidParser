@@ -3,7 +3,6 @@ package com.unifun.raidparser.validators.command;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -11,7 +10,6 @@ import java.util.regex.Pattern;
 
 @Component
 @RequiredArgsConstructor
-@Qualifier("configCommandValidator")
 public class ConfigCommandValidator implements CommandValidator{
     private static final Logger LOGGER = LogManager.getLogger(ConfigCommandValidator.class);
     private final List<Pattern> whiteList;

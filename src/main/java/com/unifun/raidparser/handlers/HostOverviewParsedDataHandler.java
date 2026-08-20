@@ -18,15 +18,15 @@ public class HostOverviewParsedDataHandler {
     private final HostOverviewDataHandler hostOverviewDataHandler;
     private final HostOverviewParser hostOverviewParser;
 
-    private List<HostInformation> hostInformationList;
+    private List<HostInformation> hostInformationList = List.of();
 
     public void loadServers() {
         getActualServerData();
         LOGGER.info("Actualizing server info list. Current count of parsed servers is {}", hostInformationList.size());
     }
-    //let it be
     public void clearCache() {
-        hostInformationList.clear();
+        // parse() возвращает неизменяемый список, поэтому именно замена, а не clear()
+        hostInformationList = List.of();
         LOGGER.info("Cache is cleared");
     }
 

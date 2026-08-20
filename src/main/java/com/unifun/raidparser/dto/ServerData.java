@@ -1,7 +1,6 @@
 package com.unifun.raidparser.dto;
 
 import com.unifun.raidparser.core.component.HealthType;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -13,7 +12,6 @@ public record ServerData(
         return rawDataByComponent.get(type);
     }
 
-    @NotNull
     @Override
     public String toString() {
         StringBuilder output = new StringBuilder("Server -> " + serverName + "\n" + "Health -> ");

@@ -1,3 +1,11 @@
+# Рабочая конфигурация приложения.
+# Значения логинов/паролей ниже — от docker-compose.yml (локальный стенд).
+# Для боевых креденшелов создайте application-local.yaml рядом с этим файлом:
+# он подхватывается автоматически, переопределяет значения отсюда и не попадает в git.
+spring:
+  config:
+    import: optional:classpath:application-local.yaml
+
 util:
   date:
     date-string-format: yyyy_MM_dd
@@ -85,7 +93,7 @@ sheets:
     saving-tokens-dir: ""
     token-lifetime-in-days: 5
   export:
-    spreadsheetId: ""
+    spreadsheet-id: ""
     disk-range: ""
     psu-range: ""
     battery-range: ""

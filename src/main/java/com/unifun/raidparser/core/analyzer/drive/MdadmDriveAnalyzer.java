@@ -27,7 +27,9 @@ public class MdadmDriveAnalyzer extends AbstractAnalyzer<DriverStatus> {
 
     @Override
     public boolean isSupportedRawData(String text) {
-        return TextSearcher.containsAll(text, "Personalities", "md", "raid", "active", "blocks super"); //md raid active blocks super
+        // Маркером mdstat служит только заголовок `Personalities`: требование
+        // `active`/`raid1` отбрасывало и пустой mdstat, и развалившийся массив.
+        return TextSearcher.containsAll(text, "Personalities");
     }
 
     @Override

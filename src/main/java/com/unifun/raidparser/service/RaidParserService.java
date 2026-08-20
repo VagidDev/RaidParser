@@ -35,6 +35,7 @@ public class RaidParserService {
     private List<ServerStatus> analyzeData(List<ServerData> serverDataList) {
         List<ServerStatus> serverStatuses = serverDataList.stream()
                 .map(analyzeDataService::analyze)
+                .filter(Objects::nonNull)
                 .toList();
         serverStatusDataHandler.updateAll(serverStatuses);
         return serverStatuses;

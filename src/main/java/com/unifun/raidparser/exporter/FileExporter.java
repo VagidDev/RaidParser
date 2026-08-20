@@ -1,7 +1,8 @@
 package com.unifun.raidparser.exporter;
 
-import com.unifun.raidparser.core.filters.Status;
 import com.unifun.raidparser.dto.ReportServerData;
+import com.unifun.raidparser.util.FileChecker;
+import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -11,31 +12,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-//TODO: write tests for this class
 @Service
+@RequiredArgsConstructor
 public class FileExporter {
     private static final Logger LOGGER = LogManager.getLogger(FileExporter.class);
 
-    private boolean ensureFileExists(Path path) {
-        try {
-            if (!Files.isRegularFile(path)) {
-                //check if directory exists, if not - create dir
-                if (Files.notExists(path.getParent())) {
-                    LOGGER.warn("Directory {} does not exist. Creating directory...", path.getParent());
-                    Files.createDirectory(path.getParent());
-                }
-                // create file
-                Files.createFile(path);
-                LOGGER.warn("File {} does not exist. Creating file...", path);
-            }
-            return true;
-        } catch (IOException e) {
-            LOGGER.error("Error while trying to create file {}. Error -> {}", path, e.getLocalizedMessage(), e);
-            return false;
-        }
-    }
+    // Создание файла вместе с деревом каталогов уже реализовано в FileChecker:
+    // локальная копия умела только один уровень вложенности и падала на пути без родителя.
+    private final FileChecker fileChecker;
 
-    public <T extends Status> void export(Path path, List<ReportServerData> reportServerDataList) {
+    public void export(Path path, List<ReportServerData> reportServerDataList) {
         StringBuilder builder = new StringBuilder();
         for (ReportServerData reportServerData : reportServerDataList) {
             builder
@@ -50,7 +36,7 @@ public class FileExporter {
                         .append("\n====================\n");
             }
         }
-        if (ensureFileExists(path)) {
+        if (fileChecker.ensureFileExists(path)) {
             LOGGER.info("Writing data to file {}", path);
             writeToFile(path, builder.toString());
         } else {

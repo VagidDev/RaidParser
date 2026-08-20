@@ -14,12 +14,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
 public class ReportFileParser {
     private static final Logger LOGGER = LogManager.getLogger(ReportFileParser.class);
+    private static final String SERVER_NAME_MARKER = "=== SERVER NAME";
 
     private final ReportFileDataBoundsPatternConfig reportFileDataBoundsPatternConfig;
 
@@ -30,38 +32,24 @@ public class ReportFileParser {
         }
 
         List<ServerData> serverDataList = new ArrayList<>();
-        StringBuilder builder = new StringBuilder();
-        String server = "";
-        //=== SERVER NAME
 
         try (Stream<String> data = Files.lines(path)) {
-            List<String> dataList = data.toList();
+            String server = "";
+            StringBuilder statusDetail = new StringBuilder();
 
-            for (int i = 0; i < dataList.size(); ++i) {
-                if (dataList.get(i).contains("=== SERVER NAME") || i == (dataList.size() - 1)) {
-                    //if new server
-                    if (!server.isEmpty() && !builder.isEmpty()) {
-                        String statusDetail = builder.toString();
-                        serverDataList.add(new ServerData(
-                                        server,
-                                        Map.of(
-                                                HealthType.DRIVE_HEALTH, getMainData(statusDetail, reportFileDataBoundsPatternConfig.getDriveStart(), reportFileDataBoundsPatternConfig.getDriveEnd()),
-                                                HealthType.PSU_HEALTH, getMainData(statusDetail, reportFileDataBoundsPatternConfig.getPsuStart(), reportFileDataBoundsPatternConfig.getPsuEnd()),
-                                                HealthType.BATTERY_HEALTH, getMainData(statusDetail, reportFileDataBoundsPatternConfig.getBatteryStart(), reportFileDataBoundsPatternConfig.getBatteryEnd())
-                                        )
-                                )
-                        );
-                        server = "";
-                        builder = new StringBuilder();
-                    }
-
-                    server = dataList.get(i).replace("=== SERVER NAME", " ");
-                    server = server.trim();
+            for (String line : data.toList()) {
+                if (line.contains(SERVER_NAME_MARKER)) {
+                    addServerData(serverDataList, server, statusDetail);
+                    server = line.replace(SERVER_NAME_MARKER, " ").trim();
+                    statusDetail = new StringBuilder();
                 } else {
-                    builder.append(dataList.get(i).trim()).append("\n");
+                    statusDetail.append(line.trim()).append("\n");
                 }
-
             }
+            // Последний сервер в файле не закрыт новым заголовком, поэтому
+            // сбрасываем его после цикла: иначе терялась последняя строка отчёта.
+            addServerData(serverDataList, server, statusDetail);
+
             LOGGER.debug("Read server data from file `{}`, server data -> {}", path, serverDataList);
             return serverDataList;
         } catch (IOException e) {
@@ -70,12 +58,28 @@ public class ReportFileParser {
         }
     }
 
+    private void addServerData(List<ServerData> serverDataList, String serverName, StringBuilder statusDetail) {
+        if (serverName.isEmpty() || statusDetail.isEmpty()) {
+            return;
+        }
+
+        String data = statusDetail.toString();
+        serverDataList.add(new ServerData(
+                serverName,
+                Map.of(
+                        HealthType.DRIVE_HEALTH, getMainData(data, reportFileDataBoundsPatternConfig.getDriveStart(), reportFileDataBoundsPatternConfig.getDriveEnd()),
+                        HealthType.PSU_HEALTH, getMainData(data, reportFileDataBoundsPatternConfig.getPsuStart(), reportFileDataBoundsPatternConfig.getPsuEnd()),
+                        HealthType.BATTERY_HEALTH, getMainData(data, reportFileDataBoundsPatternConfig.getBatteryStart(), reportFileDataBoundsPatternConfig.getBatteryEnd())
+                )
+        ));
+    }
+
     public String getMainData(String data, String startPattern, String endPattern) {
         return data.lines()
                 .takeWhile(line -> !line.contains(endPattern))
                 .dropWhile(line -> !line.contains(startPattern))
                 .filter(str -> !str.equals(startPattern))
-                .reduce((x, y) -> x.toLowerCase() + "\n" + y.toLowerCase())
-                .orElse("");
+                .map(String::toLowerCase)
+                .collect(Collectors.joining("\n"));
     }
 }

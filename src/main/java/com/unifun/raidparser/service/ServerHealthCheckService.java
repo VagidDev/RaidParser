@@ -1,6 +1,5 @@
 package com.unifun.raidparser.service;
 
-import com.unifun.raidparser.config.ServersToCheckConfig;
 import com.unifun.raidparser.dto.HostCommand;
 import com.unifun.raidparser.dto.HostInformation;
 import com.unifun.raidparser.dto.ServerData;

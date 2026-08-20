@@ -10,18 +10,26 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ServerStatusDataHandler {
     private static final Logger LOGGER = LogManager.getLogger(ServerStatusDataHandler.class);
-    private final ConcurrentHashMap<String, ServerStatus> serverStatuses = new ConcurrentHashMap<>();;
+    private final ConcurrentHashMap<String, ServerStatus> serverStatuses = new ConcurrentHashMap<>();
 
     public void updateAll(List<ServerStatus> serverStatuses) {
-        serverStatuses.forEach(this::updateStatus);
+        if (serverStatuses == null) {
+            return;
+        }
+        serverStatuses.stream().filter(Objects::nonNull).forEach(this::updateStatus);
     }
 
     public void updateStatus(ServerStatus newServerStatus) {
+        if (newServerStatus == null || newServerStatus.serverName() == null) {
+            LOGGER.warn("Skipping status update: server status or its name is null");
+            return;
+        }
         String serverName = newServerStatus.serverName();
         LOGGER.debug("Updating status for server: {}", serverName);
 

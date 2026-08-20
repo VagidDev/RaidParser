@@ -15,7 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -29,8 +29,8 @@ import static org.mockito.Mockito.*;
 /**
  * Unit-тесты для {@link GoogleSheetsService}.
  *
- * GoogleSheetsService принимает Sheets через поле (нет конструктора с Sheets),
- * поэтому sheetsService инжектируется через ReflectionTestUtils.
+ * GoogleSheetsService получает Sheets через ObjectProvider (клиент создаётся лениво,
+ * только когда действительно нужен экспорт), поэтому в тестах подставляем мок провайдера.
  * Все остальные зависимости не нужны — upload() их не использует.
  */
 @ExtendWith(MockitoExtension.class)
@@ -43,6 +43,7 @@ class GoogleSheetsServiceTest {
     @Mock private Sheets.Spreadsheets spreadsheets;
     @Mock private Sheets.Spreadsheets.Values values;
     @Mock private Sheets.Spreadsheets.Values.Update updateRequest;
+    @Mock private ObjectProvider<Sheets> sheetsServiceProvider;
 
     private GoogleSheetsService service;
 
@@ -67,10 +68,8 @@ class GoogleSheetsServiceTest {
 
     @BeforeEach
     void setUp() {
-        // заглушка для Sheets
-        service = new GoogleSheetsService(null);
-        // Sheets инжектируем через рефлексию — у сервиса нет конструктора с Sheets
-        ReflectionTestUtils.setField(service, "sheetsService", sheetsService);
+        when(sheetsServiceProvider.getObject()).thenReturn(sheetsService);
+        service = new GoogleSheetsService(sheetsServiceProvider);
     }
 
     // Вспомогательный метод: настройка цепочки моков (только там где нужно)

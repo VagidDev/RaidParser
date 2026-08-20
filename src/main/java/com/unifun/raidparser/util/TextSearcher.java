@@ -1,14 +1,24 @@
 package com.unifun.raidparser.util;
 
-public class TextSearcher {
+/**
+ * Поиск по выводу утилит: регистронезависимый, без учёта переводов строк.
+ * Реализован через indexOf, а не через text.matches(): регулярка
+ * `(?is).*\Q..\E.*` на многострочном выводе давала лишние проходы по строке
+ * для каждого слова каждого фильтра.
+ */
+public final class TextSearcher {
+
+    private TextSearcher() {
+    }
+
     public static boolean containsAll(String text, String... words) {
         if (text == null || words == null || words.length == 0) {
             return false;
         }
 
+        String lowerCaseText = text.toLowerCase();
         for (String word : words) {
-            String regex = "(?is).*\\Q" + word + "\\E.*";
-            if (!text.matches(regex)) {
+            if (word == null || !lowerCaseText.contains(word.toLowerCase())) {
                 return false;
             }
         }
@@ -20,16 +30,25 @@ public class TextSearcher {
             return false;
         }
 
-        StringBuilder sb = new StringBuilder("(?is).*(");
-        for (int i = 0; i < words.length; i++) {
-            sb.append("\\Q").append(words[i]).append("\\E");
-            if (i < words.length - 1) {
-                sb.append("|");
+        String lowerCaseText = text.toLowerCase();
+        for (String word : words) {
+            if (word != null && lowerCaseText.contains(word.toLowerCase())) {
+                return true;
             }
         }
-        sb.append(").*");
-
-        return text.matches(sb.toString());
+        return false;
     }
 
+    /**
+     * Все слова должны встретиться в пределах одной строки.
+     * Нужен там, где поиск по всему блоку даёт ложные срабатывания:
+     * например, слово `disabled` в описании одного датчика не должно
+     * менять статус блока питания целиком.
+     */
+    public static boolean anyLineContainsAll(String text, String... words) {
+        if (text == null || words == null || words.length == 0) {
+            return false;
+        }
+        return text.lines().anyMatch(line -> containsAll(line, words));
+    }
 }

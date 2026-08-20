@@ -10,7 +10,6 @@ import com.unifun.raidparser.exporter.FileExporter;
 import com.unifun.raidparser.exporter.GoogleSheetExporter;
 import com.unifun.raidparser.parser.DateParser;
 import com.unifun.raidparser.service.RaidParserService;
-import com.unifun.raidparser.service.ServerHealthCheckService;
 import com.unifun.raidparser.service.SftpFileService;
 import com.unifun.raidparser.util.ServerStatusSorter;
 import lombok.RequiredArgsConstructor;
@@ -38,8 +37,8 @@ public class InteractiveConsoleHandler {
     private final SftpFileService sftpFileService;
     private final FileExporter fileExporter;
     private final DateParser dateParser;
-    //temporary
-    private final ServerHealthCheckService serverHealthCheckService;
+    private static final boolean EXIT_SESSION = true;
+    private static final boolean BACK_TO_FILE_CHOICE = false;
 
     // Константы для оформления
     private static final String SEPARATOR = "====================================================";
@@ -59,13 +58,14 @@ public class InteractiveConsoleHandler {
 
             if (reportFilePath == null) {
                 printMsg("Завершение работы... До встречи!");
-                System.exit(0);
+                return;
             }
 
-            boolean continueWithSameFile = commandSession(consoleInput, reportFilePath);
-            if (!continueWithSameFile) {
-                printMsg("Возврат к выбору даты...");
+            if (commandSession(consoleInput, reportFilePath) == EXIT_SESSION) {
+                printMsg("Завершение работы... До встречи!");
+                return;
             }
+            printMsg("Возврат к выбору даты...");
         }
     }
 
@@ -76,6 +76,10 @@ public class InteractiveConsoleHandler {
             System.out.println("Введите дату отчета (гггг-мм-дд), 'today' или 'exit' для выхода:");
             System.out.print("> ");
 
+            if (!consoleInput.hasNextLine()) {
+                // ввод закончился (Ctrl+D или запуск через pipe) — это тоже выход
+                return null;
+            }
             String input = consoleInput.nextLine().trim();
 
             if (input.equalsIgnoreCase("exit") || input.equalsIgnoreCase("stop")) {
@@ -106,6 +110,10 @@ public class InteractiveConsoleHandler {
         }
     }
 
+    /**
+     * @return {@link #EXIT_SESSION}, если нужно выйти из приложения,
+     *         {@link #BACK_TO_FILE_CHOICE} — если вернуться к выбору отчёта.
+     */
     private boolean commandSession(Scanner consoleInput, Path reportFilePath) {
         while (true) {
             System.out.println("\n" + SEPARATOR);
@@ -122,6 +130,9 @@ public class InteractiveConsoleHandler {
             System.out.println(" [exit]     - Выйти из программы");
             System.out.print("> ");
 
+            if (!consoleInput.hasNextLine()) {
+                return EXIT_SESSION;
+            }
             String input = consoleInput.nextLine().trim().toLowerCase();
 
             switch (input) {
@@ -137,8 +148,8 @@ public class InteractiveConsoleHandler {
                 case "5", "sheets-export" -> exportToGoogleSheets();
                 case "8", "print-cache" -> printStatus(raidParserService.getCachedStatus());
                 case "9", "clear-cache" -> raidParserService.clearCache();
-                case "back" -> { return false; }
-                case "exit", "stop" -> System.exit(0);
+                case "back" -> { return BACK_TO_FILE_CHOICE; }
+                case "exit", "stop" -> { return EXIT_SESSION; }
                 default -> printError("Неизвестная команда. Попробуйте еще раз.");
             }
         }
@@ -244,31 +255,22 @@ public class InteractiveConsoleHandler {
 
         List<ServerStatus> serverStatusList = raidParserService.getCachedStatus();
 
-        googleSheetExporter.export(exportDataMapper.map(
-                serverStatusSorter.sortByHealthStatus(
-                        serverStatusList,
-                        HealthType.DRIVE_HEALTH
-                ),
-                HealthType.DRIVE_HEALTH
-        ), HealthType.DRIVE_HEALTH);
+        boolean exported = true;
+        for (HealthType healthType : List.of(HealthType.DRIVE_HEALTH, HealthType.PSU_HEALTH, HealthType.BATTERY_HEALTH)) {
+            exported &= googleSheetExporter.export(
+                    exportDataMapper.map(
+                            serverStatusSorter.sortByHealthStatus(serverStatusList, healthType),
+                            healthType
+                    ),
+                    healthType
+            );
+        }
 
-        googleSheetExporter.export(exportDataMapper.map(
-                serverStatusSorter.sortByHealthStatus(
-                        serverStatusList,
-                        HealthType.PSU_HEALTH
-                ),
-                HealthType.PSU_HEALTH
-        ), HealthType.PSU_HEALTH);
-
-        googleSheetExporter.export(exportDataMapper.map(
-                serverStatusSorter.sortByHealthStatus(
-                        serverStatusList,
-                        HealthType.BATTERY_HEALTH
-                ),
-                HealthType.BATTERY_HEALTH
-        ), HealthType.BATTERY_HEALTH);
-
-        printMsg("Данные успешно экспортированы в Google Sheets!");
+        if (exported) {
+            printMsg("Данные успешно экспортированы в Google Sheets!");
+        } else {
+            printError("Экспорт в Google Sheets не выполнен полностью — подробности в логе.");
+        }
     }
 
     // Вспомогательные методы для красоты

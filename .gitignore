@@ -16,8 +16,10 @@
 .gradle/
 target/ 
 
-# Credentials
-src/main/resources/application.yaml
+# Credentials: application.yaml лежит в репозитории как рабочий пример,
+# реальные логины/пароли держим в локальном профиле рядом с ним.
+src/main/resources/application-local.yaml
+application-local.yaml
 
 #dir for tests
 /data/

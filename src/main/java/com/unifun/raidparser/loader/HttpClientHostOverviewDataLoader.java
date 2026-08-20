@@ -40,7 +40,9 @@ public class HttpClientHostOverviewDataLoader implements HostOverviewDataLoader 
                     .build();
 
             String formData = String.format("username=%s&password=%s&Login=Login", hostOverviewLoaderConfig.getLogin(), hostOverviewLoaderConfig.getPassword());
-            LOGGER.info("Prepared form data for POST request. Form data -> {}, POST URL -> {}", formData, hostOverviewLoaderConfig.getAuthorizationLink());
+            // В formData есть пароль, поэтому в лог уходят только адрес и логин.
+            LOGGER.info("Prepared form data for POST request. Login -> {}, POST URL -> {}",
+                    hostOverviewLoaderConfig.getLogin(), hostOverviewLoaderConfig.getAuthorizationLink());
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(hostOverviewLoaderConfig.getAuthorizationLink()))

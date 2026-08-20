@@ -13,7 +13,12 @@ import org.springframework.stereotype.Component;
 public class PowerSupplyNotPresentFilter extends AbstractFilter<PowerSupplyStatus> {
     @Override
     public boolean filter(String text) {
-        return TextSearcher.containsAll(text, "disabled");
+        // Ищем `disabled` в строке самого блока питания: слово встречается
+        // и в описаниях других датчиков, и раньше любое такое совпадение
+        // перебивало статус OK для всего PSU.
+        return text != null && text.lines().anyMatch(line ->
+                TextSearcher.containsAll(line, "disabled")
+                        && TextSearcher.containsAny(line, "ps ", "power supply", "power supplies"));
     }
 
     @Override

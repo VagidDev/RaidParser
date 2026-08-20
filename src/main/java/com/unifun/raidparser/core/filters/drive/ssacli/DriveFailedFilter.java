@@ -12,7 +12,10 @@ import org.springframework.stereotype.Component;
 public class DriveFailedFilter extends AbstractFilter<DriverStatus> {
     @Override
     public boolean filter(String text) {
-        return TextSearcher.containsAll(text, "failed");
+        // `failed` должно относиться к диску или логическому тому,
+        // а не быть любым вхождением слова в блоке вывода.
+        return TextSearcher.anyLineContainsAll(text, "physicaldrive", "failed")
+                || TextSearcher.anyLineContainsAll(text, "logicaldrive", "failed");
     }
 
     @Override

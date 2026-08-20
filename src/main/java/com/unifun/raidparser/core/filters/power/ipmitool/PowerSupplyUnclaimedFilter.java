@@ -13,7 +13,11 @@ import org.springframework.stereotype.Component;
 public class PowerSupplyUnclaimedFilter extends AbstractFilter<PowerSupplyStatus> {
     @Override
     public boolean filter(String text) {
-        return (TextSearcher.containsAll(text, "unspecified"));
+        // `Unspecified` — штатное значение полей в выводе ipmitool/dmidecode,
+        // поэтому смотрим только строки про блоки питания.
+        return text != null && text.lines().anyMatch(line ->
+                TextSearcher.containsAll(line, "unspecified")
+                        && TextSearcher.containsAny(line, "ps ", "power supply", "power supplies"));
     }
 
     @Override

@@ -18,7 +18,10 @@ public class FileChecker {
         }
         LOGGER.warn("File does not exists! Creating file {}", file);
         try {
-            Files.createDirectories(file.getParent());
+            Path parent = file.toAbsolutePath().getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
             Files.createFile(file);
             LOGGER.info("File {} is created!", file);
             return true;

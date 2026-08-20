@@ -15,9 +15,14 @@
     <packaging>jar</packaging>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <java.version>21</java.version>
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Boot 3.3.5 приносит Mockito 5.11/byte-buddy 1.14, которые не читают
+             байткод новых JDK. Проект собирается под 21, но тесты должны
+             проходить и на более свежей JVM разработчика. -->
+        <mockito.version>5.20.0</mockito.version>
+        <byte-buddy.version>1.17.8</byte-buddy.version>
     </properties>
 
     <dependencies>
@@ -45,12 +50,6 @@
             <version>1.21.1</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp-jvm</artifactId>
-            <!-- Remove after OkHttp 5.2.0 with updated BOM. -->
-            <version>5.1.0</version>
-        </dependency>
 
         <dependency>
             <groupId>com.jcraft</groupId>
@@ -89,20 +88,12 @@
             <version>2.0.0</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core -->
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>2.25.3</version>
-<!--            <scope>runtime</scope>-->
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-api -->
+        <!-- Только log4j-api: реализацию даёт spring-boot-starter-logging
+             через мост log4j-to-slf4j. log4j-core здесь добавлять нельзя —
+             два провайдера для log4j-api выбираются недетерминированно. -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>2.25.2</version>
-<!--            <scope>runtime</scope>-->
         </dependency>
 
         <!-- Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-test -->
@@ -136,8 +127,7 @@
                         </path>
                     </annotationProcessorPaths>
 
-                    <source>21</source> <!-- Specify Java version -->
-                    <target>21</target>
+                    <release>${maven.compiler.release}</release>
                 </configuration>
             </plugin>
             <plugin>

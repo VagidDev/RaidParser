@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class PowerSupplyUnclaimedFilter extends AbstractFilter<PowerSupplyStatus> {
     @Override
     public boolean filter(String text) {
-        return TextSearcher.containsAll(text, "unclaimed");
+        return TextSearcher.anyLineContainsAll(text, "power", "unclaimed");
     }
 
     @Override

@@ -116,6 +116,69 @@ class MdadmDriveAnalyzerTest {
         assertTrue(response.getErrorText().toLowerCase().contains("blocks super 1.2 [2/1] [_U]".toLowerCase()));
     }
 
+
+    // =========================================================================
+    // Не только raid1: формат `[всего/живых] [UU_]` одинаков для всех уровней
+    // =========================================================================
+
+    @Test
+    void analyze_healthyRaid10_returnsOk() {
+        String text = """
+                [stdout] Personalities : [raid10] [raid6] [raid5] [raid4]\s
+                [stdout] md0 : active raid10 sdd1[3] sdc1[2] sdb1[1] sda1[0]
+                [stdout]       1953260544 blocks super 1.2 512K chunks 2 near-copies [4/4] [UUUU]
+                [stdout]\s
+                [stdout] unused devices: <none>
+                """;
+
+        AnalyzeResponse<DriverStatus> response = analyzer.analyze(text);
+
+        assertEquals(DriverStatus.OK, response.getStatus());
+    }
+
+    @Test
+    void analyze_degradedRaid5_returnsDegraded() {
+        String text = """
+                [stdout] Personalities : [raid6] [raid5] [raid4]\s
+                [stdout] md0 : active raid5 sdd1[3] sdc1[2](F) sdb1[1] sda1[0]
+                [stdout]       5860147200 blocks super 1.2 level 5, 512k chunk, algorithm 2 [4/3] [UU_U]
+                [stdout]\s
+                [stdout] unused devices: <none>
+                """;
+
+        AnalyzeResponse<DriverStatus> response = analyzer.analyze(text);
+
+        assertEquals(DriverStatus.DEGRADED, response.getStatus());
+        assertTrue(response.getErrorText().contains("[4/3] [UU_U]"));
+    }
+
+    @Test
+    void analyze_inactiveArray_returnsDegraded() {
+        // Полностью развалившийся массив: строки состояния нет вообще,
+        // раньше такой вывод не подходил ни одному фильтру и уходил в UNKNOWN.
+        String text = """
+                [stdout] Personalities : [raid1]\s
+                [stdout] md127 : inactive sda1[0](S)
+                [stdout]       488254336 blocks super 1.2
+                [stdout]\s
+                [stdout] unused devices: <none>
+                """;
+
+        AnalyzeResponse<DriverStatus> response = analyzer.analyze(text);
+
+        assertEquals(DriverStatus.DEGRADED, response.getStatus());
+    }
+
+    @Test
+    void isSupportedRawData_returnsTrue_forRaid5Output() {
+        String text = """
+                [stdout] Personalities : [raid6] [raid5] [raid4]\s
+                [stdout] md0 : active raid5 sdd1[3] sdc1[2] sdb1[1] sda1[0]
+                [stdout]       5860147200 blocks super 1.2 level 5, 512k chunk, algorithm 2 [4/4] [UUUU]
+                """;
+        assertTrue(analyzer.isSupportedRawData(text));
+    }
+
     @Test
     void analyze_unrecognizedText_returnsUnknownWithRawDataInErrorText() {
         String text = "some completely unrelated garbage output";

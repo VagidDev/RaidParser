@@ -11,8 +11,8 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -25,63 +25,62 @@ import java.util.stream.Stream;
 @Service
 public class GoogleTokenManager {
     private static final Logger LOGGER = LogManager.getLogger(GoogleTokenManager.class);
-
-    @Deprecated
-    public void validateCredential(Credential credential) throws IOException {
-        if (credential.getRefreshToken() == null) {
-            throw new IOException(
-                    "Google OAuth refresh token is missing. Reauthorization is required."
-            );
-        }
-
-        Long expiresInSeconds = credential.getExpiresInSeconds();
-
-        boolean tokenMissing = credential.getAccessToken() == null;
-        boolean tokenExpiresSoon =
-                expiresInSeconds != null && expiresInSeconds <= 120;
-
-        if (!tokenMissing && !tokenExpiresSoon) {
-            LOGGER.info(
-                    "Google access token is valid for approximately {} seconds",
-                    expiresInSeconds
-            );
-            return;
-        }
-
-        LOGGER.info("Google access token is missing or expires soon. Refreshing it.");
-
-        boolean refreshed = credential.refreshToken();
-        if (!refreshed) {
-            throw new IOException(
-                    "Google access token could not be refreshed. Reauthorization is required."
-            );
-        }
-        LOGGER.info("Google access token was successfully refreshed.");
-    }
+    private static final int RECEIVER_PORT = 8888;
 
     public Credential getCredentials(NetHttpTransport httpTransport, String userCredentialsJson, String savingTokenDir) {
+        Path credentialsFile = resolveCredentialsFile(userCredentialsJson);
+        Path tokenDir = resolveTokenDir(savingTokenDir);
+
         try {
-            return initializeCredentials(httpTransport, userCredentialsJson, savingTokenDir);
+            return initializeCredentials(httpTransport, credentialsFile, tokenDir);
         } catch (IOException e) {
-            LOGGER.warn("Receiver an exception -> {}. Remove stored credentials in directory {}", e.getLocalizedMessage(), savingTokenDir);
-            removeTokens(savingTokenDir);
+            LOGGER.warn("Received an exception -> {}. Removing stored tokens in directory `{}`", e.getLocalizedMessage(), tokenDir);
+            removeTokens(tokenDir);
             try {
                 LOGGER.warn("Trying to reinitialize credentials");
-                return initializeCredentials(httpTransport, userCredentialsJson, savingTokenDir);
+                return initializeCredentials(httpTransport, credentialsFile, tokenDir);
             } catch (IOException exception) {
-                LOGGER.error("Fatal error while trying to initialize credentials. Error -> {}", exception.getLocalizedMessage(), e);
-                throw new RuntimeException("Cannot initialize credentials for google sheets export", exception);
+                LOGGER.error("Fatal error while trying to initialize credentials. Error -> {}", exception.getLocalizedMessage(), exception);
+                throw new IllegalStateException("Cannot initialize credentials for google sheets export", exception);
             }
         }
     }
 
-    private Credential initializeCredentials(NetHttpTransport httpTransport, String userCredentialsJson, String savingTokenDir) throws IOException {
+    /**
+     * Путь к credentials.json проверяем до обращения к Google: пустое значение
+     * превращается в Path.of("") — то есть в текущий каталог, и дальше клиент
+     * падает с невнятным `Is a directory`.
+     */
+    private Path resolveCredentialsFile(String userCredentialsJson) {
+        if (!StringUtils.hasText(userCredentialsJson)) {
+            throw new IllegalStateException(
+                    "`sheets.authorization.user-credentials-json` is not configured — cannot authorize in Google Sheets");
+        }
+
+        Path credentialsFile = Path.of(userCredentialsJson).toAbsolutePath().normalize();
+        if (!Files.isRegularFile(credentialsFile)) {
+            throw new IllegalStateException(
+                    "Google credentials file `" + credentialsFile + "` does not exist or is not a regular file");
+        }
+        return credentialsFile;
+    }
+
+    /**
+     * Каталог токенов тоже обязателен: с пустым значением он указывает на
+     * рабочий каталог приложения, а его содержимое {@link #removeTokens} удаляет.
+     */
+    private Path resolveTokenDir(String savingTokenDir) {
+        if (!StringUtils.hasText(savingTokenDir)) {
+            throw new IllegalStateException(
+                    "`sheets.authorization.saving-tokens-dir` is not configured — refusing to use the working directory for tokens");
+        }
+        return Path.of(savingTokenDir).toAbsolutePath().normalize();
+    }
+
+    private Credential initializeCredentials(NetHttpTransport httpTransport, Path credentialsFile, Path tokenDir) throws IOException {
         GoogleClientSecrets clientSecrets;
 
-        try (InputStream in = Files.newInputStream(
-                Path.of(userCredentialsJson),
-                StandardOpenOption.READ)) {
-
+        try (InputStream in = Files.newInputStream(credentialsFile, StandardOpenOption.READ)) {
             clientSecrets = GoogleClientSecrets.load(
                     GsonFactory.getDefaultInstance(),
                     new InputStreamReader(in)
@@ -95,45 +94,47 @@ public class GoogleTokenManager {
                         clientSecrets,
                         List.of("https://www.googleapis.com/auth/spreadsheets")
                 )
-                        .setDataStoreFactory(
-                                new FileDataStoreFactory(
-                                        new File(savingTokenDir)
-                                )
-                        )
+                        .setDataStoreFactory(new FileDataStoreFactory(tokenDir.toFile()))
                         .setAccessType("offline")
                         .build();
 
         LocalServerReceiver receiver =
                 new LocalServerReceiver.Builder()
-                        .setPort(8888)
+                        .setPort(RECEIVER_PORT)
                         .build();
 
-        return new AuthorizationCodeInstalledApp(flow, receiver)
-                        .authorize("user");
+        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
-    private void removeTokens(String savingTokenDir) {
-        Path tokenDirPath = Path.of(savingTokenDir);
+    /**
+     * Удаляет только обычные файлы непосредственно из каталога токенов.
+     * Обход дерева (Files.walk) здесь недопустим: при неверно заданном каталоге
+     * под удаление попадал произвольный файл рабочего каталога приложения.
+     */
+    private void removeTokens(Path tokenDirPath) {
+        if (!Files.isDirectory(tokenDirPath)) {
+            LOGGER.info("Token directory `{}` does not exist, a new token can be created", tokenDirPath);
+            return;
+        }
 
-        try (Stream<Path> storedTokens = Files.walk(tokenDirPath)) {
-            Path token = storedTokens
-                    .filter(path -> path.compareTo(tokenDirPath) != 0)
-                    .findFirst()
-                    .orElse(null);
+        try (Stream<Path> storedTokens = Files.list(tokenDirPath)) {
+            List<Path> tokens = storedTokens.filter(Files::isRegularFile).toList();
 
-            if (token == null) {
-                LOGGER.info("Token in directory `{}` does not exists, can create new token", tokenDirPath);
+            if (tokens.isEmpty()) {
+                LOGGER.info("No stored tokens in directory `{}`, a new token can be created", tokenDirPath);
                 return;
             }
 
-            boolean isDeleted = Files.deleteIfExists(token);
-            if (isDeleted) {
-                LOGGER.info("Token was deleted: {} ", token.getFileName());
-            } else {
-                LOGGER.error("Cannot delete Token: {}", token.getFileName());
+            for (Path token : tokens) {
+                if (Files.deleteIfExists(token)) {
+                    LOGGER.info("Token was deleted: {}", token.getFileName());
+                } else {
+                    LOGGER.error("Cannot delete token: {}", token.getFileName());
+                }
             }
         } catch (IOException e) {
-            LOGGER.error("Input/Output exception while deleting old credential! Path to token -> {}, StackTrace -> {}", tokenDirPath, e.getMessage(), e);
+            LOGGER.error("Input/Output exception while deleting old credentials! Token directory -> {}, Error -> {}",
+                    tokenDirPath, e.getMessage(), e);
         }
     }
 

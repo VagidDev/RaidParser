@@ -36,6 +36,8 @@ class HostExecutorServiceTest {
     @BeforeEach
     public void initialize() {
         when(hostExecutorConfig.getThreads()).thenReturn(8);
+        // lenient: часть тестов не доходит до ожидания результатов задач
+        lenient().when(hostExecutorConfig.getTaskTimeoutSeconds()).thenReturn(30);
         hostExecutorService.initialize();
     }
 

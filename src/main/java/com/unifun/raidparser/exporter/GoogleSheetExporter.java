@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -19,10 +20,14 @@ public class GoogleSheetExporter {
     private final GoogleSheetsService googleSheetsService;
     private final GoogleSheetExportConfig googleSheetExportConfig;
 
-    public void export(List<ReportServerData> reportServerData, HealthType healthType) {
+    /**
+     * @return true, если данные действительно ушли в таблицу. Раньше метод был void,
+     *         и вызывающий код сообщал об успехе даже когда выгрузка не состоялась.
+     */
+    public boolean export(List<ReportServerData> reportServerData, HealthType healthType) {
         if (reportServerData == null || healthType == null || reportServerData.isEmpty()) {
             LOGGER.warn("Got empty data for export to Google Sheets. Report Data -> {} Health Type -> {}", reportServerData, healthType);
-            return;
+            return false;
         }
 
         String range = switch (healthType) {
@@ -32,10 +37,18 @@ public class GoogleSheetExporter {
             default -> throw new IllegalArgumentException("Unknown status type: " + healthType);
         };
 
+        if (!StringUtils.hasText(googleSheetExportConfig.getSpreadsheetId()) || !StringUtils.hasText(range)) {
+            LOGGER.error("Google Sheets export is not configured: `sheets.export.spreadsheet-id` -> `{}`, range for {} -> `{}`",
+                    googleSheetExportConfig.getSpreadsheetId(), healthType, range);
+            return false;
+        }
+
         try {
             googleSheetsService.upload(googleSheetExportConfig.getSpreadsheetId(), range, reportServerData);
+            return true;
         } catch (Exception e) {
             LOGGER.error("Error, while trying upload data to google-sheet. Error message -> {}", e.getMessage(), e);
+            return false;
         }
     }
 
