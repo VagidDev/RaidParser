@@ -21,7 +21,7 @@ public class HostOverviewService {
     }
 
     public void clearServerCache() {
-        hostOverviewParsedDataHandler.clearCache();
+        hostOverviewParsedDataHandler.clear();
     }
 
     public List<HostInformation> getServers() {

@@ -72,10 +72,17 @@ raid:
       drive-status: "./status/drive-status.txt"
       psu-status: "./status/psu-status.txt"
       battery-status: "./status/battery-status.txt"
+    # Время жизни кэшей. 0 или меньше — кэш не истекает по времени
+    # и сбрасывается только командой clear-cache.
     cache:
-      drive-status-age-seconds: 3600
-      power-supply-status-age-seconds: 3600
-      battery-status-age-seconds: 3600
+      # проанализированные статусы серверов, считается по каждому серверу отдельно
+      server-status-ttl-seconds: 3600
+      # данные, разобранные из файла отчёта
+      report-data-ttl-seconds: 3600
+      # список серверов из HostOverview: и файл с сырым ответом, и разобранный список
+      host-overview-ttl-seconds: 86400
+      # команды из servers-to-check файла
+      servers-to-check-ttl-seconds: 300
 host-overview:
   loader:
     login: testuser

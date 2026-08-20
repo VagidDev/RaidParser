@@ -1,5 +1,6 @@
 package com.unifun.raidparser.handlers;
 
+import com.unifun.raidparser.config.CacheConfig;
 import com.unifun.raidparser.config.ServersToCheckConfig;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.dto.HostCommand;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,7 +51,9 @@ class ServersToCheckConfigFileDataHandlerTest {
                 parser,
                 validator,
                 config,
-                fileChecker
+                fileChecker,
+                Clock.systemUTC(),
+                new CacheConfig()
         );
     }
 
@@ -96,14 +100,14 @@ class ServersToCheckConfigFileDataHandlerTest {
     }
 
     @Test
-    void clearCache_shouldClearData() {
+    void clear_shouldClearData() {
         HostCommand command = new HostCommand("server1", "cmd1", HealthType.DRIVE_HEALTH);
 
         when(parser.parse(any())).thenReturn(List.of(command));
         when(validator.isValid("cmd1")).thenReturn(true);
 
         handler.getHostCommands();
-        handler.clearCache();
+        handler.clear();
 
         List<HostCommand> result = handler.getHostCommands();
 

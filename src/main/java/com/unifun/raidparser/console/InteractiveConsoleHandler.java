@@ -4,11 +4,15 @@ import com.unifun.raidparser.config.OutputStatusFileConfig;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.dto.DateParseResponse;
 import com.unifun.raidparser.dto.ReportServerData;
+import com.unifun.raidparser.dto.HostInformation;
 import com.unifun.raidparser.dto.ServerStatus;
+import com.unifun.raidparser.handlers.CacheState;
 import com.unifun.raidparser.mapper.ExportDataMapper;
 import com.unifun.raidparser.exporter.FileExporter;
 import com.unifun.raidparser.exporter.GoogleSheetExporter;
 import com.unifun.raidparser.parser.DateParser;
+import com.unifun.raidparser.service.CacheService;
+import com.unifun.raidparser.service.HostOverviewService;
 import com.unifun.raidparser.service.RaidParserService;
 import com.unifun.raidparser.service.SftpFileService;
 import com.unifun.raidparser.util.ServerStatusSorter;
@@ -35,6 +39,8 @@ public class InteractiveConsoleHandler {
     private final RaidParserService raidParserService;
     private final ExportDataMapper exportDataMapper;
     private final SftpFileService sftpFileService;
+    private final HostOverviewService hostOverviewService;
+    private final CacheService cacheService;
     private final FileExporter fileExporter;
     private final DateParser dateParser;
     private static final boolean EXIT_SESSION = true;
@@ -124,8 +130,10 @@ public class InteractiveConsoleHandler {
             System.out.println(" [3] full-check - Парсинг отчета и проверка состояния - вывод в консоль");
             System.out.println(" [4] file-export - Экспорт статуса из кэша в статус-файлы");
             System.out.println(" [5] sheets-export - Экспорт статуса из кэша в Google Sheets");
-            System.out.println(" [8] print-cache - Показать кэш");
-            System.out.println(" [9] clear-cache - Очистить кэш");
+            System.out.println(" [6] refresh-hosts - Перечитать список серверов из HostOverview");
+            System.out.println(" [7] cache-info - Состояние кэшей: размер, возраст, TTL");
+            System.out.println(" [8] print-cache - Показать статусы из кэша");
+            System.out.println(" [9] clear-cache [имя] - Очистить кэш, без имени - все: " + String.join(", ", cacheService.cacheNames()));
             System.out.println(" [back]     - Выбрать другой файл/дату");
             System.out.println(" [exit]     - Выйти из программы");
             System.out.print("> ");
@@ -134,8 +142,10 @@ public class InteractiveConsoleHandler {
                 return EXIT_SESSION;
             }
             String input = consoleInput.nextLine().trim().toLowerCase();
+            String[] inputParts = input.split("\\s+");
+            String command = inputParts[0];
 
-            switch (input) {
+            switch (command) {
                 case "1", "parse-report" -> executeParsing(reportFilePath);
                 case "2", "check-health" -> executeHardDriveChecking();
                 case "3", "full-check" -> {
@@ -146,8 +156,10 @@ public class InteractiveConsoleHandler {
                 }
                 case "4", "file-export" -> exportToFile();
                 case "5", "sheets-export" -> exportToGoogleSheets();
+                case "6", "refresh-hosts" -> refreshHosts();
+                case "7", "cache-info" -> printCacheInfo();
                 case "8", "print-cache" -> printStatus(raidParserService.getCachedStatus());
-                case "9", "clear-cache" -> raidParserService.clearCache();
+                case "9", "clear-cache" -> clearCache(inputParts.length > 1 ? inputParts[1] : null);
                 case "back" -> { return BACK_TO_FILE_CHOICE; }
                 case "exit", "stop" -> { return EXIT_SESSION; }
                 default -> printError("Неизвестная команда. Попробуйте еще раз.");
@@ -270,6 +282,33 @@ public class InteractiveConsoleHandler {
             printMsg("Данные успешно экспортированы в Google Sheets!");
         } else {
             printError("Экспорт в Google Sheets не выполнен полностью — подробности в логе.");
+        }
+    }
+
+    private void refreshHosts() {
+        printMsg("Перечитываю список серверов из HostOverview...");
+        List<HostInformation> servers = hostOverviewService.getActualServers();
+        printMsg(String.format("Получено серверов: %d", servers.size()));
+    }
+
+    private void printCacheInfo() {
+        printMsg("Состояние кэшей:");
+        for (CacheState state : cacheService.states()) {
+            printMsg("  " + state.describe());
+        }
+    }
+
+    private void clearCache(String cacheName) {
+        if (cacheName == null) {
+            cacheService.clearAll();
+            printMsg("Все кэши очищены: " + String.join(", ", cacheService.cacheNames()));
+            return;
+        }
+
+        if (cacheService.clear(cacheName)) {
+            printMsg(String.format("Кэш `%s` очищен", cacheName));
+        } else {
+            printError(String.format("Неизвестный кэш `%s`. Доступны: %s", cacheName, String.join(", ", cacheService.cacheNames())));
         }
     }
 
