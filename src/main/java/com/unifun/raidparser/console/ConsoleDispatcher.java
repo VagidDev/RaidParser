@@ -1,60 +1,71 @@
 package com.unifun.raidparser.console;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
-@Component
-@RequiredArgsConstructor
-public class ConsoleDispatcher {
+/**
+ * Разбор аргументов командной строки и выбор режима запуска.
+ * <p>
+ * Это не бин: режим нужно знать <b>до</b> создания контекста, иначе им нельзя
+ * управлять составом бинов — интерактивному режиму не нужен ни веб-контейнер,
+ * ни контроллеры, а серверному не нужна интерактивная консоль.
+ */
+public final class ConsoleDispatcher {
     private static final String USAGE = """
-            Raid Parser %s
+            Raid Parser %s — состояние дисков, блоков питания и батарей серверов
 
-            Использование: java -jar raid_parser.jar [опция]
+            Использование: java -jar raid_parser.jar [режим] [--свойство=значение ...]
 
-              -i, --interactive    интерактивный режим (по умолчанию)
+              -i, --interactive    интерактивная консоль (по умолчанию)
+              -d, --daemon         серверный режим: REST API под /api/v1
               -h, --help           показать эту справку
 
-            Ещё не реализовано:
-              -p, --parse-status   разбор отчёта сразу в статус-файлы
-              -d, --date           обработать отчёт за указанную дату
-              -m, --manual-check   проверить серверы из ручной конфигурации
+            Свойства Spring передаются как есть, например:
+              java -jar raid_parser.jar -d --server.port=9090
+              java -jar raid_parser.jar -i --spring.config.location=./config.yaml
             """;
 
     private static final String VERSION = "v5.0";
 
-    private final InteractiveConsoleHandler interactiveConsoleHandler;
-
-    public void handle(String[] args) {
-        if (args == null || args.length == 0) {
-            interactiveConsoleHandler.startInteractiveSession();
-            return;
-        }
-
-        for (String argument : args) {
-            switch (argument) {
-                case "-i", "--interactive" -> {
-                    interactiveConsoleHandler.startInteractiveSession();
-                    return;
-                }
-                case "-h", "--help" -> {
-                    printUsage();
-                    return;
-                }
-                case "-p", "--parse-status", "-d", "--date", "-m", "--manual-check" -> {
-                    System.out.printf("Опция %s ещё не реализована.%n", argument);
-                    printUsage();
-                    return;
-                }
-                default -> {
-                    System.err.printf("Неизвестная опция: %s%n", argument);
-                    printUsage();
-                    return;
-                }
-            }
-        }
+    private ConsoleDispatcher() {
     }
 
-    private void printUsage() {
+    public static LaunchOptions parse(String[] args) {
+        if (args == null || args.length == 0) {
+            return LaunchOptions.of(LaunchMode.INTERACTIVE);
+        }
+
+        LaunchOptions selected = null;
+        for (String argument : args) {
+            if (isSpringProperty(argument)) {
+                continue;
+            }
+
+            LaunchMode mode = toMode(argument);
+            if (mode == null) {
+                return LaunchOptions.invalid("Неизвестная опция: " + argument);
+            }
+            if (selected != null && selected.mode() != mode) {
+                return LaunchOptions.invalid("Указано больше одного режима запуска: " + argument);
+            }
+            selected = LaunchOptions.of(mode);
+        }
+
+        return selected == null ? LaunchOptions.of(LaunchMode.INTERACTIVE) : selected;
+    }
+
+    public static void printUsage() {
         System.out.printf(USAGE, VERSION);
+    }
+
+    /** Свойства вида --server.port=9090 адресованы Spring, а не нам. */
+    private static boolean isSpringProperty(String argument) {
+        return argument.startsWith("--") && argument.contains("=");
+    }
+
+    private static LaunchMode toMode(String argument) {
+        return switch (argument) {
+            case "-i", "--interactive" -> LaunchMode.INTERACTIVE;
+            case "-d", "--daemon" -> LaunchMode.SERVER;
+            case "-h", "--help" -> LaunchMode.HELP;
+            default -> null;
+        };
     }
 }
