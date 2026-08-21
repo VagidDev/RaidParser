@@ -82,6 +82,14 @@ raid:
       # Origins для внешнего веб-интерфейса, например ["http://localhost:5173"].
       # Пусто — CORS выключен и браузерный клиент с другого адреса не подключится.
       allowed-origins: []
+    schedule:
+      # Автообновление статусов в серверном режиме. Выключено: планировщик
+      # ходит по SSH на боевые серверы, это включается осознанно.
+      enabled: false
+      # cron в формате Spring: 6 полей. По умолчанию — в начале каждого часа
+      cron: "0 0 * * * *"
+      # что запускать: report, hosts или full
+      mode: full
     output-files:
       drive-status: "./status/drive-status.txt"
       psu-status: "./status/psu-status.txt"
