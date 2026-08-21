@@ -79,6 +79,9 @@ raid:
       # часть эндпоинтов запускает команды на боевых серверах.
       key: ""
       key-header: X-API-Key
+      # Origins для внешнего веб-интерфейса, например ["http://localhost:5173"].
+      # Пусто — CORS выключен и браузерный клиент с другого адреса не подключится.
+      allowed-origins: []
     output-files:
       drive-status: "./status/drive-status.txt"
       psu-status: "./status/psu-status.txt"

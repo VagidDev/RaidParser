@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
+
 @Configuration
 @ConfigurationProperties("raid.parser.api")
 @Getter @Setter
@@ -16,4 +18,9 @@ public class ApiConfig {
      */
     private String key = "";
     private String keyHeader = "X-API-Key";
+    /**
+     * Origins, которым разрешены запросы из браузера. Пусто — CORS выключен,
+     * и веб-интерфейс с другого адреса работать не сможет.
+     */
+    private List<String> allowedOrigins = List.of();
 }
