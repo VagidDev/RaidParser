@@ -1,6 +1,6 @@
 package com.unifun.raidparser.console;
 
-import com.unifun.raidparser.config.OutputStatusFileConfig;
+import com.unifun.raidparser.config.Profiles;
 import com.unifun.raidparser.core.component.HealthType;
 import com.unifun.raidparser.dto.DateParseResponse;
 import com.unifun.raidparser.dto.ReportServerData;
@@ -8,40 +8,38 @@ import com.unifun.raidparser.dto.HostInformation;
 import com.unifun.raidparser.dto.ServerStatus;
 import com.unifun.raidparser.handlers.CacheState;
 import com.unifun.raidparser.mapper.ExportDataMapper;
-import com.unifun.raidparser.exporter.FileExporter;
-import com.unifun.raidparser.exporter.GoogleSheetExporter;
 import com.unifun.raidparser.parser.DateParser;
 import com.unifun.raidparser.service.CacheService;
 import com.unifun.raidparser.service.HostOverviewService;
 import com.unifun.raidparser.service.RaidParserService;
+import com.unifun.raidparser.service.StatusExportService;
 import com.unifun.raidparser.service.SftpFileService;
 import com.unifun.raidparser.util.ServerStatusSorter;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 @Component
+@Profile(Profiles.CONSOLE)
 @RequiredArgsConstructor
 public class InteractiveConsoleHandler {
     private final static Logger LOGGER = LogManager.getLogger(InteractiveConsoleHandler.class);
-    //Configs
-    private final OutputStatusFileConfig outputStatusFileConfig;
-
     //Services
-    private final GoogleSheetExporter googleSheetExporter;
+    private final StatusExportService statusExportService;
     private final ServerStatusSorter serverStatusSorter;
     private final RaidParserService raidParserService;
     private final ExportDataMapper exportDataMapper;
     private final SftpFileService sftpFileService;
     private final HostOverviewService hostOverviewService;
     private final CacheService cacheService;
-    private final FileExporter fileExporter;
     private final DateParser dateParser;
     private static final boolean EXIT_SESSION = true;
     private static final boolean BACK_TO_FILE_CHOICE = false;
@@ -230,59 +228,23 @@ public class InteractiveConsoleHandler {
     private void exportToFile() {
         printMsg("Запуск процесса экспорта статусов из кэша в файл...");
 
-        Path driveFileStatusPath = Path.of(outputStatusFileConfig.getDriveStatus());
-        Path powerSupplyFileStatusPath = Path.of(outputStatusFileConfig.getPsuStatus());
-        Path batteryFileStatusPath = Path.of(outputStatusFileConfig.getBatteryStatus());
+        Map<HealthType, Path> files = statusExportService.exportToFiles();
 
-        List<ServerStatus> serverStatusList = raidParserService.getCachedStatus();
-
-        fileExporter.export(driveFileStatusPath, exportDataMapper.map(
-                serverStatusSorter.sortByHealthStatus(
-                        serverStatusList,
-                        HealthType.DRIVE_HEALTH
-                ),
-                HealthType.DRIVE_HEALTH
-        ));
-        fileExporter.export(powerSupplyFileStatusPath, exportDataMapper.map(
-                serverStatusSorter.sortByHealthStatus(
-                        serverStatusList,
-                        HealthType.PSU_HEALTH
-                ),
-                HealthType.PSU_HEALTH
-        ));
-
-        fileExporter.export(batteryFileStatusPath, exportDataMapper.map(
-                serverStatusSorter.sortByHealthStatus(
-                        serverStatusList,
-                        HealthType.BATTERY_HEALTH
-                ),
-                HealthType.BATTERY_HEALTH
-        ));
-
-        printMsg(String.format("Данные успешно экспортированы в файлы: %s | %s | %s", driveFileStatusPath, powerSupplyFileStatusPath, batteryFileStatusPath));
+        printMsg("Данные успешно экспортированы в файлы:");
+        files.forEach((healthType, path) -> printMsg(String.format("  %s -> %s", healthType, path)));
     }
 
     private void exportToGoogleSheets() {
         printMsg("Запуск процесса экспорта статуса из кэша в Google Sheets...");
 
-        List<ServerStatus> serverStatusList = raidParserService.getCachedStatus();
+        Map<HealthType, Boolean> exported = statusExportService.exportToSheets();
 
-        boolean exported = true;
-        for (HealthType healthType : List.of(HealthType.DRIVE_HEALTH, HealthType.PSU_HEALTH, HealthType.BATTERY_HEALTH)) {
-            exported &= googleSheetExporter.export(
-                    exportDataMapper.map(
-                            serverStatusSorter.sortByHealthStatus(serverStatusList, healthType),
-                            healthType
-                    ),
-                    healthType
-            );
-        }
-
-        if (exported) {
+        if (exported.values().stream().allMatch(Boolean::booleanValue)) {
             printMsg("Данные успешно экспортированы в Google Sheets!");
-        } else {
-            printError("Экспорт в Google Sheets не выполнен полностью — подробности в логе.");
+            return;
         }
+        printError("Экспорт в Google Sheets не выполнен полностью — подробности в логе:");
+        exported.forEach((healthType, success) -> printMsg(String.format("  %s -> %s", healthType, success ? "ок" : "не выгружено")));
     }
 
     private void refreshHosts() {
