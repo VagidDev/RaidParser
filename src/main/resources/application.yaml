@@ -6,6 +6,11 @@ spring:
   config:
     import: optional:classpath:application-local.yaml
 
+# Порт REST API серверного режима (java -jar raid_parser.jar -d).
+# В интерактивном режиме контейнер не поднимается и порт не занимается.
+server:
+  port: 8080
+
 util:
   date:
     date-string-format: yyyy_MM_dd
